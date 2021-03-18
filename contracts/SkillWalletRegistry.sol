@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
+pragma solidity ^0.8.0;
 
 import {DataTypes} from './utils/DataTypes.sol';
 import "./ISkillWalletValidator.sol";
@@ -9,9 +9,14 @@ import "./ISkillWalletRegistry.sol";
 contract SkillWalletRegistry  is ISkillWalletRegistry {
 
 
-    bytes4 public override constant IDENTITY = 0x788ec99c;
+    bytes4 public constant override IDENTITY = 0x788ec99c;
 
     event SkillWalletCreationRequested(
+        address user,
+        bytes32 skillWalletHash
+    );
+
+    event SkillWalletUpdateRequested(
         address user,
         bytes32 skillWalletHash
     );
@@ -39,7 +44,11 @@ contract SkillWalletRegistry  is ISkillWalletRegistry {
     mapping(address => DataTypes.SkillWallet) public skillWallets;
 
     address private newSkillWalletCreator;
-    bool public validationRequested;
+    address private skillWalletUpdater;
+
+    bool public createValidationRequested;
+
+    bool public updateValidationRequested;
 
 
     constructor(address _oracle) {
@@ -48,28 +57,26 @@ contract SkillWalletRegistry  is ISkillWalletRegistry {
         oracle = ISkillWalletValidator(_oracle);
     }
 
-
     function createSkillWallet(address user, bytes32 skillWalletHash) public override {
         require(user == msg.sender, "SkillWalletRegistry: Only the sender can create SkillWallet for himself."); // TODO: Is this necessary?
         require(skillWallets[user].skillsHash.length == 0, "SkillWalletRegistry: Skill wallet already exists");
-        require(!validationRequested, "SkillWalletRegistry: Skill wallet validation already requested");
+        require(!createValidationRequested, "SkillWalletRegistry: Skill wallet validation already requested");
         newSkillWalletCreator = user;
-        validationRequested = true;
+        createValidationRequested = true;
 
-        require(!oracle.isRequested(), "SkillWalletRegistry: Skill wallet validation is already in progress");
-        oracle.requestIsSkillWalletValid(skillWalletHash);
+        require(!oracle.isCreateRequested(), "SkillWalletRegistry: Skill wallet create validation is already in progress");
+        oracle.requestIsSkillWalletValidOnCreate(skillWalletHash);
 
         emit SkillWalletCreationRequested(user, skillWalletHash);
     }
 
-    function confirmSkillWallet(bytes32 skillWalletHash) public override returns (bool) {
+    function confirmSkillWalletOnCreate(bytes32 skillWalletHash) public override returns (bool) {
         if (msg.sender != address(oracle)) {
             emit ErrorConfirmingSkillWallet(skillWalletHash, "SkillWalletRegistry: Not the oracle");
             return false;
         }
-        if(!validationRequested) {
+        if(!createValidationRequested) {
             emit ErrorConfirmingSkillWallet(skillWalletHash, "SkillWalletRegistry: Validation not requested yet");
-
             return false;
         }
 
@@ -84,9 +91,40 @@ contract SkillWalletRegistry  is ISkillWalletRegistry {
         emit SkillWalletCreated(newSkillWalletCreator, skillWalletHash);
 
         newSkillWalletCreator = address(0);
-        validationRequested = false;
+        createValidationRequested = false;
+        return true;
+    }
+
+    function updateSkillWallet(address user, bytes32 skillWalletHash) public override {
+        require(user == msg.sender, "SkillWalletRegistry: Only the sender can update SkillWallet for himself."); // TODO: Is this necessary?
+        require(skillWallets[user].skillsHash.length != 0, "SkillWalletRegistry: Skill wallet doesn't exists");
+        require(!updateValidationRequested, "SkillWalletRegistry: Skill wallet validation already requested");
+        skillWalletUpdater = user;
+        updateValidationRequested = true;
+
+        require(!oracle.isUpdateRequested(), "SkillWalletRegistry: Skill wallet validation is already in progress");
+        oracle.requestIsSkillWalletValidOnUpdate(skillWalletHash);
+
+        emit SkillWalletUpdateRequested(user, skillWalletHash);
+    }
 
 
+    function confirmSkillWalletOnUpdate(bytes32 skillWalletHash) public override returns (bool) {
+        if (msg.sender != address(oracle)) {
+            emit ErrorConfirmingSkillWallet(skillWalletHash, "SkillWalletRegistry: Not the oracle");
+            return false;
+        }
+        if(!updateValidationRequested) {
+            emit ErrorConfirmingSkillWallet(skillWalletHash, "SkillWalletRegistry: Validation not requested yet");
+            return false;
+        }
+
+        skillWallets[skillWalletUpdater].skillsHash = skillWalletHash;
+
+        emit SkillWalletUpdated(skillWalletUpdater, skillWalletHash);
+
+        skillWalletUpdater = address(0);
+        updateValidationRequested = false;
         return true;
     }
 

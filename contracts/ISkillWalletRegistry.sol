@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
+pragma solidity >=0.6.10 <=0.8.0;
 
 interface ISkillWalletRegistry {
 
@@ -7,7 +7,11 @@ interface ISkillWalletRegistry {
 
     function createSkillWallet(address user, bytes32 skillWalletHash) external;
 
-    function confirmSkillWallet(bytes32 skillWalletHash) external returns (bool);
+    function updateSkillWallet(address user, bytes32 skillWalletHash) external;
+
+    function confirmSkillWalletOnCreate(bytes32 skillWalletHash) external returns (bool);
+
+    function confirmSkillWalletOnUpdate(bytes32 skillWalletHash) external returns (bool);
 
 
 }

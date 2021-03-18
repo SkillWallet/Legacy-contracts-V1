@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
+pragma solidity >=0.6.10 <=0.8.0;
 
 import "./ISkillWalletValidator.sol";
 import "./ISkillWalletRegistry.sol";
-import "@chainlink/contracts/src/v0.7/ChainlinkClient.sol";
+import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 
 
 /// @author DistributedTown team
@@ -11,31 +11,36 @@ import "@chainlink/contracts/src/v0.7/ChainlinkClient.sol";
 contract SkillWalletValidator is ChainlinkClient, ISkillWalletValidator {
 
     ///@notice SkillWalletRequestFulfilled event, emitted when the Chainlink request is fulfilled
-    event SkillWalletRequestFulfilled(bytes32 _requestId, bytes32 _hash, bool _isValid, bool _isConfirmed);
+    event SkillWalletRequestFulfilled(bytes32 _requestId, bytes32 _hash, bool _isValid, bool _isConfirmed, string _type);
 
     ///@dev Used for identifying this smart contract
-    bytes4 public override constant IDENTITY = 0x5e22cfc7;
-
-    ///@dev Used for identifying the skill wallet registry smart contract
-    bytes4 public constant SKILL_WALLET_REGISTRY_IDENTITY = 0x788ec99c;
+    bytes4 public constant override IDENTITY = 0x5e22cfc7;
 
     ///@dev Used for identifying this smart contract
     string private constant PATH = "isValid";
 
-    ///@dev Request specific variables
-    bool public override isValid;
-    bool public override isFulfilled;
-    bool public override isRequested;
-    bool public override isConfirmed;
+    ///@dev Create request specific variables
+    bool public override isCreateValid;
+    bool public override isCreateFulfilled;
+    bool public override isCreateRequested;
+    bool public override isCreateConfirmed;
 
-    ///@dev The SkillWallet hash that we will be verifying
-    bytes32 public override skillWalletHash;
+    ///@dev Update request specific variables
+    bool public override isUpdateValid;
+    bool public override isUpdateFulfilled;
+    bool public override isUpdateRequested;
+    bool public override isUpdateConfirmed;
+
+    ///@dev The SkillWallet hash that we will be verifying for the create skill wallet request
+    bytes32 public override skillWalletHashOnCreate;
+
+    ///@dev The SkillWallet hash that we will be verifying for the create skill wallet request
+    bytes32 public override skillWalletHashOnUpdate;
 
     ///@dev The skill wallet registry
-    address public skillWalletRegistry;
+    address public override skillWalletRegistry;
 
     ///@dev Chainlink specific variables
-    address private oracle;
     bytes32 private jobId;
     uint256 private fee;
 
@@ -55,71 +60,132 @@ contract SkillWalletValidator is ChainlinkClient, ISkillWalletValidator {
     ///@param _baseUrl The base url of the backend to be called
     constructor(address _oracle, bytes32 _jobId, string memory _baseUrl) public {
         setPublicChainlinkToken();
-        oracle = _oracle;
+        setChainlinkOracle(_oracle);
         jobId = _jobId;
         fee = 0.1 * 10 ** 18; // 0.1 LINK
+        skillWalletRegistry = msg.sender;
         baseUrl = _baseUrl;
     }
 
 
-    ///@dev Create a Chainlink request for validating the SkillWallet hash
+    ///@dev Create a Chainlink request for validating the SkillWallet hash, called on Skill wallet create
     ///@param _hash The SkillWallet hash to be validated
     ///@return requestId The Chainlink request id
-    function requestIsSkillWalletValid(bytes32 _hash) public override returns (bytes32 requestId)
+    function requestIsSkillWalletValidOnCreate(bytes32 _hash) public override returns (bytes32 requestId)
     {
-        require(ISkillWalletRegistry(msg.sender).IDENTITY() == SKILL_WALLET_REGISTRY_IDENTITY, "SkillWalletValidator: Only the SkillWalletRegistry can call this operation");
-        require(!isRequested, "SkillWalletValidator: Request already sent");
-        skillWalletRegistry = msg.sender;
+        require(msg.sender == skillWalletRegistry, "SkillWalletValidator: Only the SkillWalletRegistry can call this operation");
+        require(!isCreateRequested, "SkillWalletValidator: Create request already sent");
 
-        isValid = false;
-        isFulfilled = false;
-        isRequested = true;
-        isConfirmed = false;
-        skillWalletHash = _hash;
-        Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
+        isCreateValid = false;
+        isCreateFulfilled = false;
+        isCreateRequested = true;
+        isCreateConfirmed = false;
+        skillWalletHashOnCreate = _hash;
+
+        return _buildAndSendValidationRequest(_hash, this.fulfillCreate.selector);
+    }
+
+
+    ///@dev Create a Chainlink request for validating the SkillWallet hash, called on Skill wallet update
+    ///@param _hash The SkillWallet hash to be validated
+    ///@return requestId The Chainlink request id
+    function requestIsSkillWalletValidOnUpdate(bytes32 _hash) public override returns (bytes32 requestId)
+    {
+        require(msg.sender == skillWalletRegistry, "SkillWalletValidator: Only the SkillWalletRegistry can call this operation");
+        require(!isUpdateRequested, "SkillWalletValidator: Update request already sent");
+
+        isUpdateValid = false;
+        isUpdateFulfilled = false;
+        isUpdateRequested = true;
+        isUpdateConfirmed = false;
+        skillWalletHashOnUpdate = _hash;
+
+        return _buildAndSendValidationRequest(_hash, this.fulfillUpdate.selector);
+    }
+
+
+    ///@dev Build and send a Chainlink request for validating the skill wallet hash
+    ///@param validationHash The SkillWallet hash to be validated
+    ///@param functionSelector The selector of the fulfillment function to be called
+    ///@return requestId The id of the sent request
+    function _buildAndSendValidationRequest(bytes32 validationHash, bytes4 functionSelector) private returns (bytes32 requestId) {
+
+        Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), functionSelector);
 
         // Set the URL to perform the GET request on
         request.add("get", baseUrl);
         request.add("queryParams", string(
-                abi.encodePacked(
-                    "hash=",
-                    _hash
-                )));
+        abi.encodePacked(
+        "hash=",
+        validationHash
+        )));
 
-        request.add("path", PATH);
+        request.add("path", "isValid");
 
         // Sends the request
-        return sendChainlinkRequestTo(oracle, request, fee);
+        return sendChainlinkRequest(request, fee);
+
     }
 
 
-    ///@dev Fufill the sent Chainlink request, called by the Chainlink oracle, emits {SkillWalletRequestFulfilled} event
+    ///@dev Fulfill the sent Chainlink request for skill wallet hash validation on create, called by the Chainlink oracle, emits {SkillWalletRequestFulfilled} event
     ///@param _requestId The id of the request being fufilled
     ///@param _isValid The backend API response
-    function fulfill(bytes32 _requestId, bool _isValid) public recordChainlinkFulfillment(_requestId)
+    function fulfillCreate(bytes32 _requestId, bool _isValid) public recordChainlinkFulfillment(_requestId)
     {
-        if(_isValid && (skillWalletRegistry != address(0))) {
-            isConfirmed = ISkillWalletRegistry(skillWalletRegistry).confirmSkillWallet(skillWalletHash);
+        require(skillWalletRegistry != address(0), "SkillWalletValidator: SkillWalletRegistry not set");
+
+        if(_isValid) {
+            isCreateConfirmed = ISkillWalletRegistry(skillWalletRegistry).confirmSkillWalletOnCreate(skillWalletHashOnCreate);
         }
 
-        isValid = _isValid;
-        isFulfilled = true;
-        isRequested = false;
-        skillWalletRegistry = address(0);
+        isCreateValid = _isValid;
+        isCreateFulfilled = true;
+        isCreateRequested = false;
 
-        emit SkillWalletRequestFulfilled(_requestId, skillWalletHash, _isValid, isConfirmed);
+        emit SkillWalletRequestFulfilled(_requestId, skillWalletHashOnCreate, _isValid, isCreateConfirmed, "create");
     }
 
-    ///@dev Reset the sent request, callable only by the original requester
-    function reset() public {
-        require(isRequested, "SkillWalletValidator: Request not sent.");
-        require(msg.sender == skillWalletRegistry, "SkillWalletValidator: Only the requester can call this operation.");
 
-        isValid = false;
-        isFulfilled = false;
-        isRequested = false;
-        isConfirmed = false;
-        skillWalletRegistry = address(0);
+    ///@dev Fulfil the sent Chainlink request, called by the Chainlink oracle, emits {SkillWalletRequestFulfilled} event
+    ///@param _requestId The id of the request being fufilled
+    ///@param _isValid The backend API response
+    function fulfillUpdate(bytes32 _requestId, bool _isValid) public recordChainlinkFulfillment(_requestId)
+    {
+        require(skillWalletRegistry != address(0), "SkillWalletValidator: SkillWalletRegistry not set");
+
+        if(_isValid) {
+            isUpdateConfirmed = ISkillWalletRegistry(skillWalletRegistry).confirmSkillWalletOnUpdate(skillWalletHashOnUpdate);
+        }
+
+        isUpdateValid = _isValid;
+        isUpdateFulfilled = true;
+        isUpdateRequested = false;
+
+        emit SkillWalletRequestFulfilled(_requestId, skillWalletHashOnUpdate, _isValid, isUpdateConfirmed, "update");
+    }
+
+
+    ///@dev Reset the sent create request, callable only by the skill wallet registry
+    function resetCreateRequest() public override {
+        require(isCreateRequested, "SkillWalletValidator: Create request not sent.");
+        require(msg.sender == skillWalletRegistry, "SkillWalletValidator: Only the SkillWalletRegistry can call this operation.");
+
+        isCreateValid = false;
+        isCreateFulfilled = false;
+        isCreateRequested = false;
+        isCreateConfirmed = false;
+    }
+
+    ///@dev Reset the sent update request, callable only by the skill wallet registry
+    function resetUpdateRequest() public override {
+        require(isUpdateRequested, "SkillWalletValidator: Update request not sent.");
+        require(msg.sender == skillWalletRegistry, "SkillWalletValidator: Only the SkillWalletRegistry can call this operation.");
+
+        isUpdateValid = false;
+        isUpdateFulfilled = false;
+        isUpdateRequested = false;
+        isUpdateConfirmed = false;
     }
 
 
