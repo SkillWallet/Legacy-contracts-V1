@@ -5,8 +5,15 @@ import "../imported/Membership.sol";
 import "../imported/Community.sol";
 import "../utils/Types.sol";
 
+/**
+ * @title DistributedTown SkillWallet
+ *
+ * @dev Implementation of the SkillWallet contract
+ * @author DistributedTown
+ */
 contract SkillWallet is ISkillWallet {
 
+    // TODO: Change this to an array?
     Membership private _membership;
     address private _owner;
 

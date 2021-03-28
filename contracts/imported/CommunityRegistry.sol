@@ -27,6 +27,7 @@ contract CommunityRegistry {
         Membership membership = new Membership(newCommunityAddress);
         address newMembershipAddress = address(membership);
 
+        communities[numOfCommunities] = newCommunityAddress;
         numOfCommunities = numOfCommunities + 1;
 
         emit CommunityCreated(newCommunityAddress, newMembershipAddress);
