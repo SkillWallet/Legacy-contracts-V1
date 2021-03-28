@@ -6,10 +6,29 @@ const { utils } = require("ethers");
 const R = require("ramda");
 
 const main = async () => {
+  const deployerWallet = ethers.provider.getSigner();
 
   console.log("\n\n 📡 Deploying...\n");
 
-  // const yourContract = await deploy("YourContract") // <-- add in constructor args like line 19 vvvv
+  console.log("\n\n Deploying community registry...\n");
+  const communityRegistry = await deploy("CommunityRegistry");
+
+  console.log("\n\n Creating communities...\n");
+
+  const [communityAddress1, membershipAddress1] = await communityRegistry.createCommunity(0);
+  const [communityAddress2, membershipAddress2] = await communityRegistry.createCommunity(1);
+  const [communityAddress3, membershipAddress3] = await communityRegistry.createCommunity(2);
+
+  console.log("\n\n Joining to community 0...\n");
+  await communityRegistry.joinCommunity(0, [[ethers.BigNumber.from(12), ethers.BigNumber.from(1)], [ethers.BigNumber.from(6), ethers.BigNumber.from(5)], [ethers.BigNumber.from(24), ethers.BigNumber.from(3)]])
+
+  console.log("\n\n Deploying skill wallet registry...\n");
+  const skillWalletRegistry = await deploy("SkillWalletRegistry");
+
+  const skillWallet = await skillWalletRegistry.createSkillWallet(deployerWallet.address, membershipAddress1);
+
+  console.log("Skill wallet deployed", skillWallet);
+
 
   console.log(
     " 💾  Artifacts (address, abi, and args) saved to: ",
