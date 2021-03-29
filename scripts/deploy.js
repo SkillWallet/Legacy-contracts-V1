@@ -7,27 +7,50 @@ const R = require("ramda");
 
 const main = async () => {
   const deployerWallet = ethers.provider.getSigner();
+  const deployerWalletAddress = await deployerWallet.getAddress();
 
   console.log("\n\n 📡 Deploying...\n");
 
   console.log("\n\n Deploying community registry...\n");
   const communityRegistry = await deploy("CommunityRegistry");
 
-  console.log("\n\n Creating communities...\n");
+  console.log(`\n\n Community reigstry created, address: ${communityRegistry.address}\n`);
 
-  const [communityAddress1, membershipAddress1] = await communityRegistry.createCommunity(0);
-  const [communityAddress2, membershipAddress2] = await communityRegistry.createCommunity(1);
-  const [communityAddress3, membershipAddress3] = await communityRegistry.createCommunity(2);
 
-  console.log("\n\n Joining to community 0...\n");
-  await communityRegistry.joinCommunity(0, [[ethers.BigNumber.from(12), ethers.BigNumber.from(1)], [ethers.BigNumber.from(6), ethers.BigNumber.from(5)], [ethers.BigNumber.from(24), ethers.BigNumber.from(3)]])
+  const communityRegistryFactory = await ethers.getContractFactory("CommunityRegistry");
+  const communityRegistryContract = await communityRegistryFactory.attach(communityRegistry.address);
 
-  console.log("\n\n Deploying skill wallet registry...\n");
-  const skillWalletRegistry = await deploy("SkillWalletRegistry");
+  console.log("\n\n Creating community...\n");
 
-  const skillWallet = await skillWalletRegistry.createSkillWallet(deployerWallet.address, membershipAddress1);
+  await communityRegistryContract.createCommunity(0);
 
-  console.log("Skill wallet deployed", skillWallet);
+
+  console.log("\n\nCommunity created");
+
+  const [_communityAddress, _membershipAddress] = await communityRegistryContract.getCommunityData(0);
+
+  console.log(`Community address: ${_communityAddress}`)
+  console.log(`Membership address: ${_membershipAddress}`)
+
+
+
+
+  const membershipContractFactory = await ethers.getContractFactory("Membership");
+  const membershipContract = await membershipContractFactory.attach(_membershipAddress);
+
+
+  console.log("\n\n Joining to community 0...", deployerWalletAddress);
+  await membershipContract.join(deployerWalletAddress, [[ethers.BigNumber.from(12), ethers.BigNumber.from(1)], [ethers.BigNumber.from(6), ethers.BigNumber.from(5)], [ethers.BigNumber.from(24), ethers.BigNumber.from(3)]])
+
+  console.log("Joined to community 0.");
+
+  // console.log("\n\n Deploying skill wallet registry...\n");
+  // const skillWalletRegistry = await deploy("SkillWalletRegistry");
+  //
+  // console.log("\n\n Creating skill wallet...\n");
+  // const skillWallet = await skillWalletRegistry.createSkillWallet(deployerWallet.address, membershipAddress1);
+  //
+  // console.log("Skill wallet deployed", skillWallet);
 
 
   console.log(

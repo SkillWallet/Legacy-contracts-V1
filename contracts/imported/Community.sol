@@ -2,7 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 /**
  * @title DistributedTown Community
  *
@@ -10,7 +14,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
  * @author DistributedTown
  */
 
-contract Community is ERC1155 {
+contract Community is ERC1155, ERC1155Holder {
 
     Template public template;
 
@@ -21,9 +25,9 @@ contract Community is ERC1155 {
     constructor(string memory _url, uint _template) public ERC1155(_url) {
         template = Template(_template);
         // Fungible DiToCredits ERC-20 token
-        _mint(msg.sender, uint256(TokenType.DiToCredit), 96000 * 1e18, "");
+        _mint(address(this), uint256(TokenType.DiToCredit), 96000 * 1e18, "");
         // Non-Fungible Community template NFT token
-        _mint(msg.sender, uint256(TokenType.Community), 1, "");
+        _mint(address(this), uint256(TokenType.Community), 1, "");
     }
 
     function transferDiToCredits(
@@ -127,4 +131,21 @@ contract Community is ERC1155 {
         }
         return false;
     }
+
+    /**
+ * @dev See {IERC165-supportsInterface}.
+ */
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, ERC1155Receiver) returns (bool) {
+        return interfaceId == type(IERC1155).interfaceId
+        || interfaceId == type(IERC1155MetadataURI).interfaceId
+        || interfaceId == type(IERC1155Receiver).interfaceId
+        || super.supportsInterface(interfaceId);
+    }
+
+//    // TODO: Only CommunityRegistry can call this
+//    // @dev This is added because approval is needed for the membership address, so it can transfer credits (calling setApprovalFor all won't work, we need to make it external)
+//    function setApprovalForMembership(address membershipAddress) public {
+//        _operatorApprovals[address(this)][membershipAddress] = approved;
+//        emit ApprovalForAll(address(this), operator, approved);
+//    }
 }

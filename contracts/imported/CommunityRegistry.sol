@@ -24,6 +24,7 @@ contract CommunityRegistry {
     /**
      * @dev Creates a community
      * @return _communityAddress the newly created Community address
+     * @return _membershipAddress the newly created Membership address
      **/
     function createCommunity(uint template) public returns (address _communityAddress, address _membershipAddress) {
         Community community = new Community('', template);
@@ -32,7 +33,9 @@ contract CommunityRegistry {
         Membership membership = new Membership(newCommunityAddress);
         address newMembershipAddress = address(membership);
 
-        communities[numOfCommunities] = CommunityData(newCommunityAddress, newMembershipAddress);
+        community.setApprovalForMembership(newMembershipAddress);
+
+        communities.push(CommunityData(newCommunityAddress, newMembershipAddress));
         numOfCommunities = numOfCommunities + 1;
 
         emit CommunityCreated(newCommunityAddress, newMembershipAddress);
@@ -40,15 +43,15 @@ contract CommunityRegistry {
         return (newCommunityAddress, newMembershipAddress);
     }
 
-    function joinCommunity(uint256 communityIndex, Types.Member memory member) external returns (bool status) {
-        require(communityIndex < communities.length, "CommunityRegistry: CommunityIndex out of bounds.");
-
-        // TODO: Add stronger require checks
-
-        address membershipAddress = communities[communityIndex].membership;
-        Membership membership = Membership(membershipAddress);
-        membership.join(msg.sender, member);
-        return true;
+    // TODO: Probably we will rely only on events and don't need this
+    /**
+     * @dev Helper function for obtaining the community address and membership address by index of the community.
+     * @param communityDataIndex - the index of the community in the communities array.
+     * @return _communityAddress - community address
+     * @return _membershipAddress - membership address
+     **/
+    function getCommunityData(uint256 communityDataIndex) public view returns (address _communityAddress, address _membershipAddress) {
+        return (communities[communityDataIndex].community, communities[communityDataIndex].membership);
     }
 
 }

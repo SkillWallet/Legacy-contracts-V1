@@ -14,6 +14,7 @@ import "../utils/Types.sol";
  * @author DistributedTown
  */
 
+
 contract Membership is Ownable {
 
     address public communityAddress;
@@ -40,19 +41,18 @@ contract Membership is Ownable {
 
     function join(address memberAddress, Types.Member memory member)
     public
-    onlyOwner
     {
-        require(numOfMembers >= 24, "Membership: There are already 24 members, sorry!");
+        require(numOfMembers <= 24, "There are already 24 members, sorry!");
         require(
-            enabledMembers[memberAddress],
-            "Membership: You have already joined!"
+            !enabledMembers[memberAddress],
+            "You have already joined!"
         );
 
         enabledMembers[memberAddress] = true;
         members[memberAddress] = member;
         numOfMembers++;
         uint16 credits = calculateCredits(memberAddress);
-        community.transferDiToCredits(msg.sender, memberAddress, credits);
+        community.transferDiToCredits(communityAddress, memberAddress, credits);
         emit MemberAdded(memberAddress, credits);
     }
 
@@ -61,7 +61,7 @@ contract Membership is Ownable {
         emit MemberLeft(memberAddress);
     }
 
-    function calculateCredits(address memberAddress) private view returns (uint16) {
+    function calculateCredits(address memberAddress) internal view returns (uint16) {
         uint16 result = 2000;
         Types.Member memory member = members[memberAddress];
 
@@ -76,6 +76,12 @@ contract Membership is Ownable {
         return enabledMembers[member];
     }
 
+
+    function getMember(address member) external view returns (Types.Member memory) {
+        require(enabledMembers[member], "Membership: The member doesn't exists");
+        return members[member];
+    }
+
     function contains(address[] memory arr, address element)
     internal
     pure
@@ -85,10 +91,5 @@ contract Membership is Ownable {
             if (arr[i] == element) return true;
         }
         return false;
-    }
-
-    function getMember(address member) external view returns (Types.Member memory) {
-        require(enabledMembers[member] == true, "Membership: The member doesn't exists");
-        return members[member];
     }
 }
