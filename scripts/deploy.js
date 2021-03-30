@@ -11,21 +11,16 @@ const main = async () => {
 
   console.log("\n\n 📡 Deploying...\n");
 
-  console.log("\n\n Deploying community registry...\n");
   const communityRegistry = await deploy("CommunityRegistry");
-
-  console.log(`\n\n Community reigstry created, address: ${communityRegistry.address}\n`);
-
 
   const communityRegistryFactory = await ethers.getContractFactory("CommunityRegistry");
   const communityRegistryContract = await communityRegistryFactory.attach(communityRegistry.address);
 
-  console.log("\n\n Creating community...\n");
+  console.log("Creating community...");
 
   await communityRegistryContract.createCommunity(0);
 
-
-  console.log("\n\nCommunity created");
+  console.log("Community created");
 
   const [_communityAddress, _membershipAddress] = await communityRegistryContract.getCommunityData(0);
 
@@ -34,24 +29,19 @@ const main = async () => {
 
 
 
-
   const membershipContractFactory = await ethers.getContractFactory("Membership");
   const membershipContract = await membershipContractFactory.attach(_membershipAddress);
 
 
-  console.log("\n\n Joining to community 0...", deployerWalletAddress);
+  console.log("\nJoining to community 0...", deployerWalletAddress);
   await membershipContract.join(deployerWalletAddress, [[ethers.BigNumber.from(12), ethers.BigNumber.from(1)], [ethers.BigNumber.from(6), ethers.BigNumber.from(5)], [ethers.BigNumber.from(24), ethers.BigNumber.from(3)]])
+  console.log("Joined to community 0.\n");
+  const skillWalletRegistry = await deploy("SkillWalletRegistry");
 
-  console.log("Joined to community 0.");
-
-  // console.log("\n\n Deploying skill wallet registry...\n");
-  // const skillWalletRegistry = await deploy("SkillWalletRegistry");
-  //
-  // console.log("\n\n Creating skill wallet...\n");
-  // const skillWallet = await skillWalletRegistry.createSkillWallet(deployerWallet.address, membershipAddress1);
-  //
-  // console.log("Skill wallet deployed", skillWallet);
-
+  console.log("Creating skill wallet...");
+  await skillWalletRegistry.createSkillWallet(deployerWalletAddress, _membershipAddress);
+  const skillWallet = await skillWalletRegistry.getSkillWallet(deployerWalletAddress);
+  console.log(`Skill wallet created, address: ${skillWallet}`);
 
   console.log(
     " 💾  Artifacts (address, abi, and args) saved to: ",

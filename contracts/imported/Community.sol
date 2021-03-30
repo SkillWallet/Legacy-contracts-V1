@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "hardhat/console.sol";
+
 /**
  * @title DistributedTown Community
  *
@@ -142,10 +144,9 @@ contract Community is ERC1155, ERC1155Holder {
         || super.supportsInterface(interfaceId);
     }
 
-//    // TODO: Only CommunityRegistry can call this
-//    // @dev This is added because approval is needed for the membership address, so it can transfer credits (calling setApprovalFor all won't work, we need to make it external)
-//    function setApprovalForMembership(address membershipAddress) public {
-//        _operatorApprovals[address(this)][membershipAddress] = approved;
-//        emit ApprovalForAll(address(this), operator, approved);
-//    }
+    // TODO: Only CommunityRegistry can call this
+    // @dev This is added because approval is needed for the membership address, so it can transfer credits (calling setApprovalFor all won't work, we need to make it external)
+    function setApprovalForMembership(address membershipAddress) public override {
+        super.setApprovalForMembership(membershipAddress);
+    }
 }
