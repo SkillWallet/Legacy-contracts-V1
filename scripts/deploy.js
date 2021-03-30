@@ -39,7 +39,7 @@ const main = async () => {
   const skillWalletRegistry = await deploy("SkillWalletRegistry");
 
   console.log("Creating skill wallet...");
-  await skillWalletRegistry.createSkillWallet(deployerWalletAddress, _membershipAddress);
+  await skillWalletRegistry.createSkillWallet(_membershipAddress);
   const skillWallet = await skillWalletRegistry.getSkillWallet(deployerWalletAddress);
   console.log(`Skill wallet created, address: ${skillWallet}`);
 

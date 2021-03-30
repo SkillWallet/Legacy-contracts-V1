@@ -10,12 +10,14 @@ import "./IPartnerAgreement.sol";
  */
 interface IPartnerAgreement {
 
-    function getPartnerContractId() external view returns (address);
+    function getPartnerContract() external view returns (address);
 
     function getPartnerTokenId() external view returns (address);
 
     function getTokenAgreement() external view returns (uint8 tokenDistributionPercent, uint8 profitDistributionPercent);
 
     function getTemplate() external view returns (uint8);
+
+    function getSkillIds() external view returns (uint8[] memory);
 
 }

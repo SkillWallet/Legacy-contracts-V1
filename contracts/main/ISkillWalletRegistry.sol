@@ -11,8 +11,8 @@ import "../imported/Membership.sol";
  */
 interface ISkillWalletRegistry {
 
-    function createSkillWallet(address owner, Membership membership) external returns(ISkillWallet);
+    function createSkillWallet(Membership membership) external returns(address skillWallet);
 
-    function getSkillWallet(address owner) external view returns (ISkillWallet);
+    function getSkillWallet(address owner) external view returns (address skillWallet);
 
 }

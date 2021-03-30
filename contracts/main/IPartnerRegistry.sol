@@ -10,6 +10,8 @@ import "./IPartnerAgreement.sol";
  */
 interface IPartnerRegistry {
 
-    function createPartnerAgreement(address partnerContractId, address partnerTokenId, uint8 tokenDistributionPercent, uint8 profitDistributionPercent, uint8 template) external returns(IPartnerAgreement partnerAgreement);
+    function createPartnerAgreement(address partnerContract, uint8 templateId, uint8[] memory skillIds) external returns(address partnerAgreement);
+
+    function getPartnerAgreement(address creator) external view returns(address partnerAgreement);
 
 }

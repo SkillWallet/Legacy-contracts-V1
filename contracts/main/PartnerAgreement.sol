@@ -13,29 +13,24 @@ import "./IPartnerAgreement.sol";
  */
 contract PartnerAgreement is IPartnerAgreement {
 
-    address private _partnerContractId;
+    address private _partnerContract;
     address private _partnerTokenId;
     uint8 private _tokenDistributionPercent;
     uint8 private _profitDistributionPercent;
     Template private _template;
+    uint8[] private _skillIds;
 
     enum Template {OpenSource, Art, Local}
 
-    constructor (address partnerContractId_, address partnerTokenId_, uint8 tokenDistributionPercent_, uint8 profitDistributionPercent_, uint8 template_) {
+    constructor (address partnerContract, uint8 templateId, uint8[] memory skillIds) {
         // TODO: Add check to verify that the call is from the PartnerRegistry
-
-        require(partnerContractId_ != address(0), "PartnerAgreement: partnerContractId_ cannot be the zero address.");
-        require(partnerTokenId_ != address(0), "PartnerAgreement: partnerTokenId_ cannot be the zero address.");
-
-        _partnerContractId = partnerContractId_;
-        _partnerTokenId = partnerTokenId_;
-        _tokenDistributionPercent = tokenDistributionPercent_;
-        _profitDistributionPercent = profitDistributionPercent_;
-        _template = Template(_template);
+        _partnerContract = partnerContract;
+        _template = Template(templateId);
+        _skillIds = skillIds;
     }
 
-    function getPartnerContractId() override external view returns(address) {
-        return _partnerContractId;
+    function getPartnerContract() override external view returns(address) {
+        return _partnerContract;
     }
 
     function getPartnerTokenId() override external view returns(address) {
@@ -48,6 +43,10 @@ contract PartnerAgreement is IPartnerAgreement {
 
     function getTemplate() override external view returns (uint8) {
         return uint8(_template);
+    }
+
+    function getSkillIds() override external view returns (uint8[] memory) {
+        return _skillIds;
     }
 
 }

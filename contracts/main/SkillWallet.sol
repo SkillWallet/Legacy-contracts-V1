@@ -13,20 +13,14 @@ import "../utils/Types.sol";
  */
 contract SkillWallet is ISkillWallet {
 
-    // TODO: Change this to an array?
     Membership private _membership;
     address private _owner;
 
 
-    constructor (address owner_, Membership membership_) {
+    constructor (address owner, Membership membership) {
         // TODO: Add check to verify that the call is from the SkillWalletRegistry
-
-        require(owner_ != address(0), "SkillWallet: SkillWallet for the zero address can't be created.");
-        require(address(membership_) != address(0), "SkillWallet: Membership must be valid.");
-        require(membership_.isMember(owner_), "SkillWallet: The user is not a member.");
-
-        _owner = owner_;
-        _membership = membership_;
+        _owner = owner;
+        _membership = membership;
     }
 
     function getMembership() override external view returns(Membership) {

@@ -15,30 +15,36 @@ contract SkillWalletRegistry is ISkillWalletRegistry {
 
     event SkillWalletCreated(address _owner, address _skillWallet);
 
-    mapping (address => SkillWallet) private skillWallets;
+    mapping (address => address) private skillWallets;
     uint256 public numWallets;
 
     /**
      * @dev Creates a new instance of SkillWallet
+     * @param membership - The address of the membership contract that this user is part of
      * @return skillWallet - The address of the newly created SkillWallet instance.
      **/
-    function createSkillWallet(address owner, Membership membership) override external returns (ISkillWallet skillWallet) {
-        require(owner != address(0), "SkillWalletRegistry: SkillWallet for the zero address can't be created.");
-        require(address(skillWallets[owner]) == address(0), "SkillWalletRegistry: SkillWallet for the user already exists.");
-        SkillWallet _skillWallet = new SkillWallet(owner, membership);
+    function createSkillWallet(Membership membership) override external returns (address skillWallet) {
+        require(skillWallets[msg.sender] == address(0), "SkillWalletRegistry: SkillWallet for the user already exists.");
 
-        skillWallets[owner] = _skillWallet;
+        require(address(membership) != address(0), "SkillWalletRegistry: The membership address cannot be the zero address.");
+        require(membership.isMember(msg.sender), "SkillWalletRegistry: The user is not a member on the provided membership.");
+
+        SkillWallet skillWallet = new SkillWallet(msg.sender, membership);
+        address newSkillWalletAddress = address(skillWallet);
+
+        skillWallets[msg.sender] = newSkillWalletAddress;
         numWallets = numWallets + 1;
 
-        emit SkillWalletCreated(owner, address(_skillWallet));
-        return _skillWallet;
+        emit SkillWalletCreated(msg.sender, newSkillWalletAddress);
+        return newSkillWalletAddress;
     }
 
     /**
      * @dev Get the SkillWallet for a specific user (owner)
+     * @param owner - The address of the owner to get the SkillWallet for
      * @return skillWallet - The address of the SkillWallet for the specific user (owner)
      **/
-    function getSkillWallet(address owner) override external view returns (ISkillWallet skillWallet) {
+    function getSkillWallet(address owner) override external view returns (address skillWallet) {
         require(address(skillWallets[owner]) != address(0), "SkillWalletRegistry: SkillWallet for the user doesn't exists.");
         return skillWallets[owner];
     }
