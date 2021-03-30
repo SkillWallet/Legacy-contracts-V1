@@ -19,12 +19,11 @@ const main = async () => {
     console.log("Creating PartnerAgreement...");
 
     const partnerContract = "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9";
-    const templateId = ethers.BigNumber.from(0);
-    const skillIds = [ethers.BigNumber.from(0), ethers.BigNumber.from(1), ethers.BigNumber.from(2)];
+    const skillWallet = "0xd8058efe0198ae9dD7D563e1b4938Dcbc86A1F81";
 
-    await partnerRegistryContract.createPartnerAgreement(partnerContract, templateId, skillIds);
+    await partnerRegistryContract.createPartnerAgreement(partnerContract, skillWallet);
 
-    const partnerAgreementAddress = await partnerRegistryContract.getPartnerAgreement(deployerWalletAddress);
+    const partnerAgreementAddress = await partnerRegistryContract.getPartnerAgreement(skillWallet);
     console.log(`Partner agreement created, address: ${partnerAgreementAddress}`);
 
 
