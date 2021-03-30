@@ -10,14 +10,39 @@ import "./IPartnerAgreement.sol";
  */
 interface IPartnerAgreement {
 
-    function getPartnerContract() external view returns (address);
+    modifier onlyCreator() virtual;
 
-    function getPartnerTokenId() external view returns (address);
+    // Token distribution agreement
+    function addTokenDistribution(address token, uint8 tokenDistributionPercent) external returns(bool);
 
-    function getTokenAgreement() external view returns (uint8 tokenDistributionPercent, uint8 profitDistributionPercent);
+    function updateToken(address newToken) external returns(bool);
 
-    function getTemplate() external view returns (uint8);
+    function updateTokenDistributionPercent(uint8 newTokenDistributionPercent) external returns(bool);
 
-    function getSkillIds() external view returns (uint8[] memory);
+    // Profit sharing agreement
+    function addProfitSharingDistribution(address treasury, uint8 profitSharingPercent) external returns(bool);
+
+    function updateTreasury(address newTreasury) external returns(bool);
+
+    function updateProfitSharingPercent(uint8 newProfitSharingPercent) external returns(bool);
+
+    // Protocol contracts
+    function addProtocolContract(address newProtocolContract) external returns (bool);
+
+    function removeProtocolContract(address protocolContract) external returns (bool);
+
+    // View functions
+    function getToken() external view returns (address token);
+
+    function getTreasury() external view returns (address treasury);
+
+    function getTokenAgreement() external view returns (address token, uint8 tokenDistributionPercent);
+
+    function getProfitSharingAgreement() external view returns (address treasury, uint8 profitSharingPercent);
+
+    function getCreator() external view returns (address creator);
+
+    function isProtocolContractAdded(address protocolContract) external view returns (bool);
+
 
 }

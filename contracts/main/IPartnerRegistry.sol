@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "./IPartnerAgreement.sol";
+import "./SkillWallet.sol";
+import "./PartnerAgreement.sol";
 
 /**
  * @title DistributedTown IPartnerRegistry
@@ -10,7 +12,7 @@ import "./IPartnerAgreement.sol";
  */
 interface IPartnerRegistry {
 
-    function createPartnerAgreement(address partnerContract, uint8 templateId, uint8[] memory skillIds) external returns(address partnerAgreement);
+    function createPartnerAgreement(address partnerContract, SkillWallet creator) external returns(address partnerAgreement);
 
     function getPartnerAgreement(address creator) external view returns(address partnerAgreement);
 
