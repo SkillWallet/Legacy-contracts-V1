@@ -1,18 +1,22 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "../imported/Membership.sol";
-import "../imported/Community.sol";
 import "../utils/Types.sol";
 
 
 interface ISkillWallet {
 
-    function getMembership() external view returns (Membership);
+    function create(bytes32 skillWalletHash, address community) external;
 
-    function getOwner() external view returns (address);
+    function updateHash(uint256 skillWalletId, bytes32 newSkillWalletHash) external;
 
-    function getMemberInfo() external view returns (Types.Member memory);
+    function changeCommunity(uint256 skillWalletId, address newCommunityAddress) external;
 
-    function getCommunity() external view returns (Community);
+    function isSkillWalletRegistered(address owner) external view returns (bool status);
+
+    function getCommunityHistory(uint256 skillWalletId) external view returns (address[] memory communities);
+
+    function getActiveCommunity(uint256 skillWalletId) external view returns (address community);
+
+    function getTotalSkillWalletsRegistered() external view returns (uint256);
 
 }
