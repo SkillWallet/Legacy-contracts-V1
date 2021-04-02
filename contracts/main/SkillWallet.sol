@@ -1,9 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "./ISkillWallet.sol";
-import "../imported/Membership.sol";
-import "../imported/Community.sol";
-import "../utils/Types.sol";
+import "../imported/Types.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
@@ -17,7 +15,8 @@ contract SkillWallet is ISkillWallet, ERC721 {
 
     using Counters for Counters.Counter;
 
-    string private baseURI;
+//    CommunityRegistry private _communityRegistry;
+    address private _communityRegistry;
 
     // Mapping from token ID to active community that the SW is part of
     mapping (uint256 => address) private _activeCommunities;
@@ -25,57 +24,49 @@ contract SkillWallet is ISkillWallet, ERC721 {
     // Mapping from token ID to list of community addresses
     mapping (uint256 => address[]) private _communityHistory;
 
-    // Mapping from token ID to skill wallet hash
-    mapping (uint256 => bytes32) private _skillWalletHashes;
+    // Mapping from token ID to SkillSet
+    mapping (uint256 => Types.SkillSet) private _skillSets;
+
 
     Counters.Counter private _skillWalletCounter;
 
-    constructor (string memory baseURI_) public ERC721("SkillWallet", "SW") {
-        baseURI = baseURI_;
+    constructor (address communityRegistry) public ERC721("SkillWallet", "SW") {
+        _communityRegistry = communityRegistry;
     }
 
-    function create(bytes32 skillWalletHash, address community) override external {
-        // TODO: Check if the msg.sender has joined the community
-        // TODO: Validate the hash through Chainlink validator
+    function create(address owner, Types.SkillSet memory skillSet) override external {
 
-        require(skillWalletHash != 0, "SkillWallet: Invalid skillWalletHash value");
-        require(community != address(0), "SkillWallet: Invalid community address");
+        // TODO: Verify that the msg.sender is valid community
 
-        require(balanceOf(msg.sender) == 0, "SkillWallet: There is SkillWallet already registered for this address.");
+        require(balanceOf(owner) == 0, "SkillWallet: There is SkillWallet already registered for this address.");
 
         uint256 tokenId = _skillWalletCounter.current();
 
-        _skillWalletHashes[tokenId] = skillWalletHash;
-        _activeCommunities[tokenId] = community;
-        _communityHistory[tokenId].push(community);
-        _safeMint(msg.sender, tokenId);
+        _activeCommunities[tokenId] = msg.sender;
+        _communityHistory[tokenId].push(msg.sender);
+        _skillSets[tokenId] = skillSet;
+        _safeMint(owner, tokenId);
 
         _skillWalletCounter.increment();
 
     }
 
-    function updateHash(uint256 skillWalletId, bytes32 newSkillWalletHash) override external {
-        // TODO: Validate the hash through Chainlink validator
+    function updateSkillSet(uint256 skillWalletId, Types.SkillSet memory newSkillSet) override external {
+        // TODO: Validate that the msg.sender is valid community
 
         require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
-        require(newSkillWalletHash != 0, "SkillWallet: Invalid newSkillWalletHash value.");
 
-        require(ownerOf(skillWalletId) == msg.sender, "SkillWallet: Only the SkillWallet owner can call this operation.");
-
-        _skillWalletHashes[skillWalletId] = newSkillWalletHash;
+        _skillSets[skillWalletId] = newSkillSet;
     }
 
 
-    function changeCommunity(uint256 skillWalletId, address newCommunityAddress) override external {
-        // TODO: Validate that the msg.sender has joined the new community
+    function changeCommunity(uint256 skillWalletId) override external {
+        // TODO: Validate that the msg.sender is valid community
 
         require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
-        require(newCommunityAddress != address(0), "SkillWallet: Invalid newCommunityAddress value.");
 
-        require(ownerOf(skillWalletId) == msg.sender, "SkillWallet: Only the SkillWallet owner can call this operation.");
-
-        _activeCommunities[skillWalletId] = newCommunityAddress;
-        _communityHistory[skillWalletId].push(newCommunityAddress);
+        _activeCommunities[skillWalletId] = msg.sender;
+        _communityHistory[skillWalletId].push(msg.sender);
     }
 
     /// ERC 721 overrides
@@ -93,11 +84,6 @@ contract SkillWallet is ISkillWallet, ERC721 {
 
 
     /// View Functions
-
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
-    }
-
 
     function isSkillWalletRegistered(address owner) override external view returns (bool status) {
         require(owner != address(0), "SkillWallet: Invalid SkillWallet owner address");

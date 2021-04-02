@@ -1,15 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "../utils/Types.sol";
+import "../imported/Types.sol";
 
 
 interface ISkillWallet {
 
-    function create(bytes32 skillWalletHash, address community) external;
+    function create(address owner, Types.SkillSet memory skillSet) external;
 
-    function updateHash(uint256 skillWalletId, bytes32 newSkillWalletHash) external;
+    function updateSkillSet(uint256 skillWalletId, Types.SkillSet memory newSkillSet) external;
 
-    function changeCommunity(uint256 skillWalletId, address newCommunityAddress) external;
+    function changeCommunity(uint256 skillWalletId) external;
 
     function isSkillWalletRegistered(address owner) external view returns (bool status);
 
