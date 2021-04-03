@@ -1,3 +1,4 @@
+
 library Types {
     struct SkillSet {
         Skill skill1;
@@ -8,5 +9,11 @@ library Types {
         uint64 displayStringId;
         uint8 posValue;
         uint8 level;
+    }
+    enum Template {
+        OpenSource, 
+        Art, 
+        Local,
+        Other
     }
 }

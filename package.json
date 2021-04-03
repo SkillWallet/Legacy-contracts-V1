@@ -32,6 +32,7 @@
     "test": "hardhat test --network hardhat",
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.js",
+    "deployDitoContracts": "hardhat run scripts/deployDito.js",
     "deployPartnerRegistry": "hardhat run scripts/deployPartnerRegistry.js",
     "watch": "node scripts/watch.js",
     "accounts": "hardhat accounts",

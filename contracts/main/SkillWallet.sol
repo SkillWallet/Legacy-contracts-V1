@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "./ISkillWallet.sol";
-import "../imported/Types.sol";
+import "../imported/CommonTypes.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
@@ -24,15 +24,18 @@ contract SkillWallet is ISkillWallet, ERC721 {
     // Mapping from token ID to SkillSet
     mapping (uint256 => Types.SkillSet) private _skillSets;
 
-    // Mapping from SkillWallet owner to token ID
+    // Mapping from owner to token ID
     mapping (address => uint256) private _skillWalletsByOwner;
+
+    // Mapping from token ID to SkillWallet metadata
+    mapping (uint256 => string) private _urls;
 
     Counters.Counter private _skillWalletCounter;
 
     constructor () public ERC721("SkillWallet", "SW") {
     }
 
-    function create(address owner, Types.SkillSet memory skillSet) override external {
+    function create(address owner, Types.SkillSet memory skillSet, string memory url) override external {
 
         // TODO: Verify that the msg.sender is valid community
 
@@ -44,6 +47,7 @@ contract SkillWallet is ISkillWallet, ERC721 {
         _activeCommunities[tokenId] = msg.sender;
         _communityHistory[tokenId].push(msg.sender);
         _skillSets[tokenId] = skillSet;
+        _urls[tokenId] = url;
         _skillWalletsByOwner[owner] = tokenId;
 
         _skillWalletCounter.increment();
