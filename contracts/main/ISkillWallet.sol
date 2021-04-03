@@ -19,4 +19,6 @@ interface ISkillWallet {
 
     function getTotalSkillWalletsRegistered() external view returns (uint256);
 
+    function getSkillWalletIdByOwner(address owner) external view returns (uint256);
+
 }

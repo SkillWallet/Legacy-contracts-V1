@@ -15,9 +15,6 @@ contract SkillWallet is ISkillWallet, ERC721 {
 
     using Counters for Counters.Counter;
 
-//    CommunityRegistry private _communityRegistry;
-    address private _communityRegistry;
-
     // Mapping from token ID to active community that the SW is part of
     mapping (uint256 => address) private _activeCommunities;
 
@@ -27,11 +24,12 @@ contract SkillWallet is ISkillWallet, ERC721 {
     // Mapping from token ID to SkillSet
     mapping (uint256 => Types.SkillSet) private _skillSets;
 
+    // Mapping from SkillWallet owner to token ID
+    mapping (address => uint256) private _skillWalletsByOwner;
 
     Counters.Counter private _skillWalletCounter;
 
-    constructor (address communityRegistry) public ERC721("SkillWallet", "SW") {
-        _communityRegistry = communityRegistry;
+    constructor () public ERC721("SkillWallet", "SW") {
     }
 
     function create(address owner, Types.SkillSet memory skillSet) override external {
@@ -42,10 +40,11 @@ contract SkillWallet is ISkillWallet, ERC721 {
 
         uint256 tokenId = _skillWalletCounter.current();
 
+        _safeMint(owner, tokenId);
         _activeCommunities[tokenId] = msg.sender;
         _communityHistory[tokenId].push(msg.sender);
         _skillSets[tokenId] = skillSet;
-        _safeMint(owner, tokenId);
+        _skillWalletsByOwner[owner] = tokenId;
 
         _skillWalletCounter.increment();
 
@@ -105,6 +104,12 @@ contract SkillWallet is ISkillWallet, ERC721 {
     function getTotalSkillWalletsRegistered() override external view returns (uint256) {
         return _skillWalletCounter.current();
     }
+
+    function getSkillWalletIdByOwner(address owner) override external view returns (uint256) {
+        require(balanceOf(owner) == 1, "SkillWallet: The SkillWallet owner is invalid.");
+        return _skillWalletsByOwner[owner];
+    }
+
 
 
 
