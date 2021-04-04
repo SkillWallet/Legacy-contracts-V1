@@ -4,6 +4,7 @@ import "./ISkillWallet.sol";
 import "../imported/CommonTypes.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title DistributedTown SkillWallet
@@ -11,7 +12,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
  * @dev Implementation of the SkillWallet contract
  * @author DistributedTown
  */
-contract SkillWallet is ISkillWallet, ERC721 {
+contract SkillWallet is ISkillWallet, ERC721, Ownable {
 
     using Counters for Counters.Counter;
 
@@ -26,6 +27,9 @@ contract SkillWallet is ISkillWallet, ERC721 {
 
     // Mapping from owner to token ID
     mapping (address => uint256) private _skillWalletsByOwner;
+
+    // Mapping from token ID to activated status
+    mapping (uint256 => bool) private _activatedSkillWallets;
 
     // Mapping from token ID to SkillWallet metadata
     mapping (uint256 => string) private _urls;
@@ -62,6 +66,14 @@ contract SkillWallet is ISkillWallet, ERC721 {
         _skillSets[skillWalletId] = newSkillSet;
     }
 
+    function activateSkillWallet(uint256 skillWalletId) override external onlyOwner {
+        require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
+        require(_activeCommunities[skillWalletId] != address(0), "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet.");
+        require(_activatedSkillWallets[skillWalletId] == false, "SkillWallet: Skill wallet already activated");
+
+        _activatedSkillWallets[skillWalletId] = true;
+    }
+
 
     function changeCommunity(uint256 skillWalletId) override external {
         // TODO: Validate that the msg.sender is valid community
@@ -93,6 +105,13 @@ contract SkillWallet is ISkillWallet, ERC721 {
         return balanceOf(owner) == 1;
     }
 
+    function isSkillWalletActivated(uint256 skillWalletId) override external view returns (bool status) {
+        require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
+        require(_activeCommunities[skillWalletId] != address(0), "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet.");
+
+        return _activatedSkillWallets[skillWalletId];
+    }
+
     function getCommunityHistory(uint256 skillWalletId) override external view returns (address[] memory communities) {
         require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
         require(_communityHistory[skillWalletId].length > 0, "SkillWallet: The SkillWallet is not part of any community.");
@@ -112,6 +131,13 @@ contract SkillWallet is ISkillWallet, ERC721 {
     function getSkillWalletIdByOwner(address owner) override external view returns (uint256) {
         require(balanceOf(owner) == 1, "SkillWallet: The SkillWallet owner is invalid.");
         return _skillWalletsByOwner[owner];
+    }
+
+    function getSkillSet(uint256 skillWalletId) override external view returns (Types.SkillSet memory skillSet) {
+        require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
+        require(_activeCommunities[skillWalletId] != address(0), "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet.");
+
+        return _skillSets[skillWalletId];
     }
 
 
