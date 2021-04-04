@@ -25,7 +25,7 @@ contract SkillWallet is ISkillWallet, ERC721, Ownable {
     // Mapping from token ID to SkillSet
     mapping (uint256 => Types.SkillSet) private _skillSets;
 
-    // Mapping from owner to token ID
+    // Mapping from skillWalletOwner to token ID
     mapping (address => uint256) private _skillWalletsByOwner;
 
     // Mapping from token ID to activated status
@@ -39,22 +39,24 @@ contract SkillWallet is ISkillWallet, ERC721, Ownable {
     constructor () public ERC721("SkillWallet", "SW") {
     }
 
-    function create(address owner, Types.SkillSet memory skillSet, string memory url) override external {
+    function create(address skillWalletOwner, Types.SkillSet memory skillSet, string memory url) override external {
 
         // TODO: Verify that the msg.sender is valid community
 
-        require(balanceOf(owner) == 0, "SkillWallet: There is SkillWallet already registered for this address.");
+        require(balanceOf(skillWalletOwner) == 0, "SkillWallet: There is SkillWallet already registered for this address.");
 
         uint256 tokenId = _skillWalletCounter.current();
 
-        _safeMint(owner, tokenId);
+        _safeMint(skillWalletOwner, tokenId);
         _activeCommunities[tokenId] = msg.sender;
         _communityHistory[tokenId].push(msg.sender);
         _skillSets[tokenId] = skillSet;
         _urls[tokenId] = url;
-        _skillWalletsByOwner[owner] = tokenId;
+        _skillWalletsByOwner[skillWalletOwner] = tokenId;
 
         _skillWalletCounter.increment();
+
+        emit SkillWalletCreated(skillWalletOwner, msg.sender, tokenId, skillSet);
 
     }
 
@@ -64,6 +66,8 @@ contract SkillWallet is ISkillWallet, ERC721, Ownable {
         require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
 
         _skillSets[skillWalletId] = newSkillSet;
+
+        emit SkillSetUpdated(skillWalletId, newSkillSet);
     }
 
     function activateSkillWallet(uint256 skillWalletId) override external onlyOwner {
@@ -72,6 +76,8 @@ contract SkillWallet is ISkillWallet, ERC721, Ownable {
         require(_activatedSkillWallets[skillWalletId] == false, "SkillWallet: Skill wallet already activated");
 
         _activatedSkillWallets[skillWalletId] = true;
+
+        emit SkillWalletActivated(skillWalletId);
     }
 
 
@@ -82,6 +88,8 @@ contract SkillWallet is ISkillWallet, ERC721, Ownable {
 
         _activeCommunities[skillWalletId] = msg.sender;
         _communityHistory[skillWalletId].push(msg.sender);
+
+        emit SkillWalletCommunityChanged(skillWalletId, msg.sender);
     }
 
     /// ERC 721 overrides
@@ -100,9 +108,9 @@ contract SkillWallet is ISkillWallet, ERC721, Ownable {
 
     /// View Functions
 
-    function isSkillWalletRegistered(address owner) override external view returns (bool status) {
-        require(owner != address(0), "SkillWallet: Invalid SkillWallet owner address");
-        return balanceOf(owner) == 1;
+    function isSkillWalletRegistered(address skillWalletOwner) override external view returns (bool status) {
+        require(skillWalletOwner != address(0), "SkillWallet: Invalid skillWalletOwner address");
+        return balanceOf(skillWalletOwner) == 1;
     }
 
     function isSkillWalletActivated(uint256 skillWalletId) override external view returns (bool status) {
@@ -128,9 +136,9 @@ contract SkillWallet is ISkillWallet, ERC721, Ownable {
         return _skillWalletCounter.current();
     }
 
-    function getSkillWalletIdByOwner(address owner) override external view returns (uint256) {
-        require(balanceOf(owner) == 1, "SkillWallet: The SkillWallet owner is invalid.");
-        return _skillWalletsByOwner[owner];
+    function getSkillWalletIdByOwner(address skillWalletOwner) override external view returns (uint256) {
+        require(balanceOf(skillWalletOwner) == 1, "SkillWallet: The SkillWallet owner is invalid.");
+        return _skillWalletsByOwner[skillWalletOwner];
     }
 
     function getSkillSet(uint256 skillWalletId) override external view returns (Types.SkillSet memory skillSet) {

@@ -93,7 +93,7 @@ contract Community is ERC1155, ERC1155Holder {
     function joinNewMember(
         Types.SkillSet calldata skillSet,
         string calldata uri,
-        uint64 credits
+        uint256 credits
     ) public {
         require(
             activeMembersCount <= 24,
@@ -112,7 +112,7 @@ contract Community is ERC1155, ERC1155Holder {
         emit MemberAdded(msg.sender, tokenId, credits);
     }
 
-    function join(uint256 skillWalletTokenId, uint64 credits) public {
+    function join(uint256 skillWalletTokenId, uint256 credits) public {
         require(
             activeMembersCount <= 24,
             "There are already 24 members, sorry!"
