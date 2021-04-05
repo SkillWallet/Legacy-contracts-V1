@@ -7,7 +7,6 @@ library Types {
     }
     struct Skill {
         uint64 displayStringId;
-        uint8 posValue;
         uint8 level;
     }
     enum Template {

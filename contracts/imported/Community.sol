@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
@@ -11,6 +10,7 @@ import "./Membership.sol";
 import "./CommunitiesRegistry.sol";
 import "./CommonTypes.sol";
 import "./ISkillWallet.sol";
+import "./ERC1155.sol";
 
 /**
  * @title DistributedTown Community
@@ -30,11 +30,11 @@ contract Community is ERC1155, ERC1155Holder {
 
     CommunitiesRegistry registry;
 
-    string name;
-    address communityCreator;
-    uint16 activeMembersCount;
-    mapping(uint256 => bool) activeSkillWallets;
-    uint256 owner;
+    string public name;
+    uint256 public ownerId;
+    uint16 public activeMembersCount;
+    uint256 public scarcityScore;
+    mapping(uint256 => bool) public activeSkillWallets;
 
     /**
      * @dev emitted when a member is added
@@ -52,7 +52,7 @@ contract Community is ERC1155, ERC1155Holder {
     constructor(
         string memory _url,
         uint256 _ownerId,
-        uint64 _ownerCredits,
+        uint256 _ownerCredits,
         string memory _name,
         Types.Template _template,
         uint8 _positionalValue1,
@@ -60,7 +60,7 @@ contract Community is ERC1155, ERC1155Holder {
         uint8 _positionalValue3,
         address skillWalletAddress,
         address communityRegistryAddress
-    ) public ERC1155(_url) {
+    ) public ERC1155(_url, communityRegistryAddress) {
         skillWallet = ISkillWallet(skillWalletAddress);
         registry = CommunitiesRegistry(communityRegistryAddress);
         membership = new Membership(
@@ -73,13 +73,9 @@ contract Community is ERC1155, ERC1155Holder {
         if (registry.numOfCommunities() == 0) {
             mintTokens();
         } else {
-            // check if it's valid.
-            // address ownerOfTheWallet = skillWallet.ownerOf(_ownerId);
-            // if (ownerOfTheWallet != address(0)) {
             mintTokens();
-            owner = _ownerId;
+            ownerId = _ownerId;
             join(_ownerId, _ownerCredits);
-            // }
         }
     }
 
@@ -90,7 +86,9 @@ contract Community is ERC1155, ERC1155Holder {
         _mint(address(this), uint256(TokenType.Community), 1, "");
     }
 
+    // check if it's called only from deployer.
     function joinNewMember(
+        address newMemberAddress,
         Types.SkillSet calldata skillSet,
         string calldata uri,
         uint256 credits
@@ -100,16 +98,16 @@ contract Community is ERC1155, ERC1155Holder {
             "There are already 24 members, sorry!"
         );
 
-        skillWallet.create(msg.sender, skillSet, uri);
+        skillWallet.create(newMemberAddress, skillSet, uri);
 
-        uint256 tokenId = skillWallet.getSkillWalletIdByOwner(msg.sender);
+        uint256 tokenId = skillWallet.getSkillWalletIdByOwner(newMemberAddress);
 
         activeSkillWallets[tokenId] = true;
         activeMembersCount++;
 
         // get the skills from chainlink
-        transferToMember(msg.sender, credits);
-        emit MemberAdded(msg.sender, tokenId, credits);
+        transferToMember(newMemberAddress, credits);
+        emit MemberAdded(newMemberAddress, tokenId, credits);
     }
 
     function join(uint256 skillWalletTokenId, uint256 credits) public {
@@ -124,10 +122,10 @@ contract Community is ERC1155, ERC1155Holder {
 
         address skillWalletAddress = skillWallet.ownerOf(skillWalletTokenId);
 
-        require(
-            msg.sender == skillWalletAddress,
-            "Only the skill wallet owner can call this function"
-        );
+        // require(
+        //     msg.sender == skillWalletAddress,
+        //     "Only the skill wallet owner can call this function"
+        // );
 
         activeSkillWallets[skillWalletTokenId] = true;
         activeMembersCount++;
@@ -236,9 +234,10 @@ contract Community is ERC1155, ERC1155Holder {
         || super.supportsInterface(interfaceId);
     }
 
-    function getMembership() public returns (Membership) {
+    function getMembership() public view returns (Membership) {
         return membership;
     }
+
 
     function contains(uint256[] memory arr, uint256 element)
         internal

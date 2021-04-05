@@ -25,13 +25,14 @@ contract Gigs {
         uint16 rate;
     }
 
-    mapping(uint256 => Gig) gigs;
+    mapping(uint256 => Gig) public gigs;
     mapping(address => uint256[]) ownersToGigs;
     mapping(address => uint256[]) completedGigs;
     mapping(uint256 => bool) isValidated;
 
 
     function createGig(uint256 ditoCredits) public {
+        uint256 newGigId = gigId.current();
         gigs[gigId.current()] = Gig(
             msg.sender,
             address(0),
@@ -42,12 +43,12 @@ contract Gigs {
         );
 
         ownersToGigs[msg.sender].push(
-            gigId.current()
+            newGigId
         );
-        isValidated[gigId.current()] = false;
+        isValidated[newGigId] = false;
         gigId.increment();
 
-        emit GigCreated(msg.sender, gigId.current());
+        emit GigCreated(msg.sender, newGigId);
     }
 
     function takeGig(uint256 _gigId) public {
@@ -109,11 +110,11 @@ contract Gigs {
         emit GigValidated(_gigId, gigs[_gigId].owner, _gigHash);
     }
 
-    function getOwnedGigs(address owner) public returns (uint256[] memory) {
+    function getOwnedGigs(address owner) public view returns (uint256[] memory) {
         return ownersToGigs[owner];
     }
 
-    function getCompletedGigs(address taker) public returns (uint256[] memory) {
+    function getCompletedGigs(address taker) public view returns (uint256[] memory) {
         return completedGigs[taker];
     }
 }

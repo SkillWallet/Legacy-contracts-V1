@@ -88,8 +88,27 @@ describe("SkillWallet tests tests", function () {
             let userAddress = ethers.utils.getAddress(account0.address);
             let credits = ethers.utils.parseEther("2006");
             let one_bn = ethers.BigNumber.from(1);
-            let skill = [one_bn, one_bn, one_bn]
-            await expect(communityInstance.joinNewMember([skill, skill, skill], '', credits)).to.emit(communityInstance, 'MemberAdded').withArgs(userAddress, 0, credits);
+            let skill = [one_bn, one_bn]
+            let skillSet = [skill, skill, skill];
+            let communityAddress = communityInstance.address
+            await communityRegistryInstance.joinNewMember(communityAddress, skillSet, '', credits)
+
+            const skillWalletRegistered = await skillWalletInstance.isSkillWalletRegistered(userAddress);
+            const skillWalletId = await skillWalletInstance.getSkillWalletIdByOwner(userAddress);
+            const skillWalletActiveCommunity = await skillWalletInstance.getActiveCommunity(0);
+            const skillWalletCommunityHistory = await skillWalletInstance.getCommunityHistory(0);
+            const skillWalletSkillSet = await skillWalletInstance.getSkillSet(0);
+            const skillWalletActivated = await skillWalletInstance.isSkillWalletActivated(0);
+
+            expect (skillWalletRegistered).to.be.equal(true);
+            expect (skillWalletId).to.be.equal(ethers.BigNumber.from(0));
+            expect (skillWalletActiveCommunity).to.be.equal(communityAddress);
+            expect (skillWalletActivated).to.be.equal(false);
+            expect (skillWalletSkillSet['skill1']['displayStringId']).to.be.equal(skill[0]);
+            expect (skillWalletSkillSet['skill1']['level']).to.be.equal(skill[1]);
+            expect (skillWalletCommunityHistory[0]).to.be.equal(communityAddress);
+
+
 
 
 
