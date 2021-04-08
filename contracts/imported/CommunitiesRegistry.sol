@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
+pragma solidity ^0.7.4;
+pragma experimental ABIEncoderV2;
 import "./Community.sol";
 import "./Membership.sol";
 
@@ -11,9 +11,10 @@ import "./Membership.sol";
  * @author DistributedTown
  */
 contract CommunitiesRegistry {
-    event CommunityCreated(address _newCommunityAddress);
+    event CommunityCreated(address indexed creator, address indexed community, address indexed membership, string name);
 
-    mapping(address => bool) public communities;
+    mapping(address => bool) public isCommunity;
+    address[] public communityAddresses;
     uint256 public numOfCommunities;
     address public skillWalletAddress;
 
@@ -34,7 +35,7 @@ contract CommunitiesRegistry {
         uint8 _positionalValue1,
         uint8 _positionalValue2,
         uint8 _positionalValue3
-    ) public returns (address _communityAddress) {
+    ) external returns (address _communityAddress) {
         Community community =
             new Community(
                 _url,
@@ -50,34 +51,45 @@ contract CommunitiesRegistry {
             );
         address newCommunityAddress = address(community);
 
+        isCommunity[newCommunityAddress] = true;
+        communityAddresses.push(newCommunityAddress);
         numOfCommunities = numOfCommunities + 1;
-        communities[newCommunityAddress] = true;
 
-        emit CommunityCreated(newCommunityAddress);
+        emit CommunityCreated(msg.sender, newCommunityAddress, address(community.getMembership()), community.name());
 
         return newCommunityAddress;
     }
 
     function joinNewMember(
         address community,
-        Types.SkillSet calldata skillSet,
+        address userAddress,
+        uint64 displayStringId1,
+        uint8 level1,
+        uint64 displayStringId2,
+        uint8 level2,
+        uint64 displayStringId3,
+        uint8 level3,
         string calldata uri,
         uint256 credits
-    ) public {
-        require(communities[community], "Invalid community address!");
+    ) external {
+        require(isCommunity[community], "Invalid community address!");
 
         Community communityContr = Community(community);
-        communityContr.joinNewMember(msg.sender, skillSet, uri, credits);
+        communityContr.joinNewMember(userAddress, displayStringId1, level1, displayStringId2, level2, displayStringId3, level3, uri, credits);
     }
 
     function joinExistingSW(
         address community,
         uint256 skillWalletTokenId,
         uint256 credits
-    ) public {
-        require(communities[community], "Invalid community address!");
+    ) external {
+        require(isCommunity[community], "Invalid community address!");
 
         Community communityContr = Community(community);
         communityContr.join(skillWalletTokenId, credits);
+    }
+
+    function getCommunities() public view returns(address[] memory) {
+        return communityAddresses;
     }
 }

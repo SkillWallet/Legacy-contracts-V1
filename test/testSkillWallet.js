@@ -63,7 +63,7 @@ describe("SkillWallet tests tests", function () {
         const txReceipt = await community.wait();
 
         const communityCreatedEvent = txReceipt.events.find(txReceiptEvent =>  txReceiptEvent.event === 'CommunityCreated');
-        const communityAddress = communityCreatedEvent.args[0];
+        const communityAddress = communityCreatedEvent.args[1];
 
         communityInstance = await CommunityFactory.attach(communityAddress);
 
@@ -87,11 +87,9 @@ describe("SkillWallet tests tests", function () {
             // join community as new member
             let userAddress = ethers.utils.getAddress(account0.address);
             let credits = ethers.utils.parseEther("2006");
-            let one_bn = ethers.BigNumber.from(1);
-            let skill = [one_bn, one_bn]
-            let skillSet = [skill, skill, skill];
+            let oneBn = ethers.BigNumber.from(1);
             let communityAddress = communityInstance.address
-            await communityRegistryInstance.joinNewMember(communityAddress, skillSet, '', credits)
+            await communityRegistryInstance.joinNewMember(communityAddress, userAddress, oneBn, oneBn, oneBn, oneBn, oneBn, oneBn, '', credits)
 
             const skillWalletRegistered = await skillWalletInstance.isSkillWalletRegistered(userAddress);
             const skillWalletId = await skillWalletInstance.getSkillWalletIdByOwner(userAddress);
@@ -104,8 +102,8 @@ describe("SkillWallet tests tests", function () {
             expect (skillWalletId).to.be.equal(ethers.BigNumber.from(0));
             expect (skillWalletActiveCommunity).to.be.equal(communityAddress);
             expect (skillWalletActivated).to.be.equal(false);
-            expect (skillWalletSkillSet['skill1']['displayStringId']).to.be.equal(skill[0]);
-            expect (skillWalletSkillSet['skill1']['level']).to.be.equal(skill[1]);
+            expect (skillWalletSkillSet['skill1']['displayStringId']).to.be.equal(oneBn);
+            expect (skillWalletSkillSet['skill1']['level']).to.be.equal(oneBn);
             expect (skillWalletCommunityHistory[0]).to.be.equal(communityAddress);
 
 

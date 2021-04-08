@@ -1,9 +1,11 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.7.4;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 // TODO: figure out rates.
+// TODO: transfer tokens.
+// TODO: 1 gigs instance per community
 contract Gigs {
     using Counters for Counters.Counter;
 

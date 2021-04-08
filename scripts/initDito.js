@@ -5,20 +5,31 @@ const { config, ethers, tenderly, run } = require("hardhat");
 const { utils } = require("ethers");
 const R = require("ramda");
 
-const main = async () => {
+
+const createSkillWallet = async (communityRegistryInstance, communityInstance) => {
     const deployerWallet = ethers.provider.getSigner();
     const deployerWalletAddress = await deployerWallet.getAddress();
-    const skillWalletAddress = "0x5c7670C72A16022a737E480c675BF1A3a0892245";
-    const communityRegistryAddress = "0x201CF2F2B667Fd0FCA1bdcE7C361fcF1f4880004";
+
+    let credits = ethers.utils.parseEther("2006");
+    let oneBn = ethers.BigNumber.from(1);
+    let communityAddress = communityInstance.address
+    await communityRegistryInstance.joinNewMember(communityAddress, deployerWalletAddress, oneBn, oneBn, oneBn, oneBn, oneBn, oneBn, '', credits)
+
+}
+
+const main = async () => {
+    const communitiesRegistryAddress = "0x0AE5d80b1089A12A4cc0D4ECc84Ecb7f487CEB2C";
 
     console.log("\n\n 📡 Deploying...\n");
 
-    const communityRegistry = await deploy("CommunitiesRegistry", [skillWalletAddress]);
     //
     const communityRegistryFactory = await ethers.getContractFactory("CommunitiesRegistry");
-    const communityRegistryContract = await communityRegistryFactory.attach(communityRegistry.address);
+    const communityFactory = await ethers.getContractFactory("Community");
+    const communityRegistryInstance = await communityRegistryFactory.attach(communitiesRegistryAddress);
 
-    const community = await communityRegistryContract.createCommunity(
+
+
+    const community = await communityRegistryInstance.createCommunity(
         "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice",
         0,
         0,
@@ -30,11 +41,15 @@ const main = async () => {
     );
 
 
-    console.log("Community created", community);
+    const txReceipt = await community.wait();
+
+    const communityCreatedEvent = txReceipt.events.find(txReceiptEvent =>  txReceiptEvent.event === 'CommunityCreated');
+    const communityAddress = communityCreatedEvent.args[1];
+
+    const communityInstance = await communityFactory.attach(communityAddress);
 
 
-    const gigs = await deploy("Gigs");
-
+    await createSkillWallet(communityRegistryInstance, communityInstance)
 
     console.log(
         " 💾  Artifacts (address, abi, and args) saved to: ",
