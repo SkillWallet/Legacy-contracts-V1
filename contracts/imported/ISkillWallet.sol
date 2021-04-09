@@ -20,7 +20,7 @@ interface ISkillWallet is IERC721 {
 
     function updateSkillSet(uint256 skillWalletId, Types.SkillSet memory newSkillSet) external;
 
-    function activateSkillWallet(uint256 skillWalletId) external;
+    function activateSkillWallet(uint256 skillWalletId, string memory randomString) external;
 
     function changeCommunity(uint256 skillWalletId) external;
 
@@ -38,7 +38,6 @@ interface ISkillWallet is IERC721 {
 
     function isSkillWalletActivated(uint256 skillWalletId) external view returns (bool status);
 
-    function getRandomString(address skillWalletOwner) external view returns (string memory randomString);
-
+    function getRandomString(uint256 skillWalletId) external view returns (string memory randomString);
 
 }

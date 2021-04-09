@@ -37,8 +37,8 @@ contract SkillWallet is ChainlinkClient, ISkillWallet, ERC721, Ownable {
     // Mapping from token ID to SkillWallet metadata
     mapping (uint256 => string) private _urls;
 
-    // Mapping from skillWalletOwner to random string used for the QR code verification
-    mapping (address => string) private _randomStrings;
+    // Mapping from token ID to random string used for the QR code verification
+    mapping (uint256 => string) private _randomStrings;
 
     Counters.Counter private _skillWalletCounter;
 
@@ -96,10 +96,12 @@ contract SkillWallet is ChainlinkClient, ISkillWallet, ERC721, Ownable {
         emit SkillSetUpdated(skillWalletId, newSkillSet);
     }
 
-    function activateSkillWallet(uint256 skillWalletId) override external onlyOwner {
+    function activateSkillWallet(uint256 skillWalletId, string memory randomString) override external onlyOwner {
         require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
         require(_activeCommunities[skillWalletId] != address(0), "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet.");
         require(_activatedSkillWallets[skillWalletId] == false, "SkillWallet: Skill wallet already activated");
+
+        require(keccak256(abi.encodePacked(_randomStrings[skillWalletId])) == keccak256(abi.encodePacked(randomString)), "SkillWallet: Invalid random string passed.");
 
         _activatedSkillWallets[skillWalletId] = true;
 
@@ -160,7 +162,7 @@ contract SkillWallet is ChainlinkClient, ISkillWallet, ERC721, Ownable {
         _skillSets[tokenId] = _skillSet;
         _urls[tokenId] = _url;
         _skillWalletsByOwner[_skillWalletOwner] = tokenId;
-        _randomStrings[_skillWalletOwner] = randomString;
+        _randomStrings[tokenId] = randomString;
 
         _skillWalletCounter.increment();
 
@@ -260,10 +262,11 @@ contract SkillWallet is ChainlinkClient, ISkillWallet, ERC721, Ownable {
         return _skillSets[skillWalletId];
     }
 
-    function getRandomString(address skillWalletOwner) override external view returns (string memory randomString) {
-        require(balanceOf(skillWalletOwner) == 1, "SkillWallet: The SkillWallet owner is invalid.");
+    function getRandomString(uint256 skillWalletId) override external view returns (string memory randomString) {
+        require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
+        require(_activeCommunities[skillWalletId] != address(0), "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet.");
 
-        return _randomStrings[skillWalletOwner];
+        return _randomStrings[skillWalletId];
     }
 
     /**
