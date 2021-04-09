@@ -7,11 +7,15 @@ const R = require("ramda");
 
 const main = async () => {
   const deployerWallet = ethers.provider.getSigner();
+  const linkAddress = config.linkAddress[config.defaultNetwork];
+  const oracleAddress = config.oracleAddress[config.defaultNetwork];
+  const jobId = ethers.utils.toUtf8Bytes(config.jobId[config.defaultNetwork]);
+
   const deployerWalletAddress = await deployerWallet.getAddress();
 
   console.log("\n\n 📡 Deploying...\n");
 
-  const skillWallet = await deploy("SkillWallet");
+  const skillWallet = await deploy("SkillWallet", [linkAddress, oracleAddress, jobId]);
 
   console.log(
     " 💾  Artifacts (address, abi, and args) saved to: ",

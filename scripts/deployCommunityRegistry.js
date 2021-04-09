@@ -6,7 +6,7 @@ const { utils } = require("ethers");
 const R = require("ramda");
 
 const main = async () => {
-    const skillWalletAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+    const skillWalletAddress = "0x14DEF8Be678589dd1445A46Fc5bE925d479694B9";
 
     console.log("\n\n 📡 Deploying...\n");
 

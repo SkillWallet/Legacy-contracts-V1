@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
+pragma solidity >=0.6.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -34,6 +34,11 @@ contract Community is ERC1155, ERC1155Holder {
     uint256 public scarcityScore;
     mapping(uint256 => bool) public isMember;
     uint256[] public skillWalletIds;
+
+
+    // chainlink related variables
+    address private _originalOwner;
+    uint256 private _credits;
 
     /**
      * @dev emitted when a member is added
@@ -103,23 +108,15 @@ contract Community is ERC1155, ERC1155Holder {
         );
 
         Types.SkillSet memory skillSet =
-            Types.SkillSet(
-                Types.Skill(displayStringId1, level1),
-                Types.Skill(displayStringId2, level2),
-                Types.Skill(displayStringId3, level3)
-            );
+        Types.SkillSet(
+            Types.Skill(displayStringId1, level1),
+            Types.Skill(displayStringId2, level2),
+            Types.Skill(displayStringId3, level3)
+        );
 
         skillWallet.create(newMemberAddress, skillSet, uri);
-
-        uint256 tokenId = skillWallet.getSkillWalletIdByOwner(newMemberAddress);
-
-        isMember[tokenId] = true;
-        skillWalletIds.push(tokenId);
-        activeMembersCount++;
-
-        // get the skills from chainlink
-        // transferToMember(newMemberAddress, credits);
-        emit MemberAdded(newMemberAddress, tokenId, credits);
+        _credits = credits;
+        _originalOwner = newMemberAddress;
     }
 
     function join(uint256 skillWalletTokenId, uint256 credits) public {
@@ -149,9 +146,9 @@ contract Community is ERC1155, ERC1155Holder {
     }
 
     function getSkillWalletIds()
-        public
-        view
-        returns (uint256[] memory skillWalletIds)
+    public
+    view
+    returns (uint256[] memory skillWalletIds)
     {
         return skillWalletIds;
     }
@@ -195,10 +192,10 @@ contract Community is ERC1155, ERC1155Holder {
     }
 
     function balanceOf(address _owner, uint256 _id)
-        public
-        view
-        override
-        returns (uint256)
+    public
+    view
+    override
+    returns (uint256)
     {
         require(
             _id == uint256(TokenType.DiToCredit),
@@ -212,10 +209,10 @@ contract Community is ERC1155, ERC1155Holder {
     }
 
     function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids)
-        public
-        view
-        override
-        returns (uint256[] memory)
+    public
+    view
+    override
+    returns (uint256[] memory)
     {
         require(
             !contains(_ids, uint256(TokenType.Community)),
@@ -226,17 +223,17 @@ contract Community is ERC1155, ERC1155Holder {
     }
 
     function setApprovalForAll(address _operator, bool _approved)
-        public
-        override
+    public
+    override
     {
         super.setApprovalForAll(_operator, _approved);
     }
 
     function isApprovedForAll(address _owner, address _operator)
-        public
-        view
-        override
-        returns (bool)
+    public
+    view
+    override
+    returns (bool)
     {
         super.isApprovedForAll(_owner, _operator);
     }
@@ -245,17 +242,17 @@ contract Community is ERC1155, ERC1155Holder {
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC1155, ERC165)
-        returns (bool)
+    public
+    view
+    virtual
+    override(ERC1155, ERC165)
+    returns (bool)
     {
         return
-            interfaceId == type(IERC1155).interfaceId ||
-            interfaceId == type(IERC1155MetadataURI).interfaceId ||
-            // || interfaceId == type(IERC1155Receiver).interfaceId
-            super.supportsInterface(interfaceId);
+        interfaceId == type(IERC1155).interfaceId ||
+        interfaceId == type(IERC1155MetadataURI).interfaceId ||
+        // || interfaceId == type(IERC1155Receiver).interfaceId
+        super.supportsInterface(interfaceId);
     }
 
     function getMembership() public view returns (Membership) {
@@ -274,13 +271,33 @@ contract Community is ERC1155, ERC1155Holder {
     }
 
     function contains(uint256[] memory arr, uint256 element)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         for (uint256 i = 0; i < arr.length; i++) {
             if (arr[i] == element) return true;
         }
         return false;
+    }
+
+
+    function skillWalletRegistered(uint256 tokenId, address owner) public  {
+        // TODO: Add better validation
+
+        require(_originalOwner != address(0), "Community: Invalid owner.");
+        require(_originalOwner == owner, "Community: Invalid owner.");
+        isMember[tokenId] = true;
+
+        skillWalletIds.push(tokenId);
+        activeMembersCount++;
+
+        // get the skills from chainlink
+        // transferToMember(newMemberAddress, credits);
+
+        // reset variables
+        _originalOwner = address(0);
+        _credits = 0;
+        emit MemberAdded(owner, tokenId, _credits);
     }
 }

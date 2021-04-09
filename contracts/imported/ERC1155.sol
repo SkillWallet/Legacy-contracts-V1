@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.4;
+pragma solidity >=0.6.0 <0.8.0;
 
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
@@ -35,7 +35,7 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
     /**
      * @dev See {_setURI}.
      */
-    constructor (string memory uri_, address communityRegistry_) {
+    constructor (string memory uri_, address communityRegistry_) public {
         _setURI(uri_);
         _communityRegistry = communityRegistry_;
     }

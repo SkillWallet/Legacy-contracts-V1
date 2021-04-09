@@ -93,6 +93,15 @@ module.exports = {
             runs: 200
           }
         }
+      },
+      {
+        version: "0.6.0",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
       }
     ],
 
@@ -101,6 +110,18 @@ module.exports = {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
     apiKey: "PSW8C433Q667DVEX5BCRMGNAH9FSGFZ7Q8"
+  },
+  linkAddress: {
+    matic: "0xb0897686c545045afc77cf20ec7a532e3120e0f1",
+    maticTestnet: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB"
+  },
+  oracleAddress: {
+    matic: "",
+    "maticTestnet": "0xc8D925525CA8759812d0c299B90247917d4d4b7C"
+  },
+  jobId: {
+    matic: "",
+    maticTestnet: "a7330d0b4b964c05abc66a26307047c0"
   }
 };
 
