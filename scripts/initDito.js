@@ -10,15 +10,14 @@ const createSkillWallet = async (communityRegistryInstance, communityInstance) =
     const deployerWallet = ethers.provider.getSigner();
     const deployerWalletAddress = await deployerWallet.getAddress();
 
-    let credits = ethers.utils.parseEther("2006");
     let oneBn = ethers.BigNumber.from(1);
     let communityAddress = communityInstance.address
-    await communityRegistryInstance.joinNewMember(communityAddress, deployerWalletAddress, oneBn, oneBn, oneBn, oneBn, oneBn, oneBn, '', credits)
+    await communityRegistryInstance.joinNewMember(communityAddress, deployerWalletAddress, oneBn, oneBn, oneBn, oneBn, oneBn, oneBn, '')
 
 }
 
 const main = async () => {
-    const communitiesRegistryAddress = "0xD480a25D561795A036DB8470D76c6D7d52b58D99";
+    const communitiesRegistryAddress = config.communityRegistryAddress[config.defaultNetwork];
 
     console.log("\n\n 📡 Deploying...\n");
 
@@ -47,7 +46,6 @@ const main = async () => {
     const communityAddress = communityCreatedEvent.args[1];
 
     const communityInstance = await communityFactory.attach(communityAddress);
-
 
     await createSkillWallet(communityRegistryInstance, communityInstance)
 

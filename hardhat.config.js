@@ -119,9 +119,13 @@ module.exports = {
     matic: "",
     maticTestnet: "0xc8D925525CA8759812d0c299B90247917d4d4b7C"
   },
-  jobId: {
+  bytesJobId: {
     matic: "",
     maticTestnet: "a7330d0b4b964c05abc66a26307047c0"
+  },
+  uintJobId: {
+    matic: "",
+    maticTestnet: "bbf0badad29d49dc887504bacfbb905b"
   },
   vrfCoordinatorAddress: {
     matic: "",
@@ -130,6 +134,14 @@ module.exports = {
   keyHash: {
     matic: "",
     maticTestnet: "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4"
+  },
+  skillWalletAddress: {
+    matic: "",
+    maticTestnet: "0xF4ECd3A92a35f00B4E238456e4A962259D81589b"
+  },
+  communityRegistryAddress: {
+    matic: "",
+    maticTestnet: "0xb133882575c9166DF970B947b4065fa1f9429d28"
   }
 
 };

@@ -114,9 +114,20 @@ contract Community is ERC1155, ERC1155Holder {
             Types.Skill(displayStringId3, level3)
         );
 
-        skillWallet.create(newMemberAddress, skillSet, uri);
         _credits = credits;
         _originalOwner = newMemberAddress;
+        skillWallet.create(newMemberAddress, skillSet, uri);
+
+
+        //        uint256 tokenId = skillWallet.getSkillWalletIdByOwner(newMemberAddress);
+
+        //        isMember[tokenId] = true;
+        //        skillWalletIds.push(tokenId);
+        //        activeMembersCount++;
+        //
+        //        // get the skills from chainlink
+        //        // transferToMember(newMemberAddress, credits);
+        //        emit MemberAdded(newMemberAddress, tokenId, credits);
     }
 
     function join(uint256 skillWalletTokenId, uint256 credits) public {
@@ -300,4 +311,6 @@ contract Community is ERC1155, ERC1155Holder {
         _credits = 0;
         emit MemberAdded(owner, tokenId, _credits);
     }
+
 }
+

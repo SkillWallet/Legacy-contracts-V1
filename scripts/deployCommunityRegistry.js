@@ -6,11 +6,16 @@ const { utils } = require("ethers");
 const R = require("ramda");
 
 const main = async () => {
-    const skillWalletAddress = "0xe13AC8cEb84B1942f060becA7407DDb144F4Da92";
+    const skillWalletAddress = config.skillWalletAddress[config.defaultNetwork];
+
+    const deployerWallet = ethers.provider.getSigner();
+    const linkAddress = config.linkAddress[config.defaultNetwork];
+    const oracleAddress = config.oracleAddress[config.defaultNetwork];
+    const jobId = ethers.utils.toUtf8Bytes(config.uintJobId[config.defaultNetwork]);
 
     console.log("\n\n 📡 Deploying...\n");
 
-    const communityRegistry = await deploy("CommunitiesRegistry", [skillWalletAddress]);
+    const communityRegistry = await deploy("CommunitiesRegistry", [skillWalletAddress, linkAddress, oracleAddress, jobId]);
 
 
     console.log(
