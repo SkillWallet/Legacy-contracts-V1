@@ -18,7 +18,7 @@ const createSkillWallet = async (communityRegistryInstance, communityInstance) =
 }
 
 const main = async () => {
-    const communitiesRegistryAddress = "0x5dff2F37174954E9aB027d3d9efc7A2410e393e7";
+    const communitiesRegistryAddress = "0xD480a25D561795A036DB8470D76c6D7d52b58D99";
 
     console.log("\n\n 📡 Deploying...\n");
 

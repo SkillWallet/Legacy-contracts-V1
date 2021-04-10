@@ -8,7 +8,7 @@ import "../imported/CommonTypes.sol";
 
 interface ISkillWallet is IERC721 {
 
-    event SkillWalletCreated(address indexed skillWalletOwner, address indexed community, uint256 indexed skillWalletId, Types.SkillSet skillSet, string randomString);
+    event SkillWalletCreated(address indexed skillWalletOwner, address indexed community, uint256 indexed skillWalletId, Types.SkillSet skillSet, uint256 randomNumber);
 
     event SkillWalletActivated(uint256 indexed skillWalletId);
 
@@ -20,7 +20,7 @@ interface ISkillWallet is IERC721 {
 
     function updateSkillSet(uint256 skillWalletId, Types.SkillSet memory newSkillSet) external;
 
-    function activateSkillWallet(uint256 skillWalletId, string memory randomString) external;
+    function activateSkillWallet(uint256 skillWalletId, uint256 randomNumber) external;
 
     function changeCommunity(uint256 skillWalletId) external;
 
@@ -38,6 +38,6 @@ interface ISkillWallet is IERC721 {
 
     function isSkillWalletActivated(uint256 skillWalletId) external view returns (bool status);
 
-    function getRandomString(uint256 skillWalletId) external view returns (string memory randomString);
+    function getRandomNumber(uint256 skillWalletId) external view returns (uint256 randomString);
 
 }

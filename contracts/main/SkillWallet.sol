@@ -7,7 +7,7 @@ import "../imported/Community.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
+import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 
 /**
  * @title DistributedTown SkillWallet
@@ -15,7 +15,7 @@ import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
  * @dev Implementation of the SkillWallet contract
  * @author DistributedTown
  */
-contract SkillWallet is ChainlinkClient, ISkillWallet, ERC721, Ownable {
+contract SkillWallet is VRFConsumerBase, ISkillWallet, ERC721, Ownable {
 
     using Counters for Counters.Counter;
 
@@ -37,38 +37,37 @@ contract SkillWallet is ChainlinkClient, ISkillWallet, ERC721, Ownable {
     // Mapping from token ID to SkillWallet metadata
     mapping (uint256 => string) private _urls;
 
-    // Mapping from token ID to random string used for the QR code verification
-    mapping (uint256 => string) private _randomStrings;
+    // Mapping from token ID to random number used for the QR code verification
+    mapping (uint256 => uint256) private _randomNumbers;
 
     Counters.Counter private _skillWalletCounter;
 
     // Chainlink specific variables
-    bytes32 private jobId;
     uint256 private fee;
+    bytes32 private keyHash;
 
     // Chainlink helper variables, used for the data capturing before the chainlink request
     address private _skillWalletOwner;
     address private _community;
     Types.SkillSet private _skillSet;
     string private _url;
+    bytes32 _requestId;
+
 
 
     /**
-     * @notice Deploy the contract with a specified address for the LINK token, oracle address and jobId
+     * @notice Deploy the contract with a specified address for the LINK token, VRF coordinator address and key hash
      * @dev Sets the storage for the specified addresses and jobId
      * @param _link The address of the LINK token contract
-     * @param _oracle The address of the Chainlink oracle
-     * @param _jobId The id of the Chainlink job
+     * @param _vrfCoordinator The address of the Chainlink VRF coordinatior
+     * @param _keyHash The id of the Chainlink job
      */
-    constructor (address _link, address _oracle, bytes32 _jobId) public ERC721("SkillWallet", "SW") {
-        if (_link == address(0)) {
-            setPublicChainlinkToken();
-        } else {
-            setChainlinkToken(_link);
-        }
-        setChainlinkOracle(_oracle);
-        jobId = _jobId;
-        fee = 0.01 * 10 ** 18; // 0.01 LINK
+    constructor (address _link, address _vrfCoordinator, bytes32 _keyHash) public ERC721("SkillWallet", "SW") VRFConsumerBase(
+        _vrfCoordinator, // VRF Coordinator
+        _link  // LINK Token
+    ){
+        keyHash = _keyHash;
+        fee = 0.0001 * 10 ** 18; // 0.01 LINK
     }
 
     function create(address skillWalletOwner, Types.SkillSet memory skillSet, string memory url) override external {
@@ -77,13 +76,18 @@ contract SkillWallet is ChainlinkClient, ISkillWallet, ERC721, Ownable {
 
         require(balanceOf(skillWalletOwner) == 0, "SkillWallet: There is SkillWallet already registered for this address.");
         require(_skillWalletOwner == address(0), "SkillWallet: Request in progress, please try again later.");
+        require(LINK.balanceOf(address(this)) >= fee, "SkillWallet: Not enough LINK - fill contract with faucet");
 
         _skillWalletOwner = skillWalletOwner;
         _skillSet = skillSet;
         _url = url;
         _community = msg.sender;
 
-        _requestRandomHashCreation(skillWalletOwner);
+        _requestId = requestRandomness(keyHash, fee, block.number);
+    }
+
+    function cancelRequest() external onlyOwner {
+        _resetChainlinkVariables();
     }
 
     function updateSkillSet(uint256 skillWalletId, Types.SkillSet memory newSkillSet) override external {
@@ -96,12 +100,12 @@ contract SkillWallet is ChainlinkClient, ISkillWallet, ERC721, Ownable {
         emit SkillSetUpdated(skillWalletId, newSkillSet);
     }
 
-    function activateSkillWallet(uint256 skillWalletId, string memory randomString) override external onlyOwner {
+    function activateSkillWallet(uint256 skillWalletId, uint256 randomNumber) override external onlyOwner {
         require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
         require(_activeCommunities[skillWalletId] != address(0), "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet.");
         require(_activatedSkillWallets[skillWalletId] == false, "SkillWallet: Skill wallet already activated");
 
-        require(keccak256(abi.encodePacked(_randomStrings[skillWalletId])) == keccak256(abi.encodePacked(randomString)), "SkillWallet: Invalid random string passed.");
+        require(_randomNumbers[skillWalletId] == randomNumber, "SkillWallet: Invalid random number passed.");
 
         _activatedSkillWallets[skillWalletId] = true;
 
@@ -120,40 +124,13 @@ contract SkillWallet is ChainlinkClient, ISkillWallet, ERC721, Ownable {
         emit SkillWalletCommunityChanged(skillWalletId, msg.sender);
     }
 
-    function _requestRandomHashCreation(address user) internal returns (bytes32 requestId) {
-        Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
 
-
-        string memory url = "https://api.distributed.town/api/skillwallet";
-        // string memory url = "https://api.distributed.town/api/skillWallet/createRandomString";
-        // Set the URL to perform the GET request on
-        request.add("get", url);
-
-        //        request.add("queryParams", abi.encodePacked("user=", user));
-        request.add("queryParams", "address=0xe5dfc64fad45122545b0a5b88726ff7858509600");
-
-        request.add("path", "nickname");
-
-        // Sends the request
-        return sendChainlinkRequest(request, fee);
-
+    function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
+        require(_requestId == requestId, "SkillWallet: received requestId is incorrect.");
+        _createSkillWallet(randomness);
     }
 
-    /**
-     * @notice The fulfill method from requests created by this contract
-     * @dev The recordChainlinkFulfillment protects this function from being called
-     * by anyone other than the oracle address that the request was sent to
-     * @param _requestId The ID that was generated for the request
-     * @param _data The answer provided by the oracle
-     */
-    function fulfill(bytes32 _requestId, bytes32 _data)
-    public
-    recordChainlinkFulfillment(_requestId)
-    {
-        _createSkillWallet(string(abi.encodePacked(_data)));
-    }
-
-    function _createSkillWallet(string memory randomString) internal {
+    function _createSkillWallet(uint256 randomNumber) internal {
         uint256 tokenId = _skillWalletCounter.current();
 
         _safeMint(_skillWalletOwner, tokenId);
@@ -162,47 +139,31 @@ contract SkillWallet is ChainlinkClient, ISkillWallet, ERC721, Ownable {
         _skillSets[tokenId] = _skillSet;
         _urls[tokenId] = _url;
         _skillWalletsByOwner[_skillWalletOwner] = tokenId;
-        _randomStrings[tokenId] = randomString;
+        _randomNumbers[tokenId] = randomNumber;
 
         _skillWalletCounter.increment();
 
-        emit SkillWalletCreated(_skillWalletOwner, _community, tokenId, _skillSet, randomString);
+        emit SkillWalletCreated(_skillWalletOwner, _community, tokenId, _skillSet, randomNumber);
 
         Community community = Community(_community);
         community.skillWalletRegistered(tokenId, _skillWalletOwner);
 
+        _resetChainlinkVariables();
+    }
+
+    function _resetChainlinkVariables() internal {
         // reset variables
         _skillWalletOwner = address(0);
         _community = address(0);
         _url = "";
+        _requestId = 0;
     }
 
     /**
      * @notice Allows the owner to withdraw any LINK balance on the contract
      */
     function withdrawLink() public onlyOwner {
-        LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
-        require(link.transfer(msg.sender, link.balanceOf(address(this))), "Unable to transfer");
-    }
-
-    /**
-     * @notice Call this method if no response is received within 5 minutes
-     * @param _requestId The ID that was generated for the request to cancel
-     * @param _payment The payment specified for the request to cancel
-     * @param _callbackFunctionId The bytes4 callback function ID specified for
-     * the request to cancel
-     * @param _expiration The expiration generated for the request to cancel
-     */
-    function cancelRequest(
-        bytes32 _requestId,
-        uint256 _payment,
-        bytes4 _callbackFunctionId,
-        uint256 _expiration
-    )
-    public
-    onlyOwner
-    {
-        cancelChainlinkRequest(_requestId, _payment, _callbackFunctionId, _expiration);
+        require(LINK.transfer(msg.sender, LINK.balanceOf(address(this))), "Unable to transfer");
     }
 
 
@@ -262,21 +223,13 @@ contract SkillWallet is ChainlinkClient, ISkillWallet, ERC721, Ownable {
         return _skillSets[skillWalletId];
     }
 
-    function getRandomString(uint256 skillWalletId) override external view returns (string memory randomString) {
+    function getRandomNumber(uint256 skillWalletId) override external view returns (uint256 randomNumber) {
         require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
         require(_activeCommunities[skillWalletId] != address(0), "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet.");
 
-        return _randomStrings[skillWalletId];
+        return _randomNumbers[skillWalletId];
     }
 
-    /**
-     * @notice Returns the address of the LINK token
-     * @dev This is the public implementation for chainlinkTokenAddress, which is
-     * an internal method of the ChainlinkClient contract
-     */
-    function getChainlinkToken() public view returns (address) {
-        return chainlinkTokenAddress();
-    }
 
 
 }

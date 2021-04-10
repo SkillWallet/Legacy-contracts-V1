@@ -117,12 +117,21 @@ module.exports = {
   },
   oracleAddress: {
     matic: "",
-    "maticTestnet": "0xc8D925525CA8759812d0c299B90247917d4d4b7C"
+    maticTestnet: "0xc8D925525CA8759812d0c299B90247917d4d4b7C"
   },
   jobId: {
     matic: "",
     maticTestnet: "a7330d0b4b964c05abc66a26307047c0"
+  },
+  vrfCoordinatorAddress: {
+    matic: "",
+    maticTestnet: "0x8C7382F9D8f56b33781fE506E897a4F1e2d17255"
+  },
+  keyHash: {
+    matic: "",
+    maticTestnet: "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4"
   }
+
 };
 
 const DEBUG = false;

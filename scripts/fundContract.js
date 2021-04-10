@@ -10,12 +10,12 @@ const main = async () => {
     const linkAddress = config.linkAddress[config.defaultNetwork];
     const LINK_TOKEN_ABI = [{ "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }]
 
-    const skillWalletContractAddress = "0x14DEF8Be678589dd1445A46Fc5bE925d479694B9";
+    const skillWalletContractAddress = "0xe13AC8cEb84B1942f060becA7407DDb144F4Da92";
 
     //Create connection to LINK token contract and initiate the transfer
     const linkTokenContract = new ethers.Contract(linkAddress, LINK_TOKEN_ABI, deployerWallet)
 
-    const amount = ethers.utils.parseEther("0.15")
+    const amount = ethers.utils.parseEther("0.1")
 
     const result = await linkTokenContract.transfer(skillWalletContractAddress, amount)
 

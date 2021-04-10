@@ -37,7 +37,7 @@
     "initDito": "hardhat run scripts/initDito.js",
     "fundContract": "hardhat run scripts/fundContract.js",
     "deployPartnerRegistry": "hardhat run scripts/deployPartnerRegistry.js",
-    "verifyRandomString": "hardhat run scripts/verifyRandomString.js",
+    "verifyRandomNumber": "hardhat run scripts/verifyRandomNumber.js",
     "watch": "node scripts/watch.js",
     "accounts": "hardhat accounts",
     "balance": "hardhat balance",
