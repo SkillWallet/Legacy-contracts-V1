@@ -36,6 +36,7 @@
     "deployGigs": "hardhat run scripts/deployGigs.js",
     "initDito": "hardhat run scripts/initDito.js",
     "fundContracts": "hardhat run scripts/fundContracts.js",
+    "withdrawLink": "hardhat run scripts/withdrawLink.js",
     "deployPartnerRegistry": "hardhat run scripts/deployPartnerRegistry.js",
     "verifyRandomNumber": "hardhat run scripts/verifyRandomNumber.js",
     "joinNewMember": "hardhat run scripts/joinNewMember.js",

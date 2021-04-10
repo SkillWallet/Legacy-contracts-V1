@@ -16,7 +16,7 @@ const joinNewMember = async (communityRegistryInstance, communityAddress, member
 const main = async () => {
     const communitiesRegistryAddress = config.communityRegistryAddress[config.defaultNetwork];
     const communityAddress =  config.communityAddress[config.defaultNetwork];
-    const memberAddress = "0x85E537A931Ed30F425cb75829796744bB0A15D71";
+    const memberAddress = "0x2111b3137d81DefC772007f802Eb151f2e500378";
 
     console.log("\n\n 📡 Deploying...\n");
 

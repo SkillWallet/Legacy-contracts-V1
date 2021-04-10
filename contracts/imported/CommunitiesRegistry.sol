@@ -48,7 +48,7 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
         }
         setChainlinkOracle(_oracle);
         jobId = _jobId;
-        fee = 0.01 * 10 ** 18; // 0.01 LINK
+        fee = 0.1 * 10 ** 18; // 0.1 LINK
         skillWalletAddress = _skillWalletAddress;
     }
 

@@ -21,7 +21,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 //
 // Select the network you want to deploy to here:
 //
-const defaultNetwork = "maticTestnet";
+const defaultNetwork = "matic";
 
 function mnemonic() {
   try {
@@ -112,39 +112,39 @@ module.exports = {
     apiKey: "PSW8C433Q667DVEX5BCRMGNAH9FSGFZ7Q8"
   },
   linkAddress: {
-    matic: "0xb0897686c545045afc77cf20ec7a532e3120e0f1",
+    matic: "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39",
     maticTestnet: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB"
   },
   oracleAddress: {
-    matic: "",
+    matic: "0xc8D925525CA8759812d0c299B90247917d4d4b7C",
     maticTestnet: "0xc8D925525CA8759812d0c299B90247917d4d4b7C"
   },
   bytesJobId: {
-    matic: "",
+    matic: "f0da6c15faf54a3187ac63001f0dab1e",
     maticTestnet: "a7330d0b4b964c05abc66a26307047c0"
   },
   uintJobId: {
-    matic: "",
+    matic: "ac9996ab9e1c4c968be4fce46b3711f9",
     maticTestnet: "bbf0badad29d49dc887504bacfbb905b"
   },
   vrfCoordinatorAddress: {
-    matic: "",
+    matic: "0x3d2341ADb2D31f1c5530cDC622016af293177AE0",
     maticTestnet: "0x8C7382F9D8f56b33781fE506E897a4F1e2d17255"
   },
   keyHash: {
-    matic: "",
+    matic: "0xf86195cf7690c55907b2b611ebb7343a6f649bff128701cc542f0569e2c549da",
     maticTestnet: "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4"
   },
   skillWalletAddress: {
-    matic: "",
+    matic: "0x646e7c1256aFC6620ABABf5b2C0efeb7Aa7E4cfC",
     maticTestnet: "0x6157C69763f67D21401B436B1DB3D9E07a2C7410"
   },
   communityRegistryAddress: {
-    matic: "",
+    matic: "0x65A14661847A0499fdE4121352bEF8275f7ec00f",
     maticTestnet: "0x0f0cf70D5fA8Af32992E79609319424fBf65a9F1"
   },
   communityAddress: {
-    matic: "",
+    matic: "0xBBE2ff74C765FFf912215cD2A796Fac7033F3E67",
     maticTestnet: "0xd4f2241d4c7a3e16b61599747EB8B78a116786f1"
   }
 
