@@ -93,12 +93,12 @@ contract Community is ERC1155, ERC1155Holder {
     // check if it's called only from deployer.
     function joinNewMember(
         address newMemberAddress,
-        uint64 displayStringId1,
-        uint8 level1,
-        uint64 displayStringId2,
-        uint8 level2,
-        uint64 displayStringId3,
-        uint8 level3,
+        uint256 displayStringId1,
+        uint256 level1,
+        uint256 displayStringId2,
+        uint256 level2,
+        uint256 displayStringId3,
+        uint256 level3,
         string calldata uri,
         uint256 credits
     ) public {

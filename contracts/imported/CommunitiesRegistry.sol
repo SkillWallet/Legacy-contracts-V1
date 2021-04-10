@@ -5,6 +5,7 @@ import "./Community.sol";
 import "./Membership.sol";
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title DistributedTown CommunitiesRegistry
@@ -14,6 +15,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract CommunitiesRegistry is ChainlinkClient, Ownable {
     event CommunityCreated(address indexed creator, address indexed community, address indexed membership, string name);
+
+    using Strings for uint;
 
     mapping(address => bool) public isCommunity;
     address[] public communityAddresses;
@@ -27,12 +30,12 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
     // Chainlink variable helpers
     address private _communityAddress;
     address private _userAddress;
-    uint64 private _displayStringId1;
-    uint8 private _level1;
-    uint64 private _displayStringId2;
-    uint8 private _level2;
-    uint64 private _displayStringId3;
-    uint8 private _level3;
+    uint256 private _displayStringId1;
+    uint256 private _level1;
+    uint256 private _displayStringId2;
+    uint256 private _level2;
+    uint256 private _displayStringId3;
+    uint256 private _level3;
     string private _uri;
     bytes32 private _requestId;
 
@@ -90,12 +93,12 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
     function joinNewMember(
         address community,
         address userAddress,
-        uint64 displayStringId1,
-        uint8 level1,
-        uint64 displayStringId2,
-        uint8 level2,
-        uint64 displayStringId3,
-        uint8 level3,
+        uint256 displayStringId1,
+        uint256 level1,
+        uint256 displayStringId2,
+        uint256 level2,
+        uint256 displayStringId3,
+        uint256 level3,
         string calldata uri
     ) external {
         require(isCommunity[community], "Invalid community address!");
@@ -115,19 +118,31 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
 
     }
 
-    function _requestDitoCreditsCalculation(address community, uint64 displayStringId1, uint8 level1, uint64 displayStringId2, uint8 level2, uint64 displayStringId3, uint8 level3) internal returns (bytes32 requestId) {
+    function _requestDitoCreditsCalculation(address community, uint256 displayStringId1, uint256 level1, uint256 displayStringId2, uint256 level2, uint256 displayStringId3, uint256 level3) internal returns (bytes32 requestId) {
         Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfillCalculateDitoCredits.selector);
 
-
-        // https://api.distributed.town/api/community/calculatecredits?commAddr=0x&skill1ID=1&skill2ID=2&skill3ID=3&lvl1=8&lvl2=9&lvl3=10
         string memory url = "https://api.distributed.town/api/community/calculatecredits";
-        // string memory url = "https://api.distributed.town/api/skillWallet/createRandomString";
         // Set the URL to perform the GET request on
         request.add("get", url);
 
-        //        request.add("queryParams", abi.encodePacked("user=", user));
         request.add("queryParams", "commAddr=0x&skill1ID=1&skill2ID=2&skill3ID=3&lvl1=8&lvl2=9&lvl3=10");
-
+//        request.add("queryParams", string(
+//        abi.encodePacked(
+//        "commAddr=",
+//        community,
+//        "&skill1ID=",
+//        displayStringId1.toString(),
+//        "&skill2ID=",
+//        displayStringId2.toString(),
+//        "&skill3ID=",
+//        displayStringId3.toString(),
+//        "&lvl1=",
+//        level1.toString(),
+//        "&lvl2=",
+//        level2.toString(),
+//        "&lvl3=",
+//        level3.toString()
+//        )));
         request.add("path", "credits");
 
         // Sends the request

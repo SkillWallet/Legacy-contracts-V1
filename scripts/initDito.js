@@ -45,6 +45,8 @@ const main = async () => {
     const communityCreatedEvent = txReceipt.events.find(txReceiptEvent =>  txReceiptEvent.event === 'CommunityCreated');
     const communityAddress = communityCreatedEvent.args[1];
 
+    console.log("COMMUNITY ADDRESS", communityAddress);
+
     const communityInstance = await communityFactory.attach(communityAddress);
 
     await createSkillWallet(communityRegistryInstance, communityInstance)

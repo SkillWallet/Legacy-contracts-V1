@@ -8,7 +8,7 @@ const R = require("ramda");
 const main = async () => {
     const deployerWallet = ethers.provider.getSigner();
     const deployerWalletAddress = await deployerWallet.getAddress();
-    const skillWalletAddress = "0xe13AC8cEb84B1942f060becA7407DDb144F4Da92";
+    const skillWalletAddress = config.skillWalletAddress[config.defaultNetwork];
 
     //
     const skillWalletContractFactory = await ethers.getContractFactory("SkillWallet");
@@ -22,9 +22,9 @@ const main = async () => {
     // const activateSkillWallet = await skillWalletContractInstance.activateSkillWallet(ethers.BigNumber.from(0), randomNumber);
 
 
-    const isSkillWalletActivated = await skillWalletContractInstance.isSkillWalletActivated(0);
-
-    console.log("SkillWallet ACTIVATED", isSkillWalletActivated)
+    // const isSkillWalletActivated = await skillWalletContractInstance.isSkillWalletActivated(0);
+    //
+    // console.log("SkillWallet ACTIVATED", isSkillWalletActivated)
 
 
 

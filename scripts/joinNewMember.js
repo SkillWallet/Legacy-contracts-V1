@@ -8,7 +8,6 @@ const R = require("ramda");
 
 const joinNewMember = async (communityRegistryInstance, communityAddress, memberAddress) => {
 
-    let credits = ethers.utils.parseEther("2006");
     let oneBn = ethers.BigNumber.from(1);
     await communityRegistryInstance.joinNewMember(communityAddress, memberAddress, oneBn, oneBn, oneBn, oneBn, oneBn, oneBn, '')
 
@@ -16,8 +15,8 @@ const joinNewMember = async (communityRegistryInstance, communityAddress, member
 
 const main = async () => {
     const communitiesRegistryAddress = config.communityRegistryAddress[config.defaultNetwork];
-    const communityAddress = "0x2f6519B04AdF148Ef851925626b07966e8736BAC";
-    const memberAddress = "0xeAEdcA5E251B1e1D77F6928868B1Ad7Dd287356d";
+    const communityAddress =  config.communityAddress[config.defaultNetwork];
+    const memberAddress = "0x85E537A931Ed30F425cb75829796744bB0A15D71";
 
     console.log("\n\n 📡 Deploying...\n");
 

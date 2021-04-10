@@ -137,11 +137,15 @@ module.exports = {
   },
   skillWalletAddress: {
     matic: "",
-    maticTestnet: "0xF4ECd3A92a35f00B4E238456e4A962259D81589b"
+    maticTestnet: "0x6157C69763f67D21401B436B1DB3D9E07a2C7410"
   },
   communityRegistryAddress: {
     matic: "",
-    maticTestnet: "0xb133882575c9166DF970B947b4065fa1f9429d28"
+    maticTestnet: "0x0f0cf70D5fA8Af32992E79609319424fBf65a9F1"
+  },
+  communityAddress: {
+    matic: "",
+    maticTestnet: "0xd4f2241d4c7a3e16b61599747EB8B78a116786f1"
   }
 
 };
