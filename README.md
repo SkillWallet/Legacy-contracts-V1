@@ -1,4 +1,4 @@
-# Skill Wallet Contracts
+# SkillWallet Contracts
 SkillWallet Contracts
 
 
