@@ -32,12 +32,16 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
     // The community registry address
     address private _communityRegistry;
 
+    // The SkillWallet address
+    address private _skillWallet;
+
     /**
      * @dev See {_setURI}.
      */
-    constructor (string memory uri_, address communityRegistry_) public {
+    constructor (string memory uri_, address communityRegistry_, address skillWallet_) public {
         _setURI(uri_);
         _communityRegistry = communityRegistry_;
+        _skillWallet = skillWallet_;
     }
 
     /**
@@ -136,7 +140,7 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
     {
         require(to != address(0), "ERC1155: transfer to the zero address");
         require(
-            from == _msgSender() || _communityRegistry == _msgSender() || isApprovedForAll(from, _msgSender()),
+            from == _msgSender() || _communityRegistry == _msgSender() || _skillWallet == _msgSender() || isApprovedForAll(from, _msgSender()),
             "ERC1155: caller is not owner nor approved"
         );
 
@@ -171,7 +175,7 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
         require(ids.length == amounts.length, "ERC1155: ids and amounts length mismatch");
         require(to != address(0), "ERC1155: transfer to the zero address");
         require(
-            from == _msgSender() || _communityRegistry == _msgSender() || isApprovedForAll(from, _msgSender()),
+            from == _msgSender() || _communityRegistry == _msgSender() || _skillWallet == _msgSender() || isApprovedForAll(from, _msgSender()),
             "ERC1155: transfer caller is not owner nor approved"
         );
 

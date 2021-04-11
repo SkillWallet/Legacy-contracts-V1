@@ -21,7 +21,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 //
 // Select the network you want to deploy to here:
 //
-const defaultNetwork = "maticTestnet";
+const defaultNetwork = "matic";
 
 function mnemonic() {
   try {
@@ -95,6 +95,15 @@ module.exports = {
         }
       },
       {
+        version: "0.6.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+      {
         version: "0.6.0",
         settings: {
           optimizer: {
@@ -119,6 +128,14 @@ module.exports = {
     matic: "0xc8D925525CA8759812d0c299B90247917d4d4b7C",
     maticTestnet: "0xc8D925525CA8759812d0c299B90247917d4d4b7C"
   },
+  ditoOracleAddress: {
+    matic: "",
+    maticTestnet: "0x3A0678DcfFe2465cDD289563570979eCA23bF3AF"
+  },
+  oracleNodeAddress: {
+    matic: "",
+    maticTestnet: "0x24485A6A978d32d04713f3dFdED0C8a29797812F"
+  },
   bytesJobId: {
     matic: "f0da6c15faf54a3187ac63001f0dab1e",
     maticTestnet: "a7330d0b4b964c05abc66a26307047c0"
@@ -126,6 +143,10 @@ module.exports = {
   uintJobId: {
     matic: "ac9996ab9e1c4c968be4fce46b3711f9",
     maticTestnet: "bbf0badad29d49dc887504bacfbb905b"
+  },
+  ditoUintJobId: {
+    matic: "",
+    maticTestnet: "2736adbcf60d4575bec1f6e4e3aeb3b7"
   },
   vrfCoordinatorAddress: {
     matic: "0x3d2341ADb2D31f1c5530cDC622016af293177AE0",
@@ -136,16 +157,16 @@ module.exports = {
     maticTestnet: "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4"
   },
   skillWalletAddress: {
-    matic: "0xB2F7441B0023f3c4989d6Ae1cE2B4CbbbB59C21D",
-    maticTestnet: "0x7B76978c7E7A14b3BEa9faEc12cA0fdff686701E"
+    matic: "0x14DEF8Be678589dd1445A46Fc5bE925d479694B9",
+    maticTestnet: "0xB0aD4014Ee360A2c7c668F2883ed73ae6780c817"
   },
   communityRegistryAddress: {
-    matic: "0xeDea4d4c120553074cda95E737105Cc738916A68",
-    maticTestnet: "0x7e86b40462bcE2f6e7Cb5FEb9D427E175cfF2892"
+    matic: "0xB4Dcc7cE6C7e8E5595fBC708b09123A86360e3e2",
+    maticTestnet: "0xAED585cE5F23D34784De65534500d0a0CD119ef3"
   },
   communityAddress: {
-    matic: "0x2E2FA1746732d86228BA6C7da17E84eF5216493b",
-    maticTestnet: "0xa90fF44eDaA627C2643be4C19a4c1B07a99cf150"
+    matic: "0x1cfe58e4319518400Dc83043C2Edd53ACEE9C07b",
+    maticTestnet: "0x280971a2bd5D2506d11AC8ce2d3FCaB58A267AE4"
   }
 
 };

@@ -16,8 +16,8 @@ const main = async () => {
     //Create connection to LINK token contract and initiate the transfer
     const linkTokenContract = new ethers.Contract(linkAddress, LINK_TOKEN_ABI, deployerWallet)
 
-    const amountSW = ethers.utils.parseEther("0.1")
-    const amountCR = ethers.utils.parseEther("0.3")
+    const amountSW = ethers.utils.parseEther("0.01")
+    const amountCR = ethers.utils.parseEther("0.5")
 
     const res1 = await linkTokenContract.transfer(skillWalletContractAddress, amountSW)
     const res2 = await linkTokenContract.transfer(communityRegistryAddress, amountCR)

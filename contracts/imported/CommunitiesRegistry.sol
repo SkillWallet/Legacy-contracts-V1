@@ -47,7 +47,7 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
         }
         setChainlinkOracle(_oracle);
         jobId = _jobId;
-        fee = 0.01 * 10 ** 18; // 0.1 LINK
+        fee = 0.1 * 10 ** 18; // 0.1 LINK
         skillWalletAddress = _skillWalletAddress;
     }
 
@@ -98,7 +98,7 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
         uint256 level2,
         uint256 displayStringId3,
         uint256 level3,
-        string calldata uri
+        string memory uri
     ) external {
         require(isCommunity[community], "Invalid community address!");
 
@@ -162,6 +162,7 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
     }
 
     function _joinNewMember(uint256 credits) internal {
+        credits = credits * 1e4;
         Community communityContr = Community(_communityAddress);
         communityContr.joinNewMember(_userAddress, _displayStringId1, _level1, _displayStringId2, _level2, _displayStringId3, _level3, _uri, credits);
     }

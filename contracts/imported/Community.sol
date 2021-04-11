@@ -64,7 +64,7 @@ contract Community is ERC1155, ERC1155Holder {
         uint8 _positionalValue3,
         address skillWalletAddress,
         address communityRegistryAddress
-    ) public ERC1155(_url, communityRegistryAddress) {
+    ) public ERC1155(_url, communityRegistryAddress, skillWalletAddress) {
         skillWallet = ISkillWallet(skillWalletAddress);
         registry = CommunitiesRegistry(communityRegistryAddress);
         membership = new Membership(
@@ -99,7 +99,7 @@ contract Community is ERC1155, ERC1155Holder {
         uint256 level2,
         uint256 displayStringId3,
         uint256 level3,
-        string calldata uri,
+        string memory uri,
         uint256 credits
     ) public {
         require(
@@ -212,11 +212,11 @@ contract Community is ERC1155, ERC1155Holder {
             _id == uint256(TokenType.DiToCredit),
             "Community NFT doesn't have a balance."
         );
-        super.balanceOf(_owner, _id);
+        return super.balanceOf(_owner, _id);
     }
 
     function diToCreditsBalance(address _owner) public view returns (uint256) {
-        super.balanceOf(_owner, uint256(TokenType.DiToCredit));
+        return super.balanceOf(_owner, uint256(TokenType.DiToCredit));
     }
 
     function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids)
@@ -230,7 +230,7 @@ contract Community is ERC1155, ERC1155Holder {
             "Community NFT can't be trasfered"
         );
 
-        super.balanceOfBatch(_owners, _ids);
+       return super.balanceOfBatch(_owners, _ids);
     }
 
     function setApprovalForAll(address _operator, bool _approved)
@@ -246,7 +246,7 @@ contract Community is ERC1155, ERC1155Holder {
     override
     returns (bool)
     {
-        super.isApprovedForAll(_owner, _operator);
+        return super.isApprovedForAll(_owner, _operator);
     }
 
     /**
@@ -303,10 +303,8 @@ contract Community is ERC1155, ERC1155Holder {
         skillWalletIds.push(tokenId);
         activeMembersCount++;
 
-        // get the skills from chainlink
-        // transferToMember(newMemberAddress, credits);
+         transferToMember(_originalOwner, _credits);
 
-        // reset variables
         _originalOwner = address(0);
         _credits = 0;
         emit MemberAdded(owner, tokenId, _credits);

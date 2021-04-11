@@ -51,8 +51,6 @@ contract SkillWallet is VRFConsumerBase, ISkillWallet, ERC721, Ownable {
     address private _community;
     Types.SkillSet private _skillSet;
     string private _url;
-    bytes32 _requestId;
-
 
 
     /**
@@ -75,7 +73,6 @@ contract SkillWallet is VRFConsumerBase, ISkillWallet, ERC721, Ownable {
         // TODO: Verify that the msg.sender is valid community
 
         require(balanceOf(skillWalletOwner) == 0, "SkillWallet: There is SkillWallet already registered for this address.");
-        require(_skillWalletOwner == address(0), "SkillWallet: Request in progress, please try again later.");
         require(LINK.balanceOf(address(this)) >= fee, "SkillWallet: Not enough LINK - fill contract with faucet");
 
         _skillWalletOwner = skillWalletOwner;
@@ -83,7 +80,7 @@ contract SkillWallet is VRFConsumerBase, ISkillWallet, ERC721, Ownable {
         _url = url;
         _community = msg.sender;
 
-        _requestId = requestRandomness(keyHash, fee, block.number);
+        requestRandomness(keyHash, fee, block.number);
     }
 
     function cancelRequest() external onlyOwner {
@@ -126,7 +123,6 @@ contract SkillWallet is VRFConsumerBase, ISkillWallet, ERC721, Ownable {
 
 
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
-        require(_requestId == requestId, "SkillWallet: received requestId is incorrect.");
         _createSkillWallet(randomness);
     }
 
@@ -156,7 +152,6 @@ contract SkillWallet is VRFConsumerBase, ISkillWallet, ERC721, Ownable {
         _skillWalletOwner = address(0);
         _community = address(0);
         _url = "";
-        _requestId = 0;
     }
 
     /**
