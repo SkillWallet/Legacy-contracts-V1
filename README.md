@@ -1,5 +1,5 @@
 # Skill Wallet Contracts
-Skill Wallet Contracts
+SkillWallet Contracts
 
 
 ### 1. SkillWallet 
