@@ -21,7 +21,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 //
 // Select the network you want to deploy to here:
 //
-const defaultNetwork = "localhost";
+const defaultNetwork = "matic";
 
 function mnemonic() {
   try {
@@ -50,43 +50,6 @@ module.exports = {
         (you can put in a mnemonic here to set the deployer locally)
       */
     },
-    rinkeby: {
-      url: "https://rinkeby.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", //<---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-    },
-    kovan: {
-      url: "https://kovan.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", //<---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-    },
-    mainnet: {
-      url: "https://mainnet.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", //<---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-    },
-    ropsten: {
-      url: "https://ropsten.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", //<---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-    },
-    goerli: {
-      url: "https://goerli.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", //<---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-    },
-    xdai: {
-      url: 'https://rpc.xdaichain.com/',
-      gasPrice: 1000000000,
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-    },
     matic: {
       url: 'https://rpc-mainnet.maticvigil.com/',
       gasPrice: 1000000000,
@@ -94,6 +57,13 @@ module.exports = {
         mnemonic: mnemonic(),
       },
     },
+    maticTestnet: {
+      url: 'https://rpc-mumbai.maticvigil.com/',
+      gasPrice: 1000000000,
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    }
   },
   solidity: {
     compilers: [
@@ -123,6 +93,24 @@ module.exports = {
             runs: 200
           }
         }
+      },
+      {
+        version: "0.6.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+      {
+        version: "0.6.0",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
       }
     ],
 
@@ -131,7 +119,56 @@ module.exports = {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
     apiKey: "PSW8C433Q667DVEX5BCRMGNAH9FSGFZ7Q8"
+  },
+  linkAddress: {
+    matic: "0xb0897686c545045afc77cf20ec7a532e3120e0f1",
+    maticTestnet: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB"
+  },
+  oracleAddress: {
+    matic: "0xc8D925525CA8759812d0c299B90247917d4d4b7C",
+    maticTestnet: "0xc8D925525CA8759812d0c299B90247917d4d4b7C"
+  },
+  ditoOracleAddress: {
+    matic: "",
+    maticTestnet: "0x3A0678DcfFe2465cDD289563570979eCA23bF3AF"
+  },
+  oracleNodeAddress: {
+    matic: "",
+    maticTestnet: "0x24485A6A978d32d04713f3dFdED0C8a29797812F"
+  },
+  bytesJobId: {
+    matic: "f0da6c15faf54a3187ac63001f0dab1e",
+    maticTestnet: "a7330d0b4b964c05abc66a26307047c0"
+  },
+  uintJobId: {
+    matic: "ac9996ab9e1c4c968be4fce46b3711f9",
+    maticTestnet: "bbf0badad29d49dc887504bacfbb905b"
+  },
+  ditoUintJobId: {
+    matic: "",
+    maticTestnet: "2736adbcf60d4575bec1f6e4e3aeb3b7"
+  },
+  vrfCoordinatorAddress: {
+    matic: "0x3d2341ADb2D31f1c5530cDC622016af293177AE0",
+    maticTestnet: "0x8C7382F9D8f56b33781fE506E897a4F1e2d17255"
+  },
+  keyHash: {
+    matic: "0xf86195cf7690c55907b2b611ebb7343a6f649bff128701cc542f0569e2c549da",
+    maticTestnet: "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4"
+  },
+  skillWalletAddress: {
+    matic: "0x14DEF8Be678589dd1445A46Fc5bE925d479694B9",
+    maticTestnet: "0xB0aD4014Ee360A2c7c668F2883ed73ae6780c817"
+  },
+  communityRegistryAddress: {
+    matic: "0xB4Dcc7cE6C7e8E5595fBC708b09123A86360e3e2",
+    maticTestnet: "0xAED585cE5F23D34784De65534500d0a0CD119ef3"
+  },
+  communityAddress: {
+    matic: "0x1cfe58e4319518400Dc83043C2Edd53ACEE9C07b",
+    maticTestnet: "0x280971a2bd5D2506d11AC8ce2d3FCaB58A267AE4"
   }
+
 };
 
 const DEBUG = false;

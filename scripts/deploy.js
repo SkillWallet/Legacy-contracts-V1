@@ -7,41 +7,15 @@ const R = require("ramda");
 
 const main = async () => {
   const deployerWallet = ethers.provider.getSigner();
+  const linkAddress = config.linkAddress[config.defaultNetwork];
+  const vrfCoordinatorAddress = config.vrfCoordinatorAddress[config.defaultNetwork];
+  const keyHash = config.keyHash[config.defaultNetwork];
+
   const deployerWalletAddress = await deployerWallet.getAddress();
 
   console.log("\n\n 📡 Deploying...\n");
 
-  const communityRegistry = await deploy("CommunityRegistry");
-
-  const communityRegistryFactory = await ethers.getContractFactory("CommunityRegistry");
-  const communityRegistryContract = await communityRegistryFactory.attach(communityRegistry.address);
-
-  console.log("Creating community...");
-
-  await communityRegistryContract.createCommunity(0);
-
-  console.log("Community created");
-
-  const [_communityAddress, _membershipAddress] = await communityRegistryContract.getCommunityData(0);
-
-  console.log(`Community address: ${_communityAddress}`)
-  console.log(`Membership address: ${_membershipAddress}`)
-
-
-
-  const membershipContractFactory = await ethers.getContractFactory("Membership");
-  const membershipContract = await membershipContractFactory.attach(_membershipAddress);
-
-
-  console.log("\nJoining to community 0...", deployerWalletAddress);
-  await membershipContract.join(deployerWalletAddress, [[ethers.BigNumber.from(12), ethers.BigNumber.from(1)], [ethers.BigNumber.from(6), ethers.BigNumber.from(5)], [ethers.BigNumber.from(24), ethers.BigNumber.from(3)]])
-  console.log("Joined to community 0.\n");
-  const skillWalletRegistry = await deploy("SkillWalletRegistry");
-
-  console.log("Creating skill wallet...");
-  await skillWalletRegistry.createSkillWallet(_membershipAddress);
-  const skillWallet = await skillWalletRegistry.getSkillWallet(deployerWalletAddress);
-  console.log(`Skill wallet created, address: ${skillWallet}`);
+  const skillWallet = await deploy("SkillWallet", [linkAddress, vrfCoordinatorAddress, keyHash]);
 
   console.log(
     " 💾  Artifacts (address, abi, and args) saved to: ",
