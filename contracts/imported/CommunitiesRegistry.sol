@@ -37,7 +37,6 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
     uint256 private _displayStringId3;
     uint256 private _level3;
     string private _uri;
-    bytes32 private _requestId;
 
 
     constructor(address _skillWalletAddress, address _link, address _oracle, bytes32 _jobId) public {
@@ -48,7 +47,7 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
         }
         setChainlinkOracle(_oracle);
         jobId = _jobId;
-        fee = 0.1 * 10 ** 18; // 0.1 LINK
+        fee = 0.01 * 10 ** 18; // 0.1 LINK
         skillWalletAddress = _skillWalletAddress;
     }
 
@@ -102,7 +101,6 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
         string calldata uri
     ) external {
         require(isCommunity[community], "Invalid community address!");
-        require(_requestId == 0, "Request already in progress");
 
         _userAddress = userAddress;
         _communityAddress = community;
@@ -114,7 +112,7 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
         _level3 = level3;
         _uri = uri;
 
-        _requestId = _requestDitoCreditsCalculation(community, displayStringId1, level1, displayStringId2, level2, displayStringId3, level3);
+        _requestDitoCreditsCalculation(community, displayStringId1, level1, displayStringId2, level2, displayStringId3, level3);
 
     }
 
@@ -160,14 +158,12 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
     public
     recordChainlinkFulfillment(_requestId_)
     {
-        require(_requestId == _requestId, "Invalid request id.");
         _joinNewMember(_credits);
     }
 
     function _joinNewMember(uint256 credits) internal {
         Community communityContr = Community(_communityAddress);
         communityContr.joinNewMember(_userAddress, _displayStringId1, _level1, _displayStringId2, _level2, _displayStringId3, _level3, _uri, credits);
-        _requestId = 0;
     }
 
 
@@ -198,7 +194,6 @@ contract CommunitiesRegistry is ChainlinkClient, Ownable {
     public
     onlyOwner
     {
-        _requestId = 0;
         cancelChainlinkRequest(_requestId_, _payment, _callbackFunctionId, _expiration);
     }
 

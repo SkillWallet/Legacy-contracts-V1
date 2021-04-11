@@ -17,7 +17,7 @@ const main = async () => {
     const linkTokenContract = new ethers.Contract(linkAddress, LINK_TOKEN_ABI, deployerWallet)
 
     const amountSW = ethers.utils.parseEther("0.1")
-    const amountCR = ethers.utils.parseEther("0.8")
+    const amountCR = ethers.utils.parseEther("0.3")
 
     const res1 = await linkTokenContract.transfer(skillWalletContractAddress, amountSW)
     const res2 = await linkTokenContract.transfer(communityRegistryAddress, amountCR)

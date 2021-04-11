@@ -9,7 +9,6 @@ const R = require("ramda");
 const main = async () => {
     const skillWalletAddress = config.skillWalletAddress[config.defaultNetwork];
 
-    console.log("\n\n 📡 Deploying...\n");
 
     //
     const skillWalletFactory = await ethers.getContractFactory("SkillWallet");
