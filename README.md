@@ -1,5 +1,7 @@
 # Overview
-It provides an universal, self-sovereign Identity as an NFT. In order to receive it and activate individuals need to be member of a Community. By being part of a Community, they can participate Gigs/Tasks/Projects, that in return provide them Credits (DITO), that they can spend across the whole network, partners included. Once an individual member's skills are validated (through Gigs), they will be able to spend their Credits, create new tasks/projects, and move to a different Community seamlessly, without losing the Credits & the reputation earned.
+The SkillWallet is a standard for universal, self-sovereign Identity as an NFT.<br/>
+In order to receive it and activate individuals need to be member of a Community. By being part of a Community, they can participate Gigs/Tasks/Projects, that in return provide them Credits (DITO), that they can spend across the whole network, partners included.<br/>
+Once an individual member's skills are validated (through Gigs), they will be able to spend their Credits, create new tasks/projects, and move to a different Community seamlessly, without losing the Credits & the reputation earned.
 
 ## Steps
 Whenever new users start to create a new account, they are prompted to:
