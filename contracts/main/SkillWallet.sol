@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @dev Implementation of the SkillWallet contract
  * @author DistributedTown
  */
-contract SkillWallet is ISkillWallet, ERC721, Ownable {
+contract SkillWallet is ISkillWallet, IERC721Metadata, ERC721, Ownable {
 
     using Counters for Counters.Counter;
 
@@ -32,9 +32,6 @@ contract SkillWallet is ISkillWallet, ERC721, Ownable {
     // Mapping from token ID to activated status
     mapping (uint256 => bool) private _activatedSkillWallets;
 
-    // Mapping from token ID to SkillWallet metadata
-    mapping (uint256 => string) private _urls;
-
     Counters.Counter private _skillWalletCounter;
 
     constructor () public ERC721("SkillWallet", "SW") {
@@ -49,10 +46,10 @@ contract SkillWallet is ISkillWallet, ERC721, Ownable {
         uint256 tokenId = _skillWalletCounter.current();
 
         _safeMint(skillWalletOwner, tokenId);
+        _setTokenURI(tokenId, url);
         _activeCommunities[tokenId] = msg.sender;
         _communityHistory[tokenId].push(msg.sender);
         _skillSets[tokenId] = skillSet;
-        _urls[tokenId] = url;
         _skillWalletsByOwner[skillWalletOwner] = tokenId;
 
         _skillWalletCounter.increment();
