@@ -52,8 +52,11 @@ contract SkillWallet is
 
     constructor() public ERC721("SkillWallet", "SW") {
         setPublicChainlinkToken();
+
+        // TODO: change with the ext adapter parameters 
         oracle = 0xAA1DC356dc4B18f30C347798FD5379F3D77ABC5b;
         jobId = "235f8b1eeb364efc83c26d0bef2d0c01";
+        
         fee = 0.1 * 10**18; // 0.1 LINK
     }
 
@@ -89,16 +92,21 @@ contract SkillWallet is
 
     function validate(
         string signature,
-        uint256 token,
+        uint256 tokenId,
+        uint256 action,
         uint256 recoveryParam
     ) public {
         Chainlink.Request memory req =
             buildChainlinkRequest(
                 jobId,
                 address(this),
-                this.fulfillEthereumPrice.selector
+                this.validationCallback.selector
             );
-        req.add("city", _city);
+        req.add("pubKey", _skillWalletToPubKey[tokenId]);
+        req.add("sig", signature);
+        req.add("action", action);
+        req.add("recoveryParam", recoveryParam);
+        req.add("tokenId", tokenId);
         sendChainlinkRequestTo(oracle, req, fee);
     }
 
