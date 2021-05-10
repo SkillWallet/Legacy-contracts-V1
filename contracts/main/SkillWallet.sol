@@ -6,6 +6,8 @@ import "../imported/CommonTypes.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@chainlink/contracts/src/v0.7/ChainlinkClient.sol";
+
 
 /**
  * @title DistributedTown SkillWallet
@@ -13,7 +15,15 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @dev Implementation of the SkillWallet contract
  * @author DistributedTown
  */
-contract SkillWallet is ISkillWallet, IERC721Metadata, ERC721, Ownable {
+contract SkillWallet is
+    ISkillWallet,
+    IERC721Metadata,
+    ERC721,
+    Ownable,
+    ChainlinkClient
+{
+    event ValidationPassed(string tokenId, uint256 nonce, uint256 action);
+
     using Counters for Counters.Counter;
 
     // Mapping from token ID to active community that the SW is part of
@@ -35,7 +45,17 @@ contract SkillWallet is ISkillWallet, IERC721Metadata, ERC721, Ownable {
 
     Counters.Counter private _skillWalletCounter;
 
-    constructor() public ERC721("SkillWallet", "SW") {}
+    // Chainlink params
+    address private oracle;
+    bytes32 private jobId;
+    uint256 private fee;
+
+    constructor() public ERC721("SkillWallet", "SW") {
+        setPublicChainlinkToken();
+        oracle = 0xAA1DC356dc4B18f30C347798FD5379F3D77ABC5b;
+        jobId = "235f8b1eeb364efc83c26d0bef2d0c01";
+        fee = 0.1 * 10**18; // 0.1 LINK
+    }
 
     function create(
         address skillWalletOwner,
@@ -65,6 +85,28 @@ contract SkillWallet is ISkillWallet, IERC721Metadata, ERC721, Ownable {
             tokenId,
             skillSet
         );
+    }
+
+    function validate(
+        string signature,
+        uint256 token,
+        uint256 recoveryParam
+    ) public {
+        Chainlink.Request memory req =
+            buildChainlinkRequest(
+                jobId,
+                address(this),
+                this.fulfillEthereumPrice.selector
+            );
+        req.add("city", _city);
+        sendChainlinkRequestTo(oracle, req, fee);
+    }
+
+    function validationCallback(bytes32 _requestId, bool _isValid)
+        public
+        recordChainlinkFulfillment(_requestId)
+    {
+        emit ValidationPassed(0, 0, 0);
     }
 
     function updateSkillSet(
