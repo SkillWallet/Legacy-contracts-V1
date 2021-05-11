@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.7/ChainlinkClient.sol";
 
-
 /**
  * @title DistributedTown SkillWallet
  *
@@ -23,6 +22,7 @@ contract SkillWallet is
     ChainlinkClient
 {
     event ValidationPassed(string tokenId, uint256 nonce, uint256 action);
+    event ValidationFailed(string tokenId, uint256 nonce, uint256 action);
 
     using Counters for Counters.Counter;
 
@@ -53,10 +53,10 @@ contract SkillWallet is
     constructor() public ERC721("SkillWallet", "SW") {
         setPublicChainlinkToken();
 
-        // TODO: change with the ext adapter parameters 
-        oracle = 0xAA1DC356dc4B18f30C347798FD5379F3D77ABC5b;
-        jobId = "235f8b1eeb364efc83c26d0bef2d0c01";
-        
+        // TODO: change with the ext adapter parameters
+        oracle = 0xb5BA7f14Fe0205593255c77875348281b44DE7BF;
+        jobId = "9fe037a36bdb44d1b4a5dec10a359893";
+
         fee = 0.1 * 10**18; // 0.1 LINK
     }
 
@@ -65,7 +65,7 @@ contract SkillWallet is
         Types.SkillSet memory skillSet,
         string memory url
     ) external override {
-        // TODO: Verify that the m`sg.sender is valid community
+        // TODO: Verify that the msg.sender is valid community
         require(
             balanceOf(skillWalletOwner) == 0,
             "SkillWallet: There is SkillWallet already registered for this address."
@@ -103,10 +103,33 @@ contract SkillWallet is
                 this.validationCallback.selector
             );
         req.add("pubKey", _skillWalletToPubKey[tokenId]);
-        req.add("sig", signature);
+        req.add("signature", signature);
         req.add("action", action);
         req.add("recoveryParam", recoveryParam);
         req.add("tokenId", tokenId);
+        req.add(
+            "getNonceUrl",
+            string(
+                abi.encodePacked(
+                    "https://api.distributed.town/api/skillwallet/",
+                    tokenId,
+                    "/nonces?action=",
+                    action
+                )
+            )
+        );
+        req.add(
+            "delNonceUrl",
+            string(
+                abi.encodePacked(
+                    "https://api.distributed.town/api/skillwallet/",
+                    tokenId,
+                    "/nonces?action=",
+                    action
+                )
+            )
+        );
+
         sendChainlinkRequestTo(oracle, req, fee);
     }
 
@@ -114,7 +137,8 @@ contract SkillWallet is
         public
         recordChainlinkFulfillment(_requestId)
     {
-        emit ValidationPassed(0, 0, 0);
+        if (_isValid) emit ValidationPassed(0, 0, 0);
+        else emit ValidationFailed(0,0,0);
     }
 
     function updateSkillSet(
