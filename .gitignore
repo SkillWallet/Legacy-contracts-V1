@@ -39,3 +39,9 @@ yarn-error.log*
 
 .idea
 .env
+
+artifacts
+deployments
+mnemonic.txt
+tenderly.yaml
+test/chainlink.test.js

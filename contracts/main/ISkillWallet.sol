@@ -20,7 +20,7 @@ interface ISkillWallet is IERC721 {
 
     function updateSkillSet(uint256 skillWalletId, Types.SkillSet memory newSkillSet) external;
 
-    function activateSkillWallet(uint256 skillWalletId, uint256 randomNumber) external;
+    function activateSkillWallet(uint256 skillWalletId, string calldata pubKey) external;
 
     function changeCommunity(uint256 skillWalletId) external;
 

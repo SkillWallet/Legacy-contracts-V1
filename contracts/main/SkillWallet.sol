@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity >=0.6.10 <0.8.0;
 pragma experimental ABIEncoderV2;
 //import "./ISkillWallet.sol";
 import "../imported/CommonTypes.sol";
@@ -7,7 +7,7 @@ import "../imported/Community.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
+import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 
 /**
  * @title DistributedTown SkillWallet
@@ -15,105 +15,181 @@ import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
  * @dev Implementation of the SkillWallet contract
  * @author DistributedTown
  */
-contract SkillWallet is VRFConsumerBase, ISkillWallet, ERC721, Ownable {
+contract SkillWallet is
+    ISkillWallet,
+    IERC721Metadata,
+    ERC721,
+    Ownable,
+    ChainlinkClient
+{
+    event ValidationPassed(uint256 tokenId, uint256 nonce, uint256 action);
+    event ValidationFailed(uint256 tokenId, uint256 nonce, uint256 action);
 
     using Counters for Counters.Counter;
 
     // Mapping from token ID to active community that the SW is part of
-    mapping (uint256 => address) private _activeCommunities;
+    mapping(uint256 => address) private _activeCommunities;
 
     // Mapping from token ID to list of community addresses
-    mapping (uint256 => address[]) private _communityHistory;
+    mapping(uint256 => address[]) private _communityHistory;
 
     // Mapping from token ID to SkillSet
-    mapping (uint256 => Types.SkillSet) private _skillSets;
+    mapping(uint256 => Types.SkillSet) private _skillSets;
 
     // Mapping from skillWalletOwner to token ID
-    mapping (address => uint256) private _skillWalletsByOwner;
+    mapping(address => uint256) private _skillWalletsByOwner;
 
     // Mapping from token ID to activated status
-    mapping (uint256 => bool) private _activatedSkillWallets;
+    mapping(uint256 => bool) private _activatedSkillWallets;
 
-    // Mapping from token ID to SkillWallet metadata
-    mapping (uint256 => string) private _urls;
+    mapping(uint256 => string) public skillWalletToPubKey;
 
     // Mapping from token ID to random number used for the QR code verification
     mapping (uint256 => uint256) private _randomNumbers;
 
     Counters.Counter private _skillWalletCounter;
 
-    // Chainlink specific variables
+    // Chainlink params
+    address private oracle;
+    bytes32 private jobId;
     uint256 private fee;
-    bytes32 private keyHash;
 
-    // Chainlink helper variables, used for the data capturing before the chainlink request
-    address private _skillWalletOwner;
-    address private _community;
-    Types.SkillSet private _skillSet;
-    string private _url;
+    constructor(address _oracle, bytes32 _jobId) public ERC721("SkillWallet", "SW") {
+        setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
+        oracle = _oracle;
+        jobId = _jobId;
 
+        // TODO: change with the ext adapter parameters
 
-    /**
-     * @notice Deploy the contract with a specified address for the LINK token, VRF coordinator address and key hash
-     * @dev Sets the storage for the specified addresses and jobId
-     * @param _link The address of the LINK token contract
-     * @param _vrfCoordinator The address of the Chainlink VRF coordinatior
-     * @param _keyHash The id of the Chainlink job
-     */
-    constructor (address _link, address _vrfCoordinator, bytes32 _keyHash) public ERC721("SkillWallet", "SW") VRFConsumerBase(
-        _vrfCoordinator, // VRF Coordinator
-        _link  // LINK Token
-    ){
-        keyHash = _keyHash;
-        fee = 0.0001 * 10 ** 18; // 0.01 LINK
+        fee = 0.1 * 10**18; // 0.1 LINK
     }
 
-    function create(address skillWalletOwner, Types.SkillSet memory skillSet, string memory url) override external {
-
+    function create(
+        address skillWalletOwner,
+        Types.SkillSet memory skillSet,
+        string memory url
+    ) external override {
         // TODO: Verify that the msg.sender is valid community
+        require(
+            balanceOf(skillWalletOwner) == 0,
+            "SkillWallet: There is SkillWallet already registered for this address."
+        );
 
-        require(balanceOf(skillWalletOwner) == 0, "SkillWallet: There is SkillWallet already registered for this address.");
-        require(LINK.balanceOf(address(this)) >= fee, "SkillWallet: Not enough LINK - fill contract with faucet");
+        uint256 tokenId = _skillWalletCounter.current();
 
-        _skillWalletOwner = skillWalletOwner;
-        _skillSet = skillSet;
-        _url = url;
-        _community = msg.sender;
+        _safeMint(skillWalletOwner, tokenId);
+        _setTokenURI(tokenId, url);
+        _activeCommunities[tokenId] = msg.sender;
+        _communityHistory[tokenId].push(msg.sender);
+        _skillSets[tokenId] = skillSet;
+        _skillWalletsByOwner[skillWalletOwner] = tokenId;
 
-        requestRandomness(keyHash, fee, block.number);
+        _skillWalletCounter.increment();
+
+        emit SkillWalletCreated(
+            skillWalletOwner,
+            msg.sender,
+            tokenId,
+            skillSet
+        );
     }
 
-    function cancelRequest() external onlyOwner {
-        _resetChainlinkVariables();
+    function validate(
+        string calldata signature,
+        uint256 tokenId,
+        uint256 action
+    ) public {
+        require(bytes(skillWalletToPubKey[tokenId]).length > 0, "SkillWallet should be activated first!");
+
+        Chainlink.Request memory req =
+            buildChainlinkRequest(
+                jobId,
+                address(this),
+                this.validationCallback.selector
+            );
+        req.add("pubKey", skillWalletToPubKey[tokenId]);
+        req.add("signature", signature);
+        req.add(
+            "getNonceUrl",
+            string(
+                abi.encodePacked(
+                    "https://api.distributed.town/api/skillwallet/",
+                    tokenId.toString(),
+                    "/nonces?action=",
+                    action.toString()
+                )
+            )
+        );
+        req.add(
+            "delNonceUrl",
+            string(
+                abi.encodePacked(
+                    "https://api.distributed.town/api/skillwallet/",
+                    tokenId.toString(),
+                    "/nonces?action=",
+                    action.toString()
+                )
+            )
+        );
+
+        sendChainlinkRequestTo(oracle, req, fee);
     }
 
-    function updateSkillSet(uint256 skillWalletId, Types.SkillSet memory newSkillSet) override external {
+    function validationCallback(bytes32 _requestId, bool _isValid)
+        public
+        recordChainlinkFulfillment(_requestId)
+    {
+        if (_isValid) emit ValidationPassed(0, 0, 0);
+        else emit ValidationFailed(0,0,0);
+    }
+
+    function updateSkillSet(
+        uint256 skillWalletId,
+        Types.SkillSet memory newSkillSet
+    ) external override {
         // TODO: Validate that the msg.sender is valid community
 
-        require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
+        require(
+            skillWalletId < _skillWalletCounter.current(),
+            "SkillWallet: skillWalletId out of range."
+        );
 
         _skillSets[skillWalletId] = newSkillSet;
 
         emit SkillSetUpdated(skillWalletId, newSkillSet);
     }
 
-    function activateSkillWallet(uint256 skillWalletId, uint256 randomNumber) override external onlyOwner {
-        require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
-        require(_activeCommunities[skillWalletId] != address(0), "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet.");
-        require(_activatedSkillWallets[skillWalletId] == false, "SkillWallet: Skill wallet already activated");
+    function activateSkillWallet(uint256 skillWalletId, string calldata pubKey)
+        external
+        override
+        onlyOwner
+    {
+        require(
+            skillWalletId < _skillWalletCounter.current(),
+            "SkillWallet: skillWalletId out of range."
+        );
+        require(
+            _activeCommunities[skillWalletId] != address(0),
+            "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet."
+        );
+        require(
+            _activatedSkillWallets[skillWalletId] == false,
+            "SkillWallet: Skill wallet already activated"
+        );
 
-        require(_randomNumbers[skillWalletId] == randomNumber, "SkillWallet: Invalid random number passed.");
-
+        skillWalletToPubKey[skillWalletId] = pubKey;
         _activatedSkillWallets[skillWalletId] = true;
 
         emit SkillWalletActivated(skillWalletId);
     }
 
-
-    function changeCommunity(uint256 skillWalletId) override external {
+    function changeCommunity(uint256 skillWalletId) external override {
         // TODO: Validate that the msg.sender is valid community
 
-        require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
+        require(
+            skillWalletId < _skillWalletCounter.current(),
+            "SkillWallet: skillWalletId out of range."
+        );
 
         _activeCommunities[skillWalletId] = msg.sender;
         _communityHistory[skillWalletId].push(msg.sender);
@@ -171,60 +247,118 @@ contract SkillWallet is VRFConsumerBase, ISkillWallet, ERC721, Ownable {
     /// @notice ERC721 _transfer() Disabled
     /// @dev _transfer() has been overriden
     /// @dev reverts on transferFrom() and safeTransferFrom()
-    function _transfer(address from, address to, uint256 tokenId) internal override {
+    function _transfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal override {
         require(false, "SkillWallet: SkillWallet transfer disabled");
     }
 
-
     /// View Functions
 
-    function isSkillWalletRegistered(address skillWalletOwner) override external view returns (bool status) {
-        require(skillWalletOwner != address(0), "SkillWallet: Invalid skillWalletOwner address");
+    function isSkillWalletRegistered(address skillWalletOwner)
+        external
+        view
+        override
+        returns (bool status)
+    {
+        require(
+            skillWalletOwner != address(0),
+            "SkillWallet: Invalid skillWalletOwner address"
+        );
         return balanceOf(skillWalletOwner) == 1;
     }
 
-    function isSkillWalletActivated(uint256 skillWalletId) override external view returns (bool status) {
-        require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
-        require(_activeCommunities[skillWalletId] != address(0), "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet.");
+    function isSkillWalletActivated(uint256 skillWalletId)
+        external
+        view
+        override
+        returns (bool status)
+    {
+        require(
+            skillWalletId < _skillWalletCounter.current(),
+            "SkillWallet: skillWalletId out of range."
+        );
+        require(
+            _activeCommunities[skillWalletId] != address(0),
+            "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet."
+        );
 
         return _activatedSkillWallets[skillWalletId];
     }
 
-    function getCommunityHistory(uint256 skillWalletId) override external view returns (address[] memory communities) {
-        require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
-        require(_communityHistory[skillWalletId].length > 0, "SkillWallet: The SkillWallet is not part of any community.");
+    function getCommunityHistory(uint256 skillWalletId)
+        external
+        view
+        override
+        returns (address[] memory communities)
+    {
+        require(
+            skillWalletId < _skillWalletCounter.current(),
+            "SkillWallet: skillWalletId out of range."
+        );
+        require(
+            _communityHistory[skillWalletId].length > 0,
+            "SkillWallet: The SkillWallet is not part of any community."
+        );
         return _communityHistory[skillWalletId];
     }
 
-    function getActiveCommunity(uint256 skillWalletId) override external view returns (address community) {
-        require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
-        require(_activeCommunities[skillWalletId] != address(0), "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet.");
+    function getActiveCommunity(uint256 skillWalletId)
+        external
+        view
+        override
+        returns (address community)
+    {
+        require(
+            skillWalletId < _skillWalletCounter.current(),
+            "SkillWallet: skillWalletId out of range."
+        );
+        require(
+            _activeCommunities[skillWalletId] != address(0),
+            "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet."
+        );
         return _activeCommunities[skillWalletId];
     }
 
-    function getTotalSkillWalletsRegistered() override external view returns (uint256) {
+    function getTotalSkillWalletsRegistered()
+        external
+        view
+        override
+        returns (uint256)
+    {
         return _skillWalletCounter.current();
     }
 
-    function getSkillWalletIdByOwner(address skillWalletOwner) override external view returns (uint256) {
-        require(balanceOf(skillWalletOwner) == 1, "SkillWallet: The SkillWallet owner is invalid.");
+    function getSkillWalletIdByOwner(address skillWalletOwner)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        require(
+            balanceOf(skillWalletOwner) == 1,
+            "SkillWallet: The SkillWallet owner is invalid."
+        );
         return _skillWalletsByOwner[skillWalletOwner];
     }
 
-    function getSkillSet(uint256 skillWalletId) override external view returns (Types.SkillSet memory skillSet) {
-        require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
-        require(_activeCommunities[skillWalletId] != address(0), "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet.");
+    function getSkillSet(uint256 skillWalletId)
+        external
+        view
+        override
+        returns (Types.SkillSet memory skillSet)
+    {
+        require(
+            skillWalletId < _skillWalletCounter.current(),
+            "SkillWallet: skillWalletId out of range."
+        );
+        require(
+            _activeCommunities[skillWalletId] != address(0),
+            "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet."
+        );
 
         return _skillSets[skillWalletId];
     }
-
-    function getRandomNumber(uint256 skillWalletId) override external view returns (uint256 randomNumber) {
-        require(skillWalletId < _skillWalletCounter.current(), "SkillWallet: skillWalletId out of range.");
-        require(_activeCommunities[skillWalletId] != address(0), "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet.");
-
-        return _randomNumbers[skillWalletId];
-    }
-
-
-
 }

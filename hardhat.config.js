@@ -21,7 +21,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 //
 // Select the network you want to deploy to here:
 //
-const defaultNetwork = "matic";
+const defaultNetwork = "mumbai";
 
 function mnemonic() {
   try {
@@ -57,7 +57,7 @@ module.exports = {
         mnemonic: mnemonic(),
       },
     },
-    maticTestnet: {
+    mumbai: {
       url: 'https://rpc-mumbai.maticvigil.com/',
       gasPrice: 1000000000,
       accounts: {
@@ -67,24 +67,6 @@ module.exports = {
   },
   solidity: {
     compilers: [
-      {
-        version: "0.8.0",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200
-          }
-        }
-      },
-      {
-        version: "0.7.4",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200
-          }
-        }
-      },
       {
         version: "0.6.10",
         settings: {
