@@ -42,3 +42,6 @@ yarn-error.log*
 
 artifacts
 deployments
+mnemonic.txt
+tenderly.yaml
+test/chainlink.test.js

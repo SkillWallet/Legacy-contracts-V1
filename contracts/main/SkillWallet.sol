@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
+pragma solidity >=0.6.10 <0.8.0;
 pragma experimental ABIEncoderV2;
 import "./ISkillWallet.sol";
 import "../imported/CommonTypes.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@chainlink/contracts/src/v0.7/ChainlinkClient.sol";
+import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 
 /**
  * @title DistributedTown SkillWallet
@@ -21,8 +21,8 @@ contract SkillWallet is
     Ownable,
     ChainlinkClient
 {
-    event ValidationPassed(string tokenId, uint256 nonce, uint256 action);
-    event ValidationFailed(string tokenId, uint256 nonce, uint256 action);
+    event ValidationPassed(uint256 tokenId, uint256 nonce, uint256 action);
+    event ValidationFailed(uint256 tokenId, uint256 nonce, uint256 action);
 
     using Counters for Counters.Counter;
 
@@ -50,12 +50,12 @@ contract SkillWallet is
     bytes32 private jobId;
     uint256 private fee;
 
-    constructor() public ERC721("SkillWallet", "SW") {
-        setPublicChainlinkToken();
+    constructor(address _oracle, bytes32 _jobId) public ERC721("SkillWallet", "SW") {
+        setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
+        oracle = _oracle;
+        jobId = _jobId;
 
         // TODO: change with the ext adapter parameters
-        oracle = 0xb5BA7f14Fe0205593255c77875348281b44DE7BF;
-        jobId = "9fe037a36bdb44d1b4a5dec10a359893";
 
         fee = 0.1 * 10**18; // 0.1 LINK
     }
@@ -91,11 +91,12 @@ contract SkillWallet is
     }
 
     function validate(
-        string signature,
+        string calldata signature,
         uint256 tokenId,
-        uint256 action,
-        uint256 recoveryParam
+        uint256 action
     ) public {
+        require(bytes(_skillWalletToPubKey[tokenId]).length > 0, "SkillWallet should be activated first!");
+
         Chainlink.Request memory req =
             buildChainlinkRequest(
                 jobId,
@@ -104,9 +105,8 @@ contract SkillWallet is
             );
         req.add("pubKey", _skillWalletToPubKey[tokenId]);
         req.add("signature", signature);
-        req.add("action", action);
-        req.add("recoveryParam", recoveryParam);
-        req.add("tokenId", tokenId);
+        req.add("action", action.toString());
+        req.add("tokenId", tokenId.toString());
         req.add(
             "getNonceUrl",
             string(
@@ -157,7 +157,7 @@ contract SkillWallet is
         emit SkillSetUpdated(skillWalletId, newSkillSet);
     }
 
-    function activateSkillWallet(uint256 skillWalletId, string pubKey)
+    function activateSkillWallet(uint256 skillWalletId, string calldata pubKey)
         external
         override
         onlyOwner

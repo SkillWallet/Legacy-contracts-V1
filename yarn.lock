@@ -23,7 +23,7 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
-"@chainlink/contracts@^0.1.7":
+"@chainlink/contracts@^0.1.6":
   version "0.1.7"
   resolved "https://registry.yarnpkg.com/@chainlink/contracts/-/contracts-0.1.7.tgz#ff8e8f1fad5f0766d52ad515f83148f9d82cccad"
   integrity sha512-txVkGrwFYnyLUC/I5hTe7yZK7fjmB6YFULfBHqryRuREUmGd4bdpXfrcUUsZycmWibanp69QVyQBpsDrPhWsjw==

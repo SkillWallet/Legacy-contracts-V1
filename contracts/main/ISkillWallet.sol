@@ -1,6 +1,6 @@
 
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
+pragma solidity >=0.6.10 <0.8.0;
 pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
@@ -20,7 +20,7 @@ interface ISkillWallet is IERC721 {
 
     function updateSkillSet(uint256 skillWalletId, Types.SkillSet memory newSkillSet) external;
 
-    function activateSkillWallet(uint256 skillWalletId) external;
+    function activateSkillWallet(uint256 skillWalletId, string calldata pubKey) external;
 
     function changeCommunity(uint256 skillWalletId) external;
 
