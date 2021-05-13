@@ -8,7 +8,7 @@ import "../imported/CommonTypes.sol";
 
 interface ISkillWallet is IERC721 {
 
-    event SkillWalletCreated(address indexed skillWalletOwner, address indexed community, uint256 indexed skillWalletId, Types.SkillSet skillSet);
+    event SkillWalletCreated(address indexed skillWalletOwner, address indexed community, uint256 indexed skillWalletId, Types.SkillSet skillSet, uint256 randomNumber);
 
     event SkillWalletActivated(uint256 indexed skillWalletId);
 
@@ -37,5 +37,7 @@ interface ISkillWallet is IERC721 {
     function getSkillSet(uint256 skillWalletId) external view returns (Types.SkillSet memory skillSet);
 
     function isSkillWalletActivated(uint256 skillWalletId) external view returns (bool status);
+
+    function getRandomNumber(uint256 skillWalletId) external view returns (uint256 randomString);
 
 }

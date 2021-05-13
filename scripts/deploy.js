@@ -7,6 +7,10 @@ const R = require("ramda");
 
 const main = async () => {
   const deployerWallet = ethers.provider.getSigner();
+  const linkAddress = config.linkAddress[config.defaultNetwork];
+  const vrfCoordinatorAddress = config.vrfCoordinatorAddress[config.defaultNetwork];
+  const keyHash = config.keyHash[config.defaultNetwork];
+
   const deployerWalletAddress = await deployerWallet.getAddress();
 
   console.log("\n\n 📡 Deploying...\n");

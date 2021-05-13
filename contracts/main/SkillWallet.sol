@@ -1,8 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.6.10 <0.8.0;
 pragma experimental ABIEncoderV2;
-import "./ISkillWallet.sol";
+//import "./ISkillWallet.sol";
 import "../imported/CommonTypes.sol";
+import "../imported/Community.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -42,6 +43,9 @@ contract SkillWallet is
     mapping(uint256 => bool) private _activatedSkillWallets;
 
     mapping(uint256 => string) public skillWalletToPubKey;
+
+    // Mapping from token ID to random number used for the QR code verification
+    mapping (uint256 => uint256) private _randomNumbers;
 
     Counters.Counter private _skillWalletCounter;
 
@@ -192,6 +196,47 @@ contract SkillWallet is
 
         emit SkillWalletCommunityChanged(skillWalletId, msg.sender);
     }
+
+
+    function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
+        _createSkillWallet(randomness);
+    }
+
+    function _createSkillWallet(uint256 randomNumber) internal {
+        uint256 tokenId = _skillWalletCounter.current();
+
+        _safeMint(_skillWalletOwner, tokenId);
+        _activeCommunities[tokenId] = _community;
+        _communityHistory[tokenId].push(_community);
+        _skillSets[tokenId] = _skillSet;
+        _urls[tokenId] = _url;
+        _skillWalletsByOwner[_skillWalletOwner] = tokenId;
+        _randomNumbers[tokenId] = randomNumber;
+
+        _skillWalletCounter.increment();
+
+        emit SkillWalletCreated(_skillWalletOwner, _community, tokenId, _skillSet, randomNumber);
+
+        Community community = Community(_community);
+        community.skillWalletRegistered(tokenId, _skillWalletOwner);
+
+        _resetChainlinkVariables();
+    }
+
+    function _resetChainlinkVariables() internal {
+        // reset variables
+        _skillWalletOwner = address(0);
+        _community = address(0);
+        _url = "";
+    }
+
+    /**
+     * @notice Allows the owner to withdraw any LINK balance on the contract
+     */
+    function withdrawLink() public onlyOwner {
+        require(LINK.transfer(msg.sender, LINK.balanceOf(address(this))), "Unable to transfer");
+    }
+
 
     /// ERC 721 overrides
 

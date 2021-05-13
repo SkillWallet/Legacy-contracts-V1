@@ -1,3 +1,4 @@
+pragma solidity >=0.6.0 <0.8.0;
 
 library Types {
     struct SkillSet {
@@ -6,8 +7,8 @@ library Types {
         Skill skill3;
     }
     struct Skill {
-        uint64 displayStringId;
-        uint8 level;
+        uint256 displayStringId;
+        uint256 level;
     }
     enum Template {
         OpenSource, 
