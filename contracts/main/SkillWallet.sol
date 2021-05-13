@@ -41,7 +41,7 @@ contract SkillWallet is
     // Mapping from token ID to activated status
     mapping(uint256 => bool) private _activatedSkillWallets;
 
-    mapping(uint256 => string) private _skillWalletToPubKey;
+    mapping(uint256 => string) public skillWalletToPubKey;
 
     Counters.Counter private _skillWalletCounter;
 
@@ -95,7 +95,7 @@ contract SkillWallet is
         uint256 tokenId,
         uint256 action
     ) public {
-        require(bytes(_skillWalletToPubKey[tokenId]).length > 0, "SkillWallet should be activated first!");
+        require(bytes(skillWalletToPubKey[tokenId]).length > 0, "SkillWallet should be activated first!");
 
         Chainlink.Request memory req =
             buildChainlinkRequest(
@@ -103,18 +103,16 @@ contract SkillWallet is
                 address(this),
                 this.validationCallback.selector
             );
-        req.add("pubKey", _skillWalletToPubKey[tokenId]);
+        req.add("pubKey", skillWalletToPubKey[tokenId]);
         req.add("signature", signature);
-        req.add("action", action.toString());
-        req.add("tokenId", tokenId.toString());
         req.add(
             "getNonceUrl",
             string(
                 abi.encodePacked(
                     "https://api.distributed.town/api/skillwallet/",
-                    tokenId,
+                    tokenId.toString(),
                     "/nonces?action=",
-                    action
+                    action.toString()
                 )
             )
         );
@@ -123,9 +121,9 @@ contract SkillWallet is
             string(
                 abi.encodePacked(
                     "https://api.distributed.town/api/skillwallet/",
-                    tokenId,
+                    tokenId.toString(),
                     "/nonces?action=",
-                    action
+                    action.toString()
                 )
             )
         );
@@ -175,7 +173,7 @@ contract SkillWallet is
             "SkillWallet: Skill wallet already activated"
         );
 
-        _skillWalletToPubKey[skillWalletId] = pubKey;
+        skillWalletToPubKey[skillWalletId] = pubKey;
         _activatedSkillWallets[skillWalletId] = true;
 
         emit SkillWalletActivated(skillWalletId);
