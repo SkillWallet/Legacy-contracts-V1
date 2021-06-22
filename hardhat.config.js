@@ -2,7 +2,6 @@ const { utils } = require("ethers");
 const fs = require("fs");
 const chalk = require("chalk");
 
-require("@nomiclabs/hardhat-waffle");
 require("@tenderly/hardhat-tenderly")
 
 require("@nomiclabs/hardhat-etherscan");
