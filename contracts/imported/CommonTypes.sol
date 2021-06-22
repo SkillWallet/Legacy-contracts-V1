@@ -1,4 +1,5 @@
-pragma solidity >=0.6.0 <0.8.0;
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.6.10;
 
 library Types {
     struct SkillSet {
@@ -7,8 +8,8 @@ library Types {
         Skill skill3;
     }
     struct Skill {
-        uint256 displayStringId;
-        uint256 level;
+        uint64 displayStringId;
+        uint8 level;
     }
     enum Template {
         OpenSource, 
@@ -16,4 +17,31 @@ library Types {
         Local,
         Other
     }
+
+    struct LatestSkills {
+        uint8 posValue;
+        uint256 categoryID;
+    }
+
+    enum Action {
+        Activate,
+        Login, 
+        CreateGig,
+        TakeGig,
+        SubmitGig,
+        CompleteGig
+    }
+
+    struct SWValidationRequest {
+        address caller;
+        Types.Action action;
+        Types.Params params;
+    }
+
+    struct Params {
+        string[] stringParams;
+        uint[] intParams;
+        address[] addressParams;
+    }
+
 }
