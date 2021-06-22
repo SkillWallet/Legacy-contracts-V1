@@ -40,7 +40,7 @@ yarn-error.log*
 .idea
 .env
 
-artifacts
+artifacts/*
 deployments
 mnemonic.txt
 tenderly.yaml
