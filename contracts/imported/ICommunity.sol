@@ -10,8 +10,14 @@ pragma experimental ABIEncoderV2;
  */
 
 interface ICommunity {
+    event MemberAdded(
+        address newMemberAddress,
+        uint256 token,
+        uint256 credits
+    );
 
     function gigsAddr() external view returns (address);
+
     function getMembers() external view returns (uint256[] memory);
 
     function getTokenId() external view returns (uint256);
@@ -29,5 +35,14 @@ interface ICommunity {
 
     function balanceOf(address member) external view returns (uint256);
 
-    function getSkillWalletAddress() external view returns (address);
+    function joinNewMember(
+        uint64 displayStringId1,
+        uint8 level1,
+        uint64 displayStringId2,
+        uint8 level2,
+        uint64 displayStringId3,
+        uint8 level3,
+        string memory uri,
+        uint256 credits
+    ) external;
 }
