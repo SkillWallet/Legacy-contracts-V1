@@ -3,8 +3,8 @@ pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
 import "./ISkillWallet.sol";
-import "./ISWActionExecutor.sol";
 import "../imported/CommonTypes.sol";
+import "./ISWActionExecutor.sol";
 import "../imported/ICommunity.sol";
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -49,13 +49,11 @@ contract SkillWallet is
     bytes32 private jobId;
     uint256 private fee;
 
-    event ValidationRequestIdSent(
-        bytes32 requestId,
-        address caller,
-        uint256 tokenId
-    );
+    event ValidationRequestIdSent(bytes32 requestId, address caller, uint256 tokenId);
     mapping(bytes32 => Types.SWValidationRequest)
         private clReqIdToValidationRequest;
+
+    mapping(bytes32 => bool) validReqIds;
 
     constructor() public ERC721("SkillWallet", "SW") {
         setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
@@ -64,19 +62,8 @@ contract SkillWallet is
         fee = 0.1 * 10**18; // 0.1 LINK
     }
 
-    /**
-     * @dev Throws if called by any account other than the community of the SkillWallet.
-     */
-    modifier onlyCommunity(uint256 skillWalletId) {
-        require(msg.sender == _activeCommunities[skillWalletId], "Only community contract can call this function");
-        _;
-    }
-
     function activateSkillWallet(uint256 skillWalletId) external override {
-        require(
-            msg.sender == address(this),
-            "This function can be called only by the SW contract!"
-        );
+        require(msg.sender == address(this), "This function can be called only by the SW contract!");
         require(
             skillWalletId < _skillWalletCounter.current(),
             "SkillWallet: skillWalletId out of range."
@@ -86,7 +73,7 @@ contract SkillWallet is
             "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet."
         );
         require(
-            !_activatedSkillWallets[skillWalletId],
+            _activatedSkillWallets[skillWalletId] == false,
             "SkillWallet: Skill wallet already activated"
         );
         _activatedSkillWallets[skillWalletId] = true;
@@ -159,16 +146,15 @@ contract SkillWallet is
             clReqIdToValidationRequest[_requestId];
         if (_isValid) {
             emit ValidationPassed(0, 0, 0);
+            validReqIds[_requestId] = true;
 
-            if (req.action == Types.Action.Login) {
+            if(req.action == Types.Action.Login) {
                 return;
             } else if (req.action == Types.Action.Activate) {
                 this.activateSkillWallet(_skillWalletsByOwner[req.caller]);
             } else {
-                ISWActionExecutor actionExecutor =
-                    ISWActionExecutor(
-                        getContractAddressPerAction(req.action, req.caller)
-                    );
+            ISWActionExecutor actionExecutor =
+                ISWActionExecutor(getContractAddressPerAction(req.action, req.caller));
 
                 actionExecutor.execute(
                     req.action,
@@ -214,10 +200,15 @@ contract SkillWallet is
         );
     }
 
+    function isRequestIdValid(bytes32 requestId) public view override returns (bool) {
+        return validReqIds[requestId];
+    }
+
     function updateSkillSet(
         uint256 skillWalletId,
         Types.SkillSet memory newSkillSet
-    ) external override onlyCommunity(skillWalletId) {
+    ) external override {
+        // TODO: Validate that the msg.sender is valid community
 
         require(
             skillWalletId < _skillWalletCounter.current(),
@@ -242,28 +233,17 @@ contract SkillWallet is
             "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet."
         );
         require(
-            !_activatedSkillWallets[skillWalletId],
+            _activatedSkillWallets[skillWalletId] == false,
             "SkillWallet: Skill wallet already activated"
         );
+
         require(
-            bytes(skillWalletToPubKey[skillWalletId]).length == 0,
-            "SkillWallet: Skill wallet already has pubKey assigned."
+            bytes(skillWalletToPubKey[tokenId]).length == 0,
+            "PubKey is already assigned to SkillWallet!"
         );
         skillWalletToPubKey[skillWalletId] = pubKey;
 
         emit PubKeyAddedToSkillWallet(skillWalletId);
-    }
-
-    function changeCommunity(uint256 skillWalletId) external override onlyCommunity(skillWalletId) {
-        require(
-            skillWalletId < _skillWalletCounter.current(),
-            "SkillWallet: skillWalletId out of range."
-        );
-
-        _activeCommunities[skillWalletId] = msg.sender;
-        _communityHistory[skillWalletId].push(msg.sender);
-
-        emit SkillWalletCommunityChanged(skillWalletId, msg.sender);
     }
 
     /// ERC 721 overrides
@@ -390,12 +370,11 @@ contract SkillWallet is
         return _skillSets[skillWalletId];
     }
 
-    function getContractAddressPerAction(Types.Action action, address caller)
-        private
-        view
-        returns (address)
-    {
-        uint256 skillWalletId = _skillWalletsByOwner[caller];
+    function getContractAddressPerAction(
+        Types.Action action,
+        address caller
+    ) private view returns (address) {
+        uint skillWalletId = _skillWalletsByOwner[caller];
         if (
             action == Types.Action.CreateGig ||
             action == Types.Action.TakeGig ||

@@ -1,170 +1,134 @@
-const { assert } = require('chai');
-const truffleAssert = require('truffle-assertions');
+const skillWalletAddress = '0x698f51C10fa47bE854E974C2b526D5288e0Bd5A7'
+const communityAddress = '0x0d296ccE6992A42fb51F77fa08bfe7C62F89201A'
+const { assert } = require('chai')
+var ethers = require('ethers')
+var abi = require('../artifacts/contracts/main/SkillWallet.sol/SkillWallet.json')
+  .abi
+var communityAbi = require('../artifacts/contracts/mocks/Community.sol/Community.json')
+  .abi
+const helpers = require('./helpers')
+const memberAddress = '0x2CEF62C91Dd92FC35f008D1d6Ed08EADF64306bc';
+function mnemonic() {
+  return "close gesture fatal vacant time toy general horror payment visit case you";
+}
 
-const Community = artifacts.require('Community');
-const SkillWallet = artifacts.require('SkillWallet');
-const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
-var BN = web3.utils.BN;
-let skillSet = [[1, 1], [1, 1], [1, 1]];
+const provider = new ethers.providers.JsonRpcProvider(
+  'https://rpc-mumbai.maticvigil.com',
+)
 
-contract('SkillWallet', function ([_, registryFunder, community, creator, skillWalletOwner, skillWalletOwner2, skillWalletOwner3, notASkillWalletOwner]) {
+// Wallet connected to a provider
+const senderWalletMnemonic = ethers.Wallet.fromMnemonic(
+  mnemonic(),
+  "m/44'/60'/0'/0/0",
+)
 
-    before(async function () {
-    })
-    beforeEach(async function () {
-        this.skillWallet = await SkillWallet.new({ from: creator });
-        this.community = await Community.new(this.skillWallet.address);
-    });
+const keyPair = helpers.generateKeyPair()
+console.log('KeyPair generated');
 
-    describe.only('SkillWallet', async function () {
-        describe('Creating a SkillWallet', async function () {
-            it("should fail when there is already a SW created for this user", async function () {
+let signer = senderWalletMnemonic.connect(provider)
 
-                const tx = await this.skillWallet.create(
-                    skillWalletOwner,
-                    skillSet,
-                    metadataUrl,
-                );
+const skillWalletContract = new ethers.Contract(skillWalletAddress, abi, signer)
 
-                const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-                assert.equal(SWCreated, true);
+const communityContract = new ethers.Contract(
+  communityAddress,
+  communityAbi,
+  signer,
+)
 
-                const failingTx = this.skillWallet.create(
-                    skillWalletOwner,
-                    skillSet,
-                    metadataUrl
-                );
-                await truffleAssert.reverts(
-                    failingTx,
-                    "SkillWallet: There is SkillWallet already registered for this address."
-                );
-            });
-            it("should create an inactive SW", async function () {
+async function joinCommunity() {
+  const url =
+    'https://hub.textile.io/ipfs/bafkreicezefuc6einewxdqhlpefelzjponwdqt4vmp2byosq5uwpn7hgoq'
+  const wei = ethers.utils.parseEther('2220').toString()
+  const joinedTx = await communityContract.joinNewMember(
+    1,
+    1,
+    2,
+    2,
+    3,
+    3,
+    url,
+    wei,
+  )
+  const joinCommunityTxResult = await joinedTx.wait()
+  const { events } = joinCommunityTxResult
+  const memberAddedEventEmitted = events.find((e) => e.event === 'MemberAdded');
 
-                const tx = await this.skillWallet.create(
-                    skillWalletOwner,
-                    skillSet,
-                    metadataUrl,
-                    { from: community }
-                );
-                const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-                const tokenId = tx.logs[1].args[2];
+  assert.isOk(memberAddedEventEmitted, 'MemberAdded event emitted');
+  console.log('[joinCommunity]:', 'MemberAdded event emitted')
+  assert.isAbove(+memberAddedEventEmitted.args[1], -1, 'TokenID is valid');
+  console.log('[joinCommunity]:', 'TokenID is valid')
+  return memberAddedEventEmitted.args[1];
 
-                assert.equal(SWCreated, true);
+}
 
+async function addPubKeyToSkillWallet(tokenId) {
+  const addPubKeyTx = await skillWalletContract.addPubKeyToSkillWallet(
+    tokenId,
+    keyPair.pubKey,
+  )
 
-                const skillWalletRegistered = await this.skillWallet.isSkillWalletRegistered(skillWalletOwner);
-                const skillWalletId = await this.skillWallet.getSkillWalletIdByOwner(skillWalletOwner);
-                const skillWalletActiveCommunity = await this.skillWallet.getActiveCommunity(tokenId);
-                const skillWalletCommunityHistory = await this.skillWallet.getCommunityHistory(tokenId);
-                const skillWalletSkillSet = await this.skillWallet.getSkillSet(tokenId);
-                const skillWalletActivated = await this.skillWallet.isSkillWalletActivated(tokenId);
+  // Wait for transaction to finish
+  const addPubKeyTxResult = await addPubKeyTx.wait()
+  const { events } = addPubKeyTxResult
+  const addPubKeyEventEmitted = events.find(
+    (e) => e.event === 'PubKeyAddedToSkillWallet',
+  )
 
-                assert.equal(skillWalletRegistered, true);
-                assert.equal(skillWalletId.toString(), tokenId.toString());
-                assert.equal(skillWalletActiveCommunity, community);
-                assert.equal(skillWalletActivated, false);
-                assert.equal(skillWalletSkillSet['skill2']['displayStringId'].toString(), '1');
-                assert.equal(skillWalletSkillSet['skill2']['level'].toString(), '1');
-                assert.equal(skillWalletCommunityHistory[0], community);
-            });
-        });
+  const pubKey = await skillWalletContract.skillWalletToPubKey(tokenId);
 
-        describe('Adding a pubKey to a SkillWallet', async function () {
-            it("should fail when the SW is not created yet", async function () {
-                const failingTx = this.skillWallet.addPubKeyToSkillWallet(
-                    1000000,
-                    "",
-                    { from: creator }
-                );
-                await truffleAssert.reverts(
-                    failingTx,
-                    "SkillWallet: skillWalletId out of range."
-                );
-            });
-            it("should fail when the call is not made by the owner", async function () {
-                const failingTx = this.skillWallet.addPubKeyToSkillWallet(
-                    1000000,
-                    ""
-                );
-                await truffleAssert.reverts(
-                    failingTx,
-                    "Ownable: caller is not the owner"
-                );
-            });
+  assert.equal(pubKey, keyPair.pubKey, 'PubKey is correctly stored;');
+  console.log('[addPubKeyToSkillWallet]:', 'PubKey is correctly stored')
+  assert.isOk(addPubKeyEventEmitted, 'PubKeyAddedToSW event emitted');
+  console.log('[addPubKeyToSkillWallet]:', 'PubKeyAddedToSW event emitted')
+}
 
-            it("should fail when the SW has pubKey already assigned.", async function () {
+async function validateSW(tokenId) {
+  const nonce = await helpers.getNonce(tokenId, 0);
+  const signature = await helpers.sign(keyPair.privKey, nonce);
+  const validationTx = await skillWalletContract.validate(
+    signature,
+    tokenId,
+    0,
+    [],
+    [],
+    [],
+  )
+  // Wait for transaction to finish
+  const validationTxResult = await validationTx.wait()
+  const { events } = validationTxResult
+  const validationEventEmitted = events.find((e) => e.event === 'ValidationRequestIdSent');
+  const requestId = validationEventEmitted.args[0];
 
-                const tx = await this.skillWallet.create(
-                    skillWalletOwner,
-                    skillSet,
-                    metadataUrl,
-                    { from: community }
-                );
-                const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-                const tokenId = tx.logs[1].args[2];
+  assert.isOk(validationEventEmitted, 'ValidationRequestIdSent event emitted');
+  console.log('[validateSW]:', 'ValidationRequestIdSent event emitted')
+  assert.isOk(requestId, 'requestId not empty');
+  console.log('[validateSW]:', 'requestId not empty')
+  return requestId;
+}
 
-                assert.equal(SWCreated, true);
+async function hasValidationPassed(reqId) {
+  const validationPassed = await skillWalletContract.isRequestIdValid(reqId);
+  assert.isTrue(validationPassed, 'Validation has passed.');
+}
 
-                const pubKeyTx = await this.skillWallet.addPubKeyToSkillWallet(
-                    tokenId,
-                    "pubKey",
-                    { from: creator }
-                );
+async function isSkillWalletActivated(tokenId) {
+  const isActivated = await skillWalletContract.isSkillWalletActivated(tokenId)
+  console.log('isActivated:', isActivated)
+}
 
-                const pubKeyEventEmitted = pubKeyTx.logs[0].event === 'PubKeyAddedToSkillWallet'
-                assert.equal(pubKeyEventEmitted, true);
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
-                const failingTx = this.skillWallet.addPubKeyToSkillWallet(
-                    tokenId,
-                    "pubKey",
-                    { from: creator }
-                );
+async function test() {
+  const tokenId = await joinCommunity();
+  await addPubKeyToSkillWallet(tokenId);
+  const reqId = await validateSW(tokenId);
+  await isSkillWalletActivated(tokenId);
+  console.log('[sleep]', 'waiting 10 seconds for the chainlink validation to pass')
+  await sleep(10000);
+  await hasValidationPassed(reqId);
+  await isSkillWalletActivated(tokenId);
+}
 
-                await truffleAssert.reverts(
-                    failingTx,
-                    "SkillWallet: Skill wallet already has pubKey assigned."
-                );
-            });
-            it("should set pubKey properly", async function () {
-
-                const tx = await this.skillWallet.create(
-                    skillWalletOwner,
-                    skillSet,
-                    metadataUrl,
-                    { from: community }
-                );
-                const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-                const tokenId = tx.logs[1].args[2];
-
-                assert.equal(SWCreated, true);
-
-                const pubKeyTx = await this.skillWallet.addPubKeyToSkillWallet(
-                    tokenId,
-                    "pubKey",
-                    { from: creator }
-                );
-
-                const pubKeyEventEmitted = pubKeyTx.logs[0].event === 'PubKeyAddedToSkillWallet'
-                assert.equal(pubKeyEventEmitted, true);
-
-                const skillWalletRegistered = await this.skillWallet.isSkillWalletRegistered(skillWalletOwner);
-                const skillWalletId = await this.skillWallet.getSkillWalletIdByOwner(skillWalletOwner);
-                const skillWalletActiveCommunity = await this.skillWallet.getActiveCommunity(tokenId);
-                const skillWalletCommunityHistory = await this.skillWallet.getCommunityHistory(tokenId);
-                const skillWalletSkillSet = await this.skillWallet.getSkillSet(tokenId);
-                const skillWalletActivated = await this.skillWallet.isSkillWalletActivated(tokenId);
-
-                const pubKey = await this.skillWallet.skillWalletToPubKey(tokenId);
-                assert.equal(skillWalletRegistered, true);
-                assert.equal(skillWalletId.toString(), tokenId.toString());
-                assert.equal(skillWalletActiveCommunity, community);
-                assert.equal(skillWalletActivated, false);
-                assert.equal(skillWalletSkillSet['skill2']['displayStringId'].toString(), '1');
-                assert.equal(skillWalletSkillSet['skill2']['level'].toString(), '1');
-                assert.equal(skillWalletCommunityHistory[0], community);
-                assert.equal(pubKey, 'pubKey');
-            });
-        });
-    });
-});
+test()
