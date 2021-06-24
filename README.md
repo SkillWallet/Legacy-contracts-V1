@@ -20,7 +20,7 @@ Behind the hoods, the protocol follows these steps:
 `import skill-wallet/contracts/main/SkillWallet.sol` <br/>
 `import skill-wallet/contracts/main/ISWActionExecutor.sol` <br/>
 
-### Flow
+## Flow
 
 1. After creating and activating the skillWallet through the SW app & DiTo Web, the app can trigger the off-chain signature mechanism
 2. The user scans a QR code with encoded nonce & action and the app calls the validate function from the SkillWallet.sol contract
