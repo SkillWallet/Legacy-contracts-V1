@@ -29,8 +29,6 @@ interface ISkillWallet is IERC721 {
     
     function addPubKeyToSkillWallet(uint256 skillWalletId, string calldata pubKey) external;
 
-    function changeCommunity(uint256 skillWalletId) external;
-
     function isSkillWalletRegistered(address skillWalletOwner) external view returns (bool status);
 
     function getCommunityHistory(uint256 skillWalletId) external view returns (address[] memory communities);
@@ -44,5 +42,7 @@ interface ISkillWallet is IERC721 {
     function getSkillSet(uint256 skillWalletId) external view returns (Types.SkillSet memory skillSet);
 
     function isSkillWalletActivated(uint256 skillWalletId) external view returns (bool status);
+
+    function isRequestIdValid(bytes32 requestId) external view returns (bool);
 
 }

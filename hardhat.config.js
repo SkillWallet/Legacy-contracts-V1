@@ -3,8 +3,11 @@ const fs = require("fs");
 const chalk = require("chalk");
 
 require("@tenderly/hardhat-tenderly")
-
 require("@nomiclabs/hardhat-etherscan");
+require("@nomiclabs/hardhat-web3");
+require("@nomiclabs/hardhat-truffle5");
+require("@nomiclabs/hardhat-waffle");
+
 
 const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 

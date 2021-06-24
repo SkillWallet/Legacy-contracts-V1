@@ -5,29 +5,6 @@ const { config, ethers, tenderly, run } = require("hardhat");
 const { utils } = require("ethers");
 const R = require("ramda");
 
-const main = async () => {
-    const deployerWallet = ethers.provider.getSigner();
-    const linkAddress = config.linkAddress[config.defaultNetwork];
-    const oracleNodeAddress = config.oracleNodeAddress[config.defaultNetwork];
-
-    const deployerWalletAddress = await deployerWallet.getAddress();
-
-    console.log("\n\n 📡 Deploying...\n");
-
-    const oracle = await deploy("Oracle", [linkAddress]);
-
-    const oracleAddress = orcale.address;
-
-    const oracleFactory = await ethers.getContractFactory("Oracle");
-    const oracleInstance = await oracleFactory.attach(oracleAddress);
-
-    const result = await oracleInstance.setFulfillmentPermission(oracleNodeAddress, true)
-
-    await result.wait()
-
-
-};
-
 const deploy = async (contractName, _args = [], overrides = {}, libraries = {}) => {
     console.log(` 🛰  Deploying: ${contractName}`);
 
@@ -64,9 +41,6 @@ const deploy = async (contractName, _args = [], overrides = {}, libraries = {}) 
 
     return deployed;
 };
-
-
-// ------ utils -------
 
 // abi encodes contract arguments
 // useful when you want to manually verify the contracts
@@ -133,9 +107,7 @@ const tenderlyVerify = async ({contractName, contractAddress}) => {
     }
 }
 
-main()
-    .then(() => process.exit(0))
-    .catch((error) => {
-        console.error(error);
-        process.exit(1);
-    });
+module.exports = {
+    deploy,
+    tenderlyVerify
+}
