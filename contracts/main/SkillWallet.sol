@@ -49,7 +49,6 @@ contract SkillWallet is
     bytes32 private jobId;
     uint256 private fee;
 
-    event ValidationRequestIdSent(bytes32 requestId, address caller, uint256 tokenId);
     mapping(bytes32 => Types.SWValidationRequest)
         private clReqIdToValidationRequest;
 
