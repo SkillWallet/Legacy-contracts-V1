@@ -16,9 +16,9 @@ Behind the hoods, the protocol follows these steps:
 
 ## Imports
 
-`import skill-wallet/contracts/main/ISkillWallet.sol`
-`import skill-wallet/contracts/main/SkillWallet.sol`
-`import skill-wallet/contracts/main/ISWActionExecutor.sol`
+`import skill-wallet/contracts/main/ISkillWallet.sol` <br/>
+`import skill-wallet/contracts/main/SkillWallet.sol` <br/>
+`import skill-wallet/contracts/main/ISWActionExecutor.sol` <br/>
 
 ### Flow
 
@@ -28,7 +28,7 @@ Behind the hoods, the protocol follows these steps:
 4. The chainlink callback calls the coresponding SWActionExecutor depending on the action 
 4. The contract which is executing the request should implement ISWActionExecutor (The actions are predefined by the SkillWallet contract)
 5. By implementing the interface, the contract will be able to gain the benefits of fast and secure, UX friendly signature mechanism.
-
+<br/><br/>
 The SkillWallet.sol contract can be used for getting the SW data such as check if it's activated, skillSet, current and history of communities.
 
 
