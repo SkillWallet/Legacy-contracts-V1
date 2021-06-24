@@ -1,8 +1,27 @@
 {
-  "name": "skill-wallet",
-  "version": "1.0.0",
+  "name": "skill-wallet-test",
+  "version": "0.0.1",
   "main": "index.js",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SkillWallet/contracts"
+  },
+  "files": [
+    "/contracts/main/*.sol",
+    "/artifacts/contracts/main/**/*.json"
+  ],
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "smart",
+    "contracts",
+    "security",
+    "identity",
+    "skill",
+    "wallet"
+  ],
+  "author": "SkillWallet Team <team@distributed.town>",
+  "homepage": "https://skillwallet.id/",
   "devDependencies": {
     "eslint": "^7.5.0",
     "eslint-config-airbnb": "^18.2.0",
