@@ -237,7 +237,7 @@ contract SkillWallet is
         );
 
         require(
-            bytes(skillWalletToPubKey[tokenId]).length == 0,
+            bytes(skillWalletToPubKey[skillWalletId]).length == 0,
             "PubKey is already assigned to SkillWallet!"
         );
         skillWalletToPubKey[skillWalletId] = pubKey;

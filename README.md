@@ -14,14 +14,21 @@ Behind the hoods, the protocol follows these steps:
 - If the validation passes the SkillWallet is marked as Active and from now on can be used for signing further transactions.
 - At this point, new users will receive their personal NFT ID – and own, de-facto, their universal, non-transferable, self-sovereign identity on the Blockchain.
 
-# Contracts
+## Imports
 
-### 1. SkillWallet 
-Location: `/contracts/main/SkillWallet.sol`
-Addresses:
-- Matic mainnet: `0x14DEF8Be678589dd1445A46Fc5bE925d479694B9`
-- Matic testnet (Mumbai): `0xB0aD4014Ee360A2c7c668F2883ed73ae6780c817`
-- RSK testnet: `0x5dDA86D336Aad78eDb8025902ab3DF8517df446E`
+`import skill-wallet/contracts/main/ISkillWallet.sol`
+`import skill-wallet/contracts/main/SkillWallet.sol`
+`import skill-wallet/contracts/main/ISWActionExecutor.sol`
 
-Smart contract used for SkillWallet management. Inherits from the ERC721 standard. Each SkillWallet is an NT-NFT (Non-transferable non-fungible token)
-Uses Chainlink VRF (inherits from VRFConsumerBase) for creating random hash, used for QR code verification.
+### Flow
+
+1. After creating and activating the skillWallet through the SW app & DiTo Web, the app can trigger the off-chain signature mechanism
+2. The user scans a QR code with encoded nonce & action and the app calls the validate function from the SkillWallet.sol contract
+3. The Validate function triggers the external adapter and verifies the signature. 
+4. The chainlink callback calls the coresponding SWActionExecutor depending on the action 
+4. The contract which is executing the request should implement ISWActionExecutor (The actions are predefined by the SkillWallet contract)
+5. By implementing the interface, the contract will be able to gain the benefits of fast and secure, UX friendly signature mechanism.
+
+The SkillWallet.sol contract can be used for getting the SW data such as check if it's activated, skillSet, current and history of communities.
+
+

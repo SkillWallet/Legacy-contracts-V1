@@ -6,7 +6,7 @@ var abi = require('../artifacts/contracts/main/SkillWallet.sol/SkillWallet.json'
   .abi
 var communityAbi = require('../artifacts/contracts/mocks/Community.sol/Community.json')
   .abi
-const helpers = require('./helpers')
+const helpers = require('../test/helpers')
 const memberAddress = '0x2CEF62C91Dd92FC35f008D1d6Ed08EADF64306bc';
 function mnemonic() {
   return "";
