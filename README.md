@@ -1,21 +1,18 @@
 # Overview
-The SkillWallet is a standard for universal, self-sovereign Identity as an NFT.<br/>
-In order to receive it and activate individuals need to be member of a Community. By being part of a Community, they can participate Gigs/Tasks/Projects, that in return provide them Credits (DITO), that they can spend across the whole network, partners included.<br/>
-Once an individual member's skills are validated (through Gigs), they will be able to spend their Credits, create new tasks/projects, and move to a different Community seamlessly, without losing the Credits & the reputation earned.
+The SkillWallet is a permissionless, open-source protocol for the creation of universal, self-sovereign Identities - based on Skills instead of personal data. <br/>
+It comes as an upgradable, Non-Transferable, Non-Fungible-Token (U-NT-NFT) - and it entiles native sybil-resistant properties. <br/>
+Moreover, in order to receive their NT-NFT, individual users need to join a Community/Protocol/Platform. By being part of a Community, they can participate in Gigs/Tasks/Projects, that in return provide them Credits (DITO) - in the form of ERC777 - that they can spend across the whole network, including the Partners that integrate the SkillWallet package in their existing Contract. <br/>
+Once an individual member's skills are validated (simply by contributing to Gigs), they will be able to spend their Credits, create new tasks/projects, and move to a different Community seamlessly, without losing the Credits & the reputation earned. <br/>
+The sybyl-resistance features, together with the portability of the Skills & Benefits acquired, makes the SkillWallet the complementary missing piece in the Multiverse, and the NFT space at large.
 
 ## Steps
-Whenever new users start to create a new account, they are prompted to:
-- select their main role or skills, plus a nickname and avatar
-- based on their Skills selection, they can pick the Community they want to join
-- these selections constitue the Metadata of their NFT ID, so that any Identity is initiated within a Community
-- once the new SkillWallet ID is initiated, Chainlink Verifiable Random Function generates a unique hash that is added to the SkillWalletRegistry contract
-- during the process, the new NFT ID is initially inactive, so the same VRF hash is used to generate a QR-code pattern, that is verifiably unique, and cannot be anyhow re-used or counterfaited
-- at this point, new users will just download our SkillWallet Mobile App, and scan the QR-Code on the Web App.
-- Finally, our Chainlink External Adapter will verify this action, and in just in 1 step, users new ID will be activated and they will receive their personal NFT ID – and own, de-facto, their universal, non-transferable, self-sovereign identity!
-
-## Links
-- [Video Demo](https://www.youtube.com/watch?v=L_67SfOAfQU)
-- Try out the [Mobile App!](https://drive.google.com/drive/folders/1AsQ9ksHGGDLgCaIIodzkYRMl__QRpb9k?usp=sharing) (Android APK)
+Behind the hoods, the protocol follows these steps:
+- New SkillWallet ID is initiated as a Non-Transferable NFT (NT-NFT), within the community, and initially labeled inactive. 
+- By installing the SkillWallet mobile app, a key pair is generated and the public key is stored on-chain and associated to the skill wallet token Id of the user.
+- A unique nonce is generated and encoded in a QR code, shown on the Web App
+- By scanning the QR code the mobile app signs the nonce and a Chainlink external adapter recovers the pubKey from the signature and verifies it
+- If the validation passes the SkillWallet is marked as Active and from now on can be used for signing further transactions.
+- At this point, new users will receive their personal NFT ID – and own, de-facto, their universal, non-transferable, self-sovereign identity on the Blockchain.
 
 # Contracts
 
