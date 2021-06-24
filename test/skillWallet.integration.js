@@ -9,7 +9,7 @@ var communityAbi = require('../artifacts/contracts/mocks/Community.sol/Community
 const helpers = require('./helpers')
 const memberAddress = '0x2CEF62C91Dd92FC35f008D1d6Ed08EADF64306bc';
 function mnemonic() {
-  return "close gesture fatal vacant time toy general horror payment visit case you";
+  return "";
 }
 
 const provider = new ethers.providers.JsonRpcProvider(
