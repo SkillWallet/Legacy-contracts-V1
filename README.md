@@ -1,50 +1,34 @@
 # Overview
-The SkillWallet is a standard for universal, self-sovereign Identity as an NFT.<br/>
-In order to receive it and activate individuals need to be member of a Community. By being part of a Community, they can participate Gigs/Tasks/Projects, that in return provide them Credits (DITO), that they can spend across the whole network, partners included.<br/>
-Once an individual member's skills are validated (through Gigs), they will be able to spend their Credits, create new tasks/projects, and move to a different Community seamlessly, without losing the Credits & the reputation earned.
+The SkillWallet is a permissionless, open-source protocol for the creation of universal, self-sovereign Identities - based on Skills instead of personal data. <br/>
+It comes as an upgradable, Non-Transferable, Non-Fungible-Token (U-NT-NFT) - and it entiles native sybil-resistant properties. <br/>
+Moreover, in order to receive their NT-NFT, individual users need to join a Community/Protocol/Platform. By being part of a Community, they can participate in Gigs/Tasks/Projects, that in return provide them Credits (DITO) - in the form of ERC777 - that they can spend across the whole network, including the Partners that integrate the SkillWallet package in their existing Contract. <br/>
+Once an individual member's skills are validated (simply by contributing to Gigs), they will be able to spend their Credits, create new tasks/projects, and move to a different Community seamlessly, without losing the Credits & the reputation earned. <br/>
+The sybyl-resistance features, together with the portability of the Skills & Benefits acquired, makes the SkillWallet the complementary missing piece in the Multiverse, and the NFT space at large.
 
 ## Steps
-Whenever new users start to create a new account, they are prompted to:
-- select their main role or skills, plus a nickname and avatar
-- based on their Skills selection, they can pick the Community they want to join
-- these selections constitue the Metadata of their NFT ID, so that any Identity is initiated within a Community
-- once the new SkillWallet ID is initiated, Chainlink Verifiable Random Function generates a unique hash that is added to the SkillWalletRegistry contract
-- during the process, the new NFT ID is initially inactive, so the same VRF hash is used to generate a QR-code pattern, that is verifiably unique, and cannot be anyhow re-used or counterfaited
-- at this point, new users will just download our SkillWallet Mobile App, and scan the QR-Code on the Web App.
-- Finally, our Chainlink External Adapter will verify this action, and in just in 1 step, users new ID will be activated and they will receive their personal NFT ID – and own, de-facto, their universal, non-transferable, self-sovereign identity!
+Behind the hoods, the protocol follows these steps:
+- New SkillWallet ID is initiated as a Non-Transferable NFT (NT-NFT), within the community, and initially labeled inactive. 
+- By installing the SkillWallet mobile app, a key pair is generated and the public key is stored on-chain and associated to the skill wallet token Id of the user.
+- A unique nonce is generated and encoded in a QR code, shown on the Web App
+- By scanning the QR code the mobile app signs the nonce and a Chainlink external adapter recovers the pubKey from the signature and verifies it
+- If the validation passes the SkillWallet is marked as Active and from now on can be used for signing further transactions.
+- At this point, new users will receive their personal NFT ID – and own, de-facto, their universal, non-transferable, self-sovereign identity on the Blockchain.
 
-## Links
-- [Video Demo](https://www.youtube.com/watch?v=L_67SfOAfQU)
-- Try out the [Mobile App!](https://drive.google.com/drive/folders/1AsQ9ksHGGDLgCaIIodzkYRMl__QRpb9k?usp=sharing) (Android APK)
+## Imports
 
-# Contracts
+`import skill-wallet/contracts/main/ISkillWallet.sol`
+`import skill-wallet/contracts/main/SkillWallet.sol`
+`import skill-wallet/contracts/main/ISWActionExecutor.sol`
 
-### 1. SkillWallet 
-Location: `/contracts/main/SkillWallet.sol`
-Addresses:
-- Matic mainnet: `0x14DEF8Be678589dd1445A46Fc5bE925d479694B9`
-- Matic testnet (Mumbai): `0xB0aD4014Ee360A2c7c668F2883ed73ae6780c817`
-- RSK testnet: `0x5dDA86D336Aad78eDb8025902ab3DF8517df446E`
+### Flow
 
-Smart contract used for SkillWallet management. Inherits from the ERC721 standard. Each SkillWallet is an NT-NFT (Non-transferable non-fungible token)
-Uses Chainlink VRF (inherits from VRFConsumerBase) for creating random hash, used for QR code verification.
+1. After creating and activating the skillWallet through the SW app & DiTo Web, the app can trigger the off-chain signature mechanism
+2. The user scans a QR code with encoded nonce & action and the app calls the validate function from the SkillWallet.sol contract
+3. The Validate function triggers the external adapter and verifies the signature. 
+4. The chainlink callback calls the coresponding SWActionExecutor depending on the action 
+4. The contract which is executing the request should implement ISWActionExecutor (The actions are predefined by the SkillWallet contract)
+5. By implementing the interface, the contract will be able to gain the benefits of fast and secure, UX friendly signature mechanism.
 
-### 2. CommunitiesRegistry.sol 
-Location: `/contracts/imported/CommunitiesRegistry.sol`
-Addresses:
-- Matic mainnet: `0xB4Dcc7cE6C7e8E5595fBC708b09123A86360e3e2`
-- Matic testnet (Mumbai): `0xAED585cE5F23D34784De65534500d0a0CD119ef3`
-- RSK testnet: `0xd6b562Cb49B8a9DA7A3C4d73d96Bb5eA19F51299`
-
-Smart contract used for Community management and community proxy functions. Inherits from ChainlinkClient, and uses Chainlink for offchain credits computation based on
-the user's skills. Current implementation uses a public core adapter (HttpGet). External adapter is in progress.
+The SkillWallet.sol contract can be used for getting the SW data such as check if it's activated, skillSet, current and history of communities.
 
 
-### 3. Community.sol
-Location: `/contracts/imported/Community.sol`
-Addresses:
-- Matic mainnet: `0x1cfe58e4319518400Dc83043C2Edd53ACEE9C07b`
-- Matic testnet (Mumbai): `0x280971a2bd5D2506d11AC8ce2d3FCaB58A267AE4`
-
-Smart contract for managing Communities and the activities in the communities themselves. 
-It is implemented as ERC1155 (Inherits from ERC1155 with small modifications) and issues two types of tokens: DitoCredits and Community tokens. 
