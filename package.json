@@ -1,6 +1,6 @@
 {
   "name": "skill-wallet",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "index.js",
   "license": "MIT",
   "bugs": {
@@ -8,6 +8,8 @@
   },
   "files": [
     "/contracts/main/*.sol",
+    "/contracts/mocks/LinkToken.sol",
+    "/contracts/mocks/MockOracle.sol",
     "/artifacts/contracts/main/**/*.json"
   ],
   "keywords": [
