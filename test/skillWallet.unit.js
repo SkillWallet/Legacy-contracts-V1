@@ -14,7 +14,6 @@ let skillSet = [
   [1, 1],
 ]
 const { expect } = require('chai')
-const helpers = require('./helpers')
 
 contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
   before(async function () {})
@@ -212,11 +211,10 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
 
         assert.isTrue(SWCreated)
 
-        const keyPair = helpers.generateKeyPair()
         // Add pubKey to the created SkillWallet
         const pubKeyTx = await this.skillWallet.addPubKeyToSkillWallet(
           tokenId,
-          keyPair.pubKey,
+          'pubKey',
           { from: creator },
         )
 
@@ -224,8 +222,7 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
           pubKeyTx.logs[0].event === 'PubKeyAddedToSkillWallet'
         assert.isTrue(pubKeyEventEmitted)
 
-        const nonce = await helpers.getNonce(tokenId, 0)
-        const signature = await helpers.sign(keyPair.privKey, nonce)
+        const signature = ''
 
         await this.linkTokenMock.transfer(
           this.skillWallet.address,
@@ -270,11 +267,10 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
 
         assert.isTrue(SWCreated)
 
-        const keyPair = helpers.generateKeyPair()
         // Add pubKey to the created SkillWallet
         const pubKeyTx = await this.skillWallet.addPubKeyToSkillWallet(
           tokenId,
-          keyPair.pubKey,
+          'pubKey',
           { from: creator },
         )
 
@@ -282,8 +278,7 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
           pubKeyTx.logs[0].event === 'PubKeyAddedToSkillWallet'
         assert.isTrue(pubKeyEventEmitted)
 
-        const nonce = await helpers.getNonce(tokenId, 0)
-        const signature = await helpers.sign(keyPair.privKey, nonce)
+        const signature = '';
 
         await this.linkTokenMock.transfer(
           this.skillWallet.address,
