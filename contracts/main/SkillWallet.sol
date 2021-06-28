@@ -54,9 +54,9 @@ contract SkillWallet is
 
     mapping(bytes32 => bool) validReqIds;
 
-    constructor() public ERC721("SkillWallet", "SW") {
-        setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
-        oracle = 0xc8D925525CA8759812d0c299B90247917d4d4b7C;
+    constructor(address _linkToken, address _oracle) public ERC721("SkillWallet", "SW") {
+        setChainlinkToken(_linkToken);
+        oracle = _oracle;
         jobId = "31061086cb2749f7a3f99f2d5179caf7";
         fee = 0.1 * 10**18; // 0.1 LINK
     }
@@ -238,7 +238,7 @@ contract SkillWallet is
 
         require(
             bytes(skillWalletToPubKey[skillWalletId]).length == 0,
-            "PubKey is already assigned to SkillWallet!"
+            "SkillWallet: Skill wallet already has pubKey assigned."
         );
         skillWalletToPubKey[skillWalletId] = pubKey;
 
