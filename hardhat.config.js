@@ -23,7 +23,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 //
 // Select the network you want to deploy to here:
 //
-const defaultNetwork = "mumbai";
+const defaultNetwork = "kovan";
 
 function mnemonic() {
   try {
@@ -58,6 +58,13 @@ module.exports = {
       accounts: {
         mnemonic: mnemonic(),
       },
+    },
+    kovan: {
+      url: 'https://kovan.infura.io/v3/779285194bd146b48538d269d1332f20',
+      gasPrice: 1000000000,
+      accounts: {
+        mnemonic: mnemonic(),
+      }
     },
     mumbai: {
       url: 'https://rpc-mumbai.maticvigil.com/',

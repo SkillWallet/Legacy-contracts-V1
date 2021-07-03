@@ -2,7 +2,7 @@
 pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
-import "../imported/ICommunity.sol";
+import "../imported/IMinimumCommunity.sol";
 import "../main/ISkillWallet.sol";
 
 /**
@@ -12,7 +12,7 @@ import "../main/ISkillWallet.sol";
  * @author DistributedTown
  */
 
-contract Community is ICommunity {
+contract MinimumCommunity is IMinimumCommunity {
     address private skillWalletAddress;
 
     constructor(address _skillWalletAddress) public {

@@ -1,6 +1,6 @@
 {
   "name": "skill-wallet",
-  "version": "0.0.2",
+  "version": "0.0.3-beta",
   "main": "index.js",
   "license": "MIT",
   "bugs": {
@@ -10,6 +10,7 @@
     "/contracts/main/*.sol",
     "/contracts/mocks/LinkToken.sol",
     "/contracts/mocks/MockOracle.sol",
+    "/contracts/imported/*.sol",
     "/artifacts/contracts/main/**/*.json"
   ],
   "keywords": [
@@ -45,6 +46,7 @@
     "@nomiclabs/hardhat-waffle": "^2.0.0",
     "@openzeppelin/contracts": "3.4.1",
     "@tenderly/hardhat-tenderly": "^1.0.10",
+    "@chainlink/token": "^1.1.0",
     "chai": "^4.2.0",
     "chalk": "^4.1.0",
     "ethers": "^5.2.3",

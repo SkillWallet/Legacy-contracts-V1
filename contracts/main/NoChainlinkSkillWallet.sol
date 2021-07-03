@@ -10,7 +10,6 @@ import "../imported/IMinimumCommunity.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 
 /**
  * @title DistributedTown SkillWallet
@@ -18,13 +17,7 @@ import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
  * @dev Implementation of the SkillWallet contract
  * @author DistributedTown
  */
-contract SkillWallet is
-    ISkillWallet,
-    IERC721Metadata,
-    ERC721,
-    Ownable,
-    ChainlinkClient
-{
+contract NoChainlinkSkillWallet is ISkillWallet, IERC721Metadata, ERC721, Ownable {
     using Counters for Counters.Counter;
 
     // Mapping from token ID to active community that the SW is part of
@@ -54,15 +47,13 @@ contract SkillWallet is
 
     mapping(bytes32 => bool) validReqIds;
 
-    constructor(address _linkToken, address _oracle) public ERC721("SkillWallet", "SW") {
-        setChainlinkToken(_linkToken);
-        oracle = _oracle;
-        jobId = "31061086cb2749f7a3f99f2d5179caf7";
-        fee = 0.1 * 10**18; // 0.1 LINK
-    }
+    constructor() public ERC721("SkillWallet", "SW") {}
 
     function activateSkillWallet(uint256 skillWalletId) external override {
-        require(msg.sender == address(this), "This function can be called only by the SW contract!");
+        require(
+            msg.sender == address(this),
+            "This function can be called only by the SW contract!"
+        );
         require(
             skillWalletId < _skillWalletCounter.current(),
             "SkillWallet: skillWalletId out of range."
@@ -93,38 +84,8 @@ contract SkillWallet is
             "PubKey should be assigned to the skill walletID first!"
         );
 
-        Chainlink.Request memory req =
-            buildChainlinkRequest(
-                jobId,
-                address(this),
-                this.validationCallback.selector
-            );
-        req.add("pubKey", skillWalletToPubKey[tokenId]);
-        req.add("signature", signature);
-        req.add(
-            "getNonceUrl",
-            string(
-                abi.encodePacked(
-                    "https://api.skillwallet.id/api/skillwallet/",
-                    tokenId.toString(),
-                    "/nonces?action=",
-                    action.toString()
-                )
-            )
-        );
-        req.add(
-            "delNonceUrl",
-            string(
-                abi.encodePacked(
-                    "https://api.skillwallet.id/api/skillwallet/",
-                    tokenId.toString(),
-                    "/nonces?action=",
-                    action.toString()
-                )
-            )
-        );
+        bytes32 reqId = stringToBytes32(signature);
         address caller = ownerOf(tokenId);
-        bytes32 reqId = sendChainlinkRequestTo(oracle, req, fee);
 
         clReqIdToValidationRequest[reqId] = Types.SWValidationRequest(
             caller,
@@ -132,30 +93,35 @@ contract SkillWallet is
             Types.Params(stringParams, intParams, addressParams)
         );
 
+        validationCallback(reqId, true);
         emit ValidationRequestIdSent(reqId, caller, tokenId);
     }
 
-    function validationCallback(bytes32 _requestId, bool _isValid)
-        public
-        recordChainlinkFulfillment(_requestId)
-    {
+    function validationCallback(bytes32 _requestId, bool _isValid) public {
         // add a require here so that only the oracle contract can
         // call the fulfill alarm method
-        Types.SWValidationRequest memory req =
-            clReqIdToValidationRequest[_requestId];
+        Types.SWValidationRequest memory req = clReqIdToValidationRequest[
+            _requestId
+        ];
         if (_isValid) {
             emit ValidationPassed(0, 0, 0);
             validReqIds[_requestId] = true;
 
-            if(req.action == Types.Action.Login) {
+            if (req.action == Types.Action.Login) {
                 return;
             } else if (req.action == Types.Action.Activate) {
                 this.activateSkillWallet(_skillWalletsByOwner[req.caller]);
             } else {
-                require(this.isSkillWalletActivated(_skillWalletsByOwner[req.caller]), "SkillWallet must be activated first!");
-           
-            ISWActionExecutor actionExecutor =
-                ISWActionExecutor(getContractAddressPerAction(req.action, req.caller));
+                require(
+                    this.isSkillWalletActivated(
+                        _skillWalletsByOwner[req.caller]
+                    ),
+                    "SkillWallet must be activated first!"
+                );
+
+                ISWActionExecutor actionExecutor = ISWActionExecutor(
+                    getContractAddressPerAction(req.action, req.caller)
+                );
 
                 actionExecutor.execute(
                     req.action,
@@ -201,7 +167,12 @@ contract SkillWallet is
         );
     }
 
-    function isRequestIdValid(bytes32 requestId) public view override returns (bool) {
+    function isRequestIdValid(bytes32 requestId)
+        public
+        view
+        override
+        returns (bool)
+    {
         return validReqIds[requestId];
     }
 
@@ -371,11 +342,12 @@ contract SkillWallet is
         return _skillSets[skillWalletId];
     }
 
-    function getContractAddressPerAction(
-        Types.Action action,
-        address caller
-    ) private view returns (address) {
-        uint skillWalletId = _skillWalletsByOwner[caller];
+    function getContractAddressPerAction(Types.Action action, address caller)
+        private
+        view
+        returns (address)
+    {
+        uint256 skillWalletId = _skillWalletsByOwner[caller];
         if (
             action == Types.Action.CreateGig ||
             action == Types.Action.TakeGig ||
@@ -388,5 +360,18 @@ contract SkillWallet is
         }
         return address(0);
     }
-    
+
+    function stringToBytes32(string memory source)
+        public
+        pure
+        returns (bytes32 result)
+    {
+        bytes memory tempEmptyStringTest = bytes(source);
+        if (tempEmptyStringTest.length == 0) {
+            return 0x0;
+        }
+        assembly {
+            result := mload(add(source, 32))
+        }
+    }
 }
