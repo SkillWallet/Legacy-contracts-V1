@@ -46,7 +46,7 @@ module.exports = {
 
   networks: {
     localhost: {
-      url: "http://localhost:8545",
+      url: "http://localhost:7545",
       /*
         notice no mnemonic here? it will just use account 0 of the hardhat node to deploy
         (you can put in a mnemonic here to set the deployer locally)
@@ -59,12 +59,17 @@ module.exports = {
         mnemonic: mnemonic(),
       },
     },
-    mumbai: {
-      url: 'https://rpc-mumbai.maticvigil.com/',
+    kovan: {
+      url: 'https://kovan.infura.io/v3/779285194bd146b48538d269d1332f20',
       gasPrice: 1000000000,
       accounts: {
         mnemonic: mnemonic(),
-      },
+      }
+    },
+    mumbai: {
+      url: 'https://rpc-mumbai.maticvigil.com/',
+      gasPrice: 1000000000,
+      accounts:  [''],
     }
   },
   solidity: {

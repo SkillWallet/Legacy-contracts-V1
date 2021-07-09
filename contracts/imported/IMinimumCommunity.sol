@@ -9,7 +9,7 @@ pragma experimental ABIEncoderV2;
  * @author DistributedTown
  */
 
-interface ICommunity {
+interface IMinimumCommunity {
     event MemberAdded(
         address newMemberAddress,
         uint256 token,
