@@ -32,3 +32,18 @@ Behind the hoods, the protocol follows these steps:
 The SkillWallet.sol contract can be used for getting the SW data such as check if it's activated, skillSet, current and history of communities.
 
 
+## Chainlink 
+
+1. Kovan: <br/> <br/>
+
+Oracle: 0xF405B99ACa8578B9eb989ee2b69D518aaDb90c1F <br/>
+JobID: e1b99d23a00549ad97cc2519d7d4f767 <br/>
+LinkToken: 
+0xa36085f69e2889c224210f603d836748e7dc0088
+
+
+2. Mumbai <br/> <br/>
+
+Oracle: 0xc8D925525CA8759812d0c299B90247917d4d4b7C <br/>
+JobID: 31061086cb2749f7a3f99f2d5179caf7 <br/>
+LinkToken: 0x326C977E6efc84E512bB9C30f76E30c160eD06FB

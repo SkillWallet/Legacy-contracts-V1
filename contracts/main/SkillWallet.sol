@@ -57,7 +57,7 @@ contract SkillWallet is
     constructor(address _linkToken, address _oracle) public ERC721("SkillWallet", "SW") {
         setChainlinkToken(_linkToken);
         oracle = _oracle;
-        jobId = "31061086cb2749f7a3f99f2d5179caf7";
+        jobId = "e1b99d23a00549ad97cc2519d7d4f767";
         fee = 0.1 * 10**18; // 0.1 LINK
     }
 
