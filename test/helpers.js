@@ -16,6 +16,11 @@ const getNonce = async (skillWalletId, action) => {
     const nonce = res.data.nonce.toString();
     return nonce;
 }
+const getLogin = async (nonce) => {
+    const logins = await axios.get(`https://api.skillwallet.id/api/login?nonce=${nonce}`);
+    console.log(logins);
+    return logins;
+}
 
 const sign = async (privKey, msg) => {
     const hashedMessage = await eccryptoJS.sha256(msg);
@@ -25,5 +30,6 @@ const sign = async (privKey, msg) => {
 }
 
 exports.sign = sign;
+exports.getLogin = getLogin;
 exports.getNonce = getNonce;
 exports.generateKeyPair = generateKeyPair;

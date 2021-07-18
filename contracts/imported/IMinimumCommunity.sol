@@ -43,6 +43,7 @@ interface IMinimumCommunity {
         uint64 displayStringId3,
         uint8 level3,
         string memory uri,
-        uint256 credits
+        uint256 credits,
+        uint members
     ) external;
 }

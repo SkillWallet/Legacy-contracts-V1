@@ -73,7 +73,8 @@ contract MinimumCommunity is IMinimumCommunity {
         uint64 displayStringId3,
         uint8 level3,
         string memory uri,
-        uint256 credits
+        uint256 credits,
+        uint members
     ) public override {
         ISkillWallet skillWallet = ISkillWallet(skillWalletAddress);
         Types.SkillSet memory skillSet =

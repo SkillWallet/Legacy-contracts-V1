@@ -7,10 +7,11 @@ const main = async () => {
     const deployerWallet = ethers.provider.getSigner();
     const deployerWalletAddress = await deployerWallet.getAddress();
     
-    const linkToken = '0x326C977E6efc84E512bB9C30f76E30c160eD06FB';
-    const oracle = '0xc8D925525CA8759812d0c299B90247917d4d4b7C';
+    const linkTokenMumbai = '0x326C977E6efc84E512bB9C30f76E30c160eD06FB';
+    const linkTokenKovan = '0xa36085f69e2889c224210f603d836748e7dc0088';
+    const oracleKovan = '0xF405B99ACa8578B9eb989ee2b69D518aaDb90c1F';
   
-    const skillWallet = await deploy("SkillWallet", [linkToken, oracle]);
+    const skillWallet = await deploy("SkillWallet", [linkTokenKovan, oracleKovan]);
 
     console.log(
         " 💾  Artifacts (address, abi, and args) saved to: ",
