@@ -17,9 +17,8 @@ const getNonce = async (skillWalletId, action) => {
     return nonce;
 }
 const getLogin = async (nonce) => {
-    const logins = await axios.get(`https://api.skillwallet.id/api/login?nonce=${nonce}`);
-    console.log(logins);
-    return logins;
+    const res = await axios.get(`https://api.skillwallet.id/api/skillwallet/login?nonce=${nonce}`);
+    return res.data;
 }
 
 const sign = async (privKey, msg) => {

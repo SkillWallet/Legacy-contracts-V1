@@ -16,7 +16,7 @@ let skillSet = [
 const { expect } = require('chai')
 
 contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
-  before(async function () {})
+  before(async function () { })
   beforeEach(async function () {
     this.linkTokenMock = await LinkToken.new()
     this.mockOracle = await MockOracle.new(this.linkTokenMock.address)

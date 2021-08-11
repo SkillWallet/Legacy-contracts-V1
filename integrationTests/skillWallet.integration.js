@@ -1,5 +1,5 @@
-const skillWalletAddress = '0x7426575fa17c319ca85591a1211E5574f49694aB'
-const communityAddress = '0xC79c95236d2A876205D36cE4b160cFA4397dDA9C'
+const skillWalletAddress = '0x9b195453d82b37415DE963547f3E1246a8E06887'
+const communityAddress = '0xec1380558d5A9e25bf258f2e341C6bF562ca7480'
 const { assert } = require('chai')
 var ethers = require('ethers')
 var abi = require('../artifacts/contracts/main/SkillWallet.sol/SkillWallet.json')
@@ -13,7 +13,7 @@ function mnemonic() {
 
 
 
-const keyPair = {
+let keyPair = {
   privKey: new Buffer([
     142,
     252,
@@ -72,8 +72,8 @@ const communityContract = new ethers.Contract(
 )
 
 async function joinCommunity() {
-  const newKeyPair = generateKeyPair();
-  keyPair = newKeyPair;
+  // const newKeyPair = helpers.generateKeyPair();
+  // keyPair = newKeyPair;
 
   const url =
     'https://hub.textile.io/ipfs/bafkreicezefuc6einewxdqhlpefelzjponwdqt4vmp2byosq5uwpn7hgoq'
@@ -120,9 +120,10 @@ async function addPubKeyToSkillWallet(tokenId) {
   console.log('[addPubKeyToSkillWallet]:', 'PubKeyAddedToSW event emitted')
 }
 
-async function validateSW(tokenId, action) {
-  const nonce = await helpers.getNonce(tokenId, 0)
-  const signature = await helpers.sign(keyPair.privKey, nonce)
+async function validateSW(tokenId, action, nonce) {
+  if (!nonce)
+    nonce = await helpers.getNonce(tokenId, action)
+  const signature = await helpers.sign(keyPair.privKey, nonce.toString())
   const validationTx = await skillWalletContract.validate(
     signature,
     tokenId,
@@ -132,7 +133,6 @@ async function validateSW(tokenId, action) {
     [],
   )
 
-  console.log(validationTx)
   // Wait for transaction to finish
   const validationTxResult = await validationTx.wait()
   const { events } = validationTxResult
@@ -145,7 +145,7 @@ async function validateSW(tokenId, action) {
   console.log('[validateSW]:', 'ValidationRequestIdSent event emitted')
   assert.isOk(requestId, 'requestId not empty')
   console.log('[validateSW]:', 'requestId not empty')
-  return requestId
+  return { requestId, nonce }
 }
 
 async function hasValidationPassed(reqId) {
@@ -163,16 +163,17 @@ function sleep(ms) {
 }
 
 async function getLogins(nonce) {
-  const logins = await getLogin(nonce);
+  const logins = await helpers.getLogin(nonce);
   console.log(logins);
 }
 
 async function test() {
+  const tokenId = 10;
   // const tokenId = await joinCommunity()
-  const tokenId = 5
-  getLogins('123123');
+
   // await addPubKeyToSkillWallet(tokenId)
-  // const reqId = await validateSW(tokenId, 0);
+  // const activateRes = await validateSW(tokenId, 0, 275795494);
+  // console.log(activateRes.requestId);
   // await isSkillWalletActivated(tokenId)
   // console.log(
   //   '[sleep]',
@@ -181,6 +182,20 @@ async function test() {
   // await sleep(10000)
   // await hasValidationPassed(reqId)
   // await isSkillWalletActivated(tokenId)
+
+
+  const loginRes = await validateSW(tokenId, 1);
+  console.log('[login] nonce: ', loginRes.nonce)
+
+  console.log(
+    '[sleep]',
+    'waiting 10 seconds for the chainlink validation to pass',
+  )
+  await sleep(10000)
+
+  await getLogins(loginRes.nonce);
+
+  await hasValidationPassed(loginRes.requestId);
 }
 
 test()

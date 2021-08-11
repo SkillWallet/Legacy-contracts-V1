@@ -23,7 +23,7 @@
     "skill",
     "wallet"
   ],
-  "author": "SkillWallet Team <team@distributed.town>",
+  "author": "DiTo Labs <team@distributed.town>",
   "homepage": "https://skillwallet.id/",
   "devDependencies": {
     "@nomiclabs/hardhat-truffle5": "2.0.0",
