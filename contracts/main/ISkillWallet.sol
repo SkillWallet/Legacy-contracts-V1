@@ -24,7 +24,7 @@ interface ISkillWallet is IERC721, IERC721Receiver {
     event ValidationRequestIdSent(bytes32 requestId, address caller, uint256 tokenId);
     event SkillWalletClaimed(uint tokenId, address owner);
 
-    function create(address skillWalletOwner, string memory url) external;
+    function create(address skillWalletOwner, string memory url, bool isClaimable) external;
 
     function claim() external;
 

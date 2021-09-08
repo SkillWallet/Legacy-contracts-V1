@@ -29,6 +29,7 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         const tx = await this.skillWallet.create(
           skillWalletOwner,
           metadataUrl,
+          true
         )
 
         const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
@@ -37,6 +38,7 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         const failingTx = this.skillWallet.create(
           skillWalletOwner,
           metadataUrl,
+          true
         )
         await truffleAssert.reverts(
           failingTx,
@@ -47,6 +49,7 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         const tx = await this.skillWallet.create(
           skillWalletOwner,
           metadataUrl,
+          true
         )
 
         const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
@@ -60,16 +63,48 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         const failingTx = this.skillWallet.create(
           skillWalletOwner,
           metadataUrl,
+          true
         )
         await truffleAssert.reverts(
           failingTx,
           'SkillWallet: There is SkillWallet already registered for this address.',
         )
       })
-      it('should create an inactive SW', async function () {
+      it('should fail when the user already owns a SW', async function () {
         const tx = await this.skillWallet.create(
           skillWalletOwner,
           metadataUrl,
+          false
+        )
+
+        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
+        assert.equal(SWCreated, true)
+
+        const failingTx1 = this.skillWallet.create(
+          skillWalletOwner,
+          metadataUrl,
+          false
+        )
+
+        const failingTx2 = this.skillWallet.create(
+          skillWalletOwner,
+          metadataUrl,
+          true
+        )
+        await truffleAssert.reverts(
+          failingTx1,
+          'SkillWallet: There is SkillWallet already registered for this address.',
+        )
+        await truffleAssert.reverts(
+          failingTx2,
+          'SkillWallet: There is SkillWallet already registered for this address.',
+        )
+      })
+      it('should create a claimable inactive SW', async function () {
+        const tx = await this.skillWallet.create(
+          skillWalletOwner,
+          metadataUrl,
+          true,
           { from: community },
         )
         const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
@@ -99,10 +134,45 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         assert.equal(skillWalletActivated, false)
         assert.equal(skillWalletCommunityHistory[0], community)
       })
+      it('should create an inactive SW', async function () {
+        const tx = await this.skillWallet.create(
+          skillWalletOwner,
+          metadataUrl,
+          false,
+          { from: community },
+        )
+        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
+        const tokenId = tx.logs[1].args[2]
+
+        assert.equal(SWCreated, true)
+
+        const skillWalletClaimable = await this.skillWallet.isSkillWalletClaimable(
+          skillWalletOwner,
+        )
+        const skillWalletId = await this.skillWallet.getSkillWalletIdByOwner(
+          skillWalletOwner
+        )
+        const skillWalletActiveCommunity = await this.skillWallet.getActiveCommunity(
+          tokenId,
+        )
+        const skillWalletCommunityHistory = await this.skillWallet.getCommunityHistory(
+          tokenId,
+        )
+        const skillWalletActivated = await this.skillWallet.isSkillWalletActivated(
+          tokenId,
+        )
+
+        assert.equal(skillWalletClaimable, false)
+        assert.equal(skillWalletId.toString(), tokenId.toString())
+        assert.equal(skillWalletActiveCommunity, community)
+        assert.equal(skillWalletActivated, false)
+        assert.equal(skillWalletCommunityHistory[0], community)
+      })
       it('should claim SW and transfer the token to the owner', async function () {
         const tx = await this.skillWallet.create(
           skillWalletOwner,
           metadataUrl,
+          true,
           { from: community },
         )
         const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
@@ -135,6 +205,66 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         assert.equal(skillWalletId.toString(), tokenId.toString())
         assert.equal(owner, skillWalletOwner);
         assert.equal(skillWalletActivated, false)
+
+      })
+      it('should transfer the token to the owner if not claimable', async function () {
+        const tx = await this.skillWallet.create(
+          skillWalletOwner,
+          metadataUrl,
+          false,
+          { from: community },
+        )
+        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
+        const tokenId = tx.logs[1].args[2]
+
+        assert.equal(SWCreated, true)
+
+        const skillWalletClaimable = await this.skillWallet.isSkillWalletClaimable(
+          skillWalletOwner,
+        )
+
+        assert.equal(skillWalletClaimable, false)
+
+        const owner = await this.skillWallet.ownerOf(
+          tokenId
+        );
+
+        const skillWalletId = await this.skillWallet.getSkillWalletIdByOwner(
+          skillWalletOwner
+        )
+        const skillWalletActivated = await this.skillWallet.isSkillWalletActivated(
+          tokenId,
+        )
+
+        assert.equal(skillWalletId.toString(), tokenId.toString())
+        assert.equal(owner, skillWalletOwner);
+        assert.equal(skillWalletActivated, false)
+
+      })
+      it('should fail claiming not claimable SW', async function () {
+        const tx = await this.skillWallet.create(
+          skillWalletOwner,
+          metadataUrl,
+          false,
+          { from: community },
+        )
+        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
+        const tokenId = tx.logs[1].args[2]
+
+        assert.equal(SWCreated, true)
+
+        const skillWalletClaimable = await this.skillWallet.isSkillWalletClaimable(
+          skillWalletOwner,
+        )
+
+        assert.equal(skillWalletClaimable, false)
+
+        const claimedTx = this.skillWallet.claim({ from: skillWalletOwner });
+
+        await truffleAssert.reverts(
+          claimedTx,
+          'SkillWallet: There is SkillWallet already registered for this address.',
+        )
 
       })
     })
@@ -222,6 +352,7 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         const tx = await this.skillWallet.create(
           skillWalletOwner,
           metadataUrl,
+          true,
           { from: community },
         )
         const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
@@ -233,6 +364,53 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         const claimedTxEvent = claimedTx.logs[2].event === 'SkillWalletClaimed'
 
         assert.equal(claimedTxEvent, true);
+
+        const pubKeyTx = await this.skillWallet.addPubKeyToSkillWallet(
+          tokenId,
+          'pubKey',
+          { from: creator },
+        )
+
+        const pubKeyEventEmitted =
+          pubKeyTx.logs[0].event === 'PubKeyAddedToSkillWallet'
+        assert.equal(pubKeyEventEmitted, true)
+
+        const skillWalletRegistered = await this.skillWallet.isSkillWalletRegistered(
+          skillWalletOwner,
+        )
+        const skillWalletId = await this.skillWallet.getSkillWalletIdByOwner(
+          skillWalletOwner,
+        )
+        const skillWalletActiveCommunity = await this.skillWallet.getActiveCommunity(
+          tokenId,
+        )
+        const skillWalletCommunityHistory = await this.skillWallet.getCommunityHistory(
+          tokenId,
+        )
+        const skillWalletActivated = await this.skillWallet.isSkillWalletActivated(
+          tokenId,
+        )
+
+        const pubKey = await this.skillWallet.skillWalletToPubKey(tokenId)
+        assert.equal(skillWalletRegistered, true)
+        assert.equal(skillWalletId.toString(), tokenId.toString())
+        assert.equal(skillWalletActiveCommunity, community)
+        assert.equal(skillWalletActivated, false)
+        assert.equal(skillWalletCommunityHistory[0], community)
+        assert.equal(pubKey, 'pubKey')
+      })
+
+      it('should set pubKey properly', async function () {
+        const tx = await this.skillWallet.create(
+          skillWalletOwner,
+          metadataUrl,
+          false,
+          { from: community },
+        )
+        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
+        const tokenId = tx.logs[1].args[2]
+
+        assert.equal(SWCreated, true)
 
         const pubKeyTx = await this.skillWallet.addPubKeyToSkillWallet(
           tokenId,

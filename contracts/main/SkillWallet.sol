@@ -201,12 +201,12 @@ contract SkillWallet is
         emit SkillWalletClaimed(skillWalletClaimers[msg.sender], msg.sender);
     }
 
-    function create(address skillWalletOwner, string memory url)
-        external
-        override
-    {
+    function create(
+        address skillWalletOwner,
+        string memory url,
+        bool isClaimable
+    ) external override {
         // TODO: Verify that the msg.sender is valid community
-
         require(
             balanceOf(skillWalletOwner) == 0,
             "SkillWallet: There is SkillWallet already registered for this address."
@@ -219,16 +219,18 @@ contract SkillWallet is
 
         uint256 tokenId = _skillWalletCounter.current();
 
-        _safeMint(address(this), tokenId);
+        if (isClaimable) {
+            _safeMint(address(this), tokenId);
+            skillWalletClaimers[skillWalletOwner] = tokenId;
+        } else {
+            _safeMint(skillWalletOwner, tokenId);
+        }
+
         _setTokenURI(tokenId, url);
         _activeCommunities[tokenId] = msg.sender;
         _communityHistory[tokenId].push(msg.sender);
-
         _skillWalletsByOwner[skillWalletOwner] = tokenId;
-        skillWalletClaimers[skillWalletOwner] = tokenId;
-
         _skillWalletCounter.increment();
-
 
         emit SkillWalletCreated(skillWalletOwner, msg.sender, tokenId);
     }
@@ -287,9 +289,11 @@ contract SkillWallet is
         address to,
         uint256 tokenId
     ) internal override {
-        require(msg.sender != address(this), "SkillWallet: SkillWallet transfer disabled");
+        require(
+            msg.sender != address(this),
+            "SkillWallet: SkillWallet transfer disabled"
+        );
         super._transfer(from, to, tokenId);
-
     }
 
     /// View Functions
@@ -307,7 +311,7 @@ contract SkillWallet is
         return balanceOf(skillWalletOwner) == 1;
     }
 
-      function isSkillWalletClaimable(address skillWalletOwner)
+    function isSkillWalletClaimable(address skillWalletOwner)
         external
         view
         override
@@ -394,7 +398,6 @@ contract SkillWallet is
         return _skillWalletsByOwner[skillWalletOwner];
     }
 
-
     function getClaimableSkillWalletId(address skillWalletOwner)
         external
         view
@@ -407,6 +410,7 @@ contract SkillWallet is
         );
         return skillWalletClaimers[skillWalletOwner];
     }
+
     function getContractAddressPerAction(Types.Action action, address caller)
         private
         view

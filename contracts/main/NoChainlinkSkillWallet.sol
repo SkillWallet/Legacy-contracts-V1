@@ -31,7 +31,6 @@ contract NoChainlinkSkillWallet is
     // Mapping from token ID to list of community addresses
     mapping(uint256 => address[]) private _communityHistory;
 
-
     // Mapping from skillWalletOwner to token ID
     mapping(address => uint256) private _skillWalletsByOwner;
 
@@ -156,7 +155,8 @@ contract NoChainlinkSkillWallet is
 
     function create(
         address skillWalletOwner,
-        string memory url
+        string memory url,
+        bool isClaimable
     ) external override {
         // TODO: Verify that the msg.sender is valid community
 
@@ -167,7 +167,12 @@ contract NoChainlinkSkillWallet is
 
         uint256 tokenId = _skillWalletCounter.current();
 
-        _safeMint(skillWalletOwner, tokenId);
+        if (isClaimable) {
+            _safeMint(address(this), tokenId);
+            skillWalletClaimers[skillWalletOwner] = tokenId;
+        } else {
+            _safeMint(skillWalletOwner, tokenId);
+        }
         _setTokenURI(tokenId, url);
         _activeCommunities[tokenId] = msg.sender;
         _communityHistory[tokenId].push(msg.sender);
@@ -332,7 +337,6 @@ contract NoChainlinkSkillWallet is
         return _skillWalletsByOwner[skillWalletOwner];
     }
 
-
     function getClaimableSkillWalletId(address skillWalletOwner)
         external
         view
@@ -379,8 +383,12 @@ contract NoChainlinkSkillWallet is
         }
     }
 
-    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external override returns (bytes4) {
-                return this.onERC721Received.selector;
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external override returns (bytes4) {
+        return this.onERC721Received.selector;
     }
-
 }
