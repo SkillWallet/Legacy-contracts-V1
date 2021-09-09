@@ -23,7 +23,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 //
 // Select the network you want to deploy to here:
 //
-const defaultNetwork = "kovan";
+const defaultNetwork = "mumbai";
 
 function mnemonic() {
   try {

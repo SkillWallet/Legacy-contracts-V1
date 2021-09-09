@@ -66,23 +66,11 @@ contract MinimumCommunity is IMinimumCommunity {
 
     // check if it's called only from deployer.
     function joinNewMember(
-        uint64 displayStringId1,
-        uint8 level1,
-        uint64 displayStringId2,
-        uint8 level2,
-        uint64 displayStringId3,
-        uint8 level3,
         string memory uri,
         uint256 credits
     ) public override {
         ISkillWallet skillWallet = ISkillWallet(skillWalletAddress);
-        Types.SkillSet memory skillSet =
-            Types.SkillSet(
-                Types.Skill(displayStringId1, level1),
-                Types.Skill(displayStringId2, level2),
-                Types.Skill(displayStringId3, level3)
-            );
-        skillWallet.create(msg.sender, skillSet, uri);
+        skillWallet.create(msg.sender, uri, true);
         uint256 token = skillWallet.getSkillWalletIdByOwner(msg.sender);
 
         emit MemberAdded(msg.sender, token, credits);

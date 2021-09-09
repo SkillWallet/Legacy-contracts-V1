@@ -1,4 +1,4 @@
-const skillWalletAddress = '0x9b195453d82b37415DE963547f3E1246a8E06887'
+const skillWalletAddress = '0xf89424a725298737086812173f0dc7dfd221dc60'
 const communityAddress = '0xec1380558d5A9e25bf258f2e341C6bF562ca7480'
 const { assert } = require('chai')
 var ethers = require('ethers')
@@ -52,7 +52,8 @@ let keyPair = {
 }
 
 const provider = new ethers.providers.JsonRpcProvider(
-  'https://kovan.infura.io/v3/779285194bd146b48538d269d1332f20',
+  // 'https://kovan.infura.io/v3/779285194bd146b48538d269d1332f20',
+  'https://rpc-mumbai.maticvigil.com/'
 )
 
 // Wallet connected to a provider
@@ -168,34 +169,34 @@ async function getLogins(nonce) {
 }
 
 async function test() {
-  const tokenId = 10;
+  const tokenId = 14;
   // const tokenId = await joinCommunity()
 
   // await addPubKeyToSkillWallet(tokenId)
-  // const activateRes = await validateSW(tokenId, 0, 275795494);
-  // console.log(activateRes.requestId);
-  // await isSkillWalletActivated(tokenId)
-  // console.log(
-  //   '[sleep]',
-  //   'waiting 10 seconds for the chainlink validation to pass',
-  // )
-  // await sleep(10000)
-  // await hasValidationPassed(reqId)
-  // await isSkillWalletActivated(tokenId)
-
-
-  const loginRes = await validateSW(tokenId, 1);
-  console.log('[login] nonce: ', loginRes.nonce)
-
+  const activateRes = await validateSW(tokenId, 0);
+  console.log(activateRes.requestId);
+  await isSkillWalletActivated(tokenId)
   console.log(
     '[sleep]',
     'waiting 10 seconds for the chainlink validation to pass',
   )
   await sleep(10000)
+  await hasValidationPassed(activateRes.requestId)
+  await isSkillWalletActivated(tokenId)
 
-  await getLogins(loginRes.nonce);
 
-  await hasValidationPassed(loginRes.requestId);
+  // const loginRes = await validateSW(tokenId, 1);
+  // console.log('[login] nonce: ', loginRes.nonce)
+
+  // console.log(
+  //   '[sleep]',
+  //   'waiting 10 seconds for the chainlink validation to pass',
+  // )
+  // await sleep(10000)
+
+  // await getLogins(loginRes.nonce);
+
+  // await hasValidationPassed(loginRes.requestId);
 }
 
 test()
