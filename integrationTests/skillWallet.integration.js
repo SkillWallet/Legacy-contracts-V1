@@ -1,4 +1,4 @@
-const skillWalletAddress = '0xf89424a725298737086812173f0dc7dfd221dc60'
+const skillWalletAddress = '0x1e79bE396CE37F7eB43aF0Ef0ffb3124F3fD23eF'
 const communityAddress = '0xec1380558d5A9e25bf258f2e341C6bF562ca7480'
 const { assert } = require('chai')
 var ethers = require('ethers')
@@ -8,7 +8,7 @@ var communityAbi = require('./communityAbi')
 const helpers = require('../test/helpers')
 const memberAddress = '0x2CEF62C91Dd92FC35f008D1d6Ed08EADF64306bc'
 function mnemonic() {
-  return 'close gesture fatal vacant time toy general horror payment visit case you'
+  return 'pilot other fault relief thrive speak wrestle north find unique dry actor'
 }
 
 
@@ -80,12 +80,6 @@ async function joinCommunity() {
     'https://hub.textile.io/ipfs/bafkreicezefuc6einewxdqhlpefelzjponwdqt4vmp2byosq5uwpn7hgoq'
   const wei = ethers.utils.parseEther('2220').toString()
   const joinedTx = await communityContract.joinNewMember(
-    1,
-    1,
-    2,
-    2,
-    3,
-    3,
     url,
     wei,
   )
@@ -169,10 +163,11 @@ async function getLogins(nonce) {
 }
 
 async function test() {
-  const tokenId = 14;
+  const tokenId = 20;
   // const tokenId = await joinCommunity()
 
-  // await addPubKeyToSkillWallet(tokenId)
+  await addPubKeyToSkillWallet(tokenId)
+  // const activateRes = await validateSW(tokenId, 0, 247810275);
   const activateRes = await validateSW(tokenId, 0);
   console.log(activateRes.requestId);
   await isSkillWalletActivated(tokenId)
@@ -183,6 +178,7 @@ async function test() {
   await sleep(10000)
   await hasValidationPassed(activateRes.requestId)
   await isSkillWalletActivated(tokenId)
+
 
 
   // const loginRes = await validateSW(tokenId, 1);
