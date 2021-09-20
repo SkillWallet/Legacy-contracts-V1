@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "./ISkillWallet.sol";
 import "../imported/CommonTypes.sol";
 import "./ISWActionExecutor.sol";
-import "../imported/IMinimumCommunity.sol";
+import "../imported/ICommunity.sol";
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
@@ -424,7 +424,7 @@ contract SkillWallet is
             action == Types.Action.CompleteGig
         ) {
             address community = _activeCommunities[skillWalletId];
-            address gigAddress = IMinimumCommunity(community).gigsAddr();
+            address gigAddress = ICommunity(community).gigsAddr();
             return gigAddress;
         }
         return address(0);

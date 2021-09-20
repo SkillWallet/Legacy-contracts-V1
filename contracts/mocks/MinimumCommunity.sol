@@ -2,7 +2,7 @@
 pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
-import "../imported/IMinimumCommunity.sol";
+import "../imported/ICommunity.sol";
 import "../main/ISkillWallet.sol";
 
 /**
@@ -12,7 +12,7 @@ import "../main/ISkillWallet.sol";
  * @author DistributedTown
  */
 
-contract MinimumCommunity is IMinimumCommunity {
+contract MinimumCommunity is ICommunity {
     address private skillWalletAddress;
 
     constructor(address _skillWalletAddress) public {
@@ -62,6 +62,21 @@ contract MinimumCommunity is IMinimumCommunity {
 
     function balanceOf(address member) public view override returns (uint256) {
         return 3000;
+    }
+
+
+    function isMember(address member) public view override returns (bool) {
+        ISkillWallet skillWallet = ISkillWallet(skillWalletAddress);
+        skillWallet.getSkillWalletIdByOwner(member) > 0;
+    }
+
+    function getMemberAddresses() public view override returns (address[] memory) {
+        address[] memory res;
+        return res;
+    }
+
+    function getSkillWalletAddress() public view override returns (address) {
+        return skillWalletAddress;
     }
 
     // check if it's called only from deployer.
