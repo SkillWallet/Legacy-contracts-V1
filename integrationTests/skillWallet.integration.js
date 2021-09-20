@@ -8,7 +8,7 @@ var communityAbi = require('./communityAbi')
 const helpers = require('../test/helpers')
 const memberAddress = '0x2CEF62C91Dd92FC35f008D1d6Ed08EADF64306bc'
 function mnemonic() {
-  return 'pilot other fault relief thrive speak wrestle north find unique dry actor'
+  return undefined;
 }
 
 
