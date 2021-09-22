@@ -6,12 +6,14 @@ import "./ISkillWallet.sol";
 import "../imported/CommonTypes.sol";
 import "./ISWActionExecutor.sol";
 import "../imported/ICommunity.sol";
+import "./OSM.sol";
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721MetadataUpgradeable.sol";
+
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
  * @title DistributedTown SkillWallet
@@ -21,21 +23,17 @@ import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
  */
 contract SkillWallet is
     ISkillWallet,
-    IERC721Metadata,
-    ERC721,
-    Ownable,
-    ChainlinkClient
+    IERC721MetadataUpgradeable,
+    ERC721Upgradeable,
+    OwnableUpgradeable
 {
-    using Counters for Counters.Counter;
+    using CountersUpgradeable for CountersUpgradeable.Counter;
 
     // Mapping from token ID to active community that the SW is part of
     mapping(uint256 => address) private _activeCommunities;
 
     // Mapping from token ID to list of community addresses
     mapping(uint256 => address[]) private _communityHistory;
-
-    // Mapping from token ID to SkillSet
-    mapping(uint256 => Types.SkillSet) private _skillSets;
 
     // Mapping from skillWalletOwner to token ID
     mapping(address => uint256) private _skillWalletsByOwner;
@@ -47,25 +45,25 @@ contract SkillWallet is
 
     mapping(address => uint256) public skillWalletClaimers;
 
-    Counters.Counter private _skillWalletCounter;
+    CountersUpgradeable.Counter private _skillWalletCounter;
+
     address private oracle;
     bytes32 private jobId;
     uint256 private fee;
+    OffchainSignatureMechanism osm;
 
     mapping(bytes32 => Types.SWValidationRequest)
         private clReqIdToValidationRequest;
 
     mapping(bytes32 => bool) validReqIds;
 
-    constructor(address _linkToken, address _oracle)
+    function initialize(address _linkToken, address _oracle)
         public
-        ERC721("SkillWallet", "SW")
+        initializer
     {
-        setChainlinkToken(_linkToken);
-        oracle = _oracle;
-        jobId = "31061086cb2749f7a3f99f2d5179caf7";
-        fee = 0.1 * 10**18; // 0.1 LINK
+        __ERC721_init("SkillWallet", "SW");
         _skillWalletCounter.increment();
+        osm = new OffchainSignatureMechanism(_linkToken, _oracle);
     }
 
     function activateSkillWallet(uint256 skillWalletId) external override {
@@ -98,92 +96,7 @@ contract SkillWallet is
         uint256[] memory intParams,
         address[] memory addressParams
     ) public {
-        require(
-            bytes(skillWalletToPubKey[tokenId]).length > 0,
-            "PubKey should be assigned to the skill walletID first!"
-        );
-
-        Chainlink.Request memory req = buildChainlinkRequest(
-            jobId,
-            address(this),
-            this.validationCallback.selector
-        );
-        req.add("pubKey", skillWalletToPubKey[tokenId]);
-        req.add("signature", signature);
-        req.add(
-            "getNonceUrl",
-            string(
-                abi.encodePacked(
-                    "https://api.skillwallet.id/api/skillwallet/",
-                    tokenId.toString(),
-                    "/nonces?action=",
-                    action.toString()
-                )
-            )
-        );
-        req.add(
-            "delNonceUrl",
-            string(
-                abi.encodePacked(
-                    "https://api.skillwallet.id/api/skillwallet/",
-                    tokenId.toString(),
-                    "/nonces?action=",
-                    action.toString()
-                )
-            )
-        );
-        address caller = ownerOf(tokenId);
-        bytes32 reqId = sendChainlinkRequestTo(oracle, req, fee);
-
-        clReqIdToValidationRequest[reqId] = Types.SWValidationRequest(
-            caller,
-            Types.Action(action),
-            Types.Params(stringParams, intParams, addressParams)
-        );
-
-        emit ValidationRequestIdSent(reqId, caller, tokenId);
-    }
-
-    function validationCallback(bytes32 _requestId, bool _isValid)
-        public
-        recordChainlinkFulfillment(_requestId)
-    {
-        // add a require here so that only the oracle contract can
-        // call the fulfill alarm method
-        Types.SWValidationRequest memory req = clReqIdToValidationRequest[
-            _requestId
-        ];
-        if (_isValid) {
-            emit ValidationPassed(0, 0, 0);
-            validReqIds[_requestId] = true;
-
-            if (req.action == Types.Action.Login) {
-                return;
-            } else if (req.action == Types.Action.Activate) {
-                this.activateSkillWallet(_skillWalletsByOwner[req.caller]);
-            } else {
-                require(
-                    this.isSkillWalletActivated(
-                        _skillWalletsByOwner[req.caller]
-                    ),
-                    "SkillWallet must be activated first!"
-                );
-
-                ISWActionExecutor actionExecutor = ISWActionExecutor(
-                    getContractAddressPerAction(req.action, req.caller)
-                );
-
-                actionExecutor.execute(
-                    req.action,
-                    req.caller,
-                    req.params.intParams,
-                    req.params.stringParams,
-                    req.params.addressParams
-                );
-            }
-        } else {
-            emit ValidationFailed(0, 0, 0);
-        }
+        osm.validate(signature,tokenId, action, stringParams, intParams, addressParams);
     }
 
     function claim() external override {
@@ -398,6 +311,10 @@ contract SkillWallet is
         return _skillWalletsByOwner[skillWalletOwner];
     }
 
+    function getPubKeyBySkillWalletId(uint skillWalletId) external view override returns(string memory) {
+        return skillWalletToPubKey[skillWalletId];
+    }
+
     function getClaimableSkillWalletId(address skillWalletOwner)
         external
         view
@@ -412,8 +329,9 @@ contract SkillWallet is
     }
 
     function getContractAddressPerAction(Types.Action action, address caller)
-        private
+        public
         view
+        override
         returns (address)
     {
         uint256 skillWalletId = _skillWalletsByOwner[caller];

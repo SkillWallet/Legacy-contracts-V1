@@ -72,7 +72,7 @@ contract PartnersRegistry {
         if (partnersContractAddress == address(0))
             partnersContractAddress = communityAddress;
 
-        PartnersAgreement agreement = new PartnersAgreement(
+        PartnersAgreement agreement = new PartnersAgreement.initialize(, _owner, _communityAddress, _rolesCount, _numberOfActions, _oracle, _chainlinkToken);(
             partnersContractAddress,
             msg.sender,
             communityAddress,
