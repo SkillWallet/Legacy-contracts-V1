@@ -5,12 +5,7 @@ pragma experimental ABIEncoderV2;
 import "./ISkillWallet.sol";
 import "./ISWActionExecutor.sol";
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
-
-import "../imported/CommonTypes.sol";
-import "./ISWActionExecutor.sol";
-import "../imported/ICommunity.sol";
-
-
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title SkillWallet OSM implementation
@@ -18,27 +13,30 @@ import "../imported/ICommunity.sol";
  * @dev Implementation of the Offchain Signature Mechanism contract using chainlink EA
  * @author DistributedTown
  */
-contract OffchainSignatureMechanism is ChainlinkClient
-{
+contract OffchainSignatureMechanism is ChainlinkClient {
+    using Strings for uint256;
+
     address private oracle;
     bytes32 private jobId;
     uint256 private fee;
     ISkillWallet skillWallet;
 
-    event ValidationPassed(uint256 tokenId, uint256 nonce, uint256 action);
+    event ValidationPassed(bytes32 requestId);
 
-    event ValidationFailed(uint256 tokenId, uint256 nonce, uint256 action);
+    event ValidationFailed(bytes32 requestId);
 
-    event ValidationRequestIdSent(bytes32 requestId, address caller, uint256 tokenId);
+    event ValidationRequestIdSent(
+        bytes32 requestId,
+        address caller,
+        uint256 tokenId
+    );
 
-    mapping(bytes32 => Types.SWValidationRequest) 
-    private clReqIdToValidationRequest;
+    mapping(bytes32 => Types.SWValidationRequest)
+        private clReqIdToValidationRequest;
 
     mapping(bytes32 => bool) validReqIds;
 
-    constructor (address _linkToken, address _oracle)
-        public
-    {
+    constructor(address _linkToken, address _oracle) public {
         setChainlinkToken(_linkToken);
         oracle = _oracle;
         jobId = "31061086cb2749f7a3f99f2d5179caf7";
@@ -71,9 +69,9 @@ contract OffchainSignatureMechanism is ChainlinkClient
             string(
                 abi.encodePacked(
                     "https://api.skillwallet.id/api/skillwallet/",
-                    tokenId,
+                    tokenId.toString(),
                     "/nonces?action=",
-                    action
+                    action.toString()
                 )
             )
         );
@@ -82,9 +80,9 @@ contract OffchainSignatureMechanism is ChainlinkClient
             string(
                 abi.encodePacked(
                     "https://api.skillwallet.id/api/skillwallet/",
-                    tokenId,
+                    tokenId.toString(),
                     "/nonces?action=",
-                    action
+                    action.toString()
                 )
             )
         );
@@ -110,13 +108,15 @@ contract OffchainSignatureMechanism is ChainlinkClient
             _requestId
         ];
         if (_isValid) {
-            emit ValidationPassed(0, 0, 0);
+            emit ValidationPassed(_requestId);
             validReqIds[_requestId] = true;
 
             if (req.action == Types.Action.Login) {
                 return;
             } else if (req.action == Types.Action.Activate) {
-                skillWallet.activateSkillWallet(skillWallet.getSkillWalletIdByOwner(req.caller));
+                skillWallet.activateSkillWallet(
+                    skillWallet.getSkillWalletIdByOwner(req.caller)
+                );
             } else {
                 require(
                     skillWallet.isSkillWalletActivated(
@@ -126,7 +126,10 @@ contract OffchainSignatureMechanism is ChainlinkClient
                 );
 
                 ISWActionExecutor actionExecutor = ISWActionExecutor(
-                    skillWallet.getContractAddressPerAction(req.action, req.caller)
+                    skillWallet.getContractAddressPerAction(
+                        req.action,
+                        req.caller
+                    )
                 );
 
                 actionExecutor.execute(
@@ -138,7 +141,7 @@ contract OffchainSignatureMechanism is ChainlinkClient
                 );
             }
         } else {
-            emit ValidationFailed(0, 0, 0);
+            emit ValidationFailed(_requestId);
         }
     }
 }

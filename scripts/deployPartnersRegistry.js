@@ -22,7 +22,7 @@ const main = async () => {
 
     const oracleMumbai = '0xc8D925525CA8759812d0c299B90247917d4d4b7C';
     const linkTokenMumbai = '0x326C977E6efc84E512bB9C30f76E30c160eD06FB';
-    const distributedTownAddress = "0xB4E068Ea3f5086b76c3BC2Fbae4c5e59453207F8";
+    const distributedTownAddress = "0xbd3e6c9213eF3b90D6e31AfBbd5021c0f37046ff";
 
     const partnersRegistry = await upgrades.deployProxy(PartnersRegistry, [distributedTownAddress, oracleMumbai, linkTokenMumbai], {
         initializer: 'initialize',

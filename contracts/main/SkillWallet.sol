@@ -65,7 +65,9 @@ contract SkillWallet is
         __ERC721_init("SkillWallet", "SW");
 
         _skillWalletCounter.increment();
-        osmAddress = address(new OffchainSignatureMechanism(_linkToken, _oracle));
+        osmAddress = address(
+            new OffchainSignatureMechanism(_linkToken, _oracle)
+        );
     }
 
     function activateSkillWallet(uint256 skillWalletId) external override {
@@ -302,7 +304,12 @@ contract SkillWallet is
         return _skillWalletsByOwner[skillWalletOwner];
     }
 
-    function getPubKeyBySkillWalletId(uint skillWalletId) external view override returns(string memory) {
+    function getPubKeyBySkillWalletId(uint256 skillWalletId)
+        external
+        view
+        override
+        returns (string memory)
+    {
         return skillWalletToPubKey[skillWalletId];
     }
 
@@ -339,12 +346,7 @@ contract SkillWallet is
         return address(0);
     }
 
-     function getOSMAddress()
-        public
-        view
-        override
-        returns (address)
-    {
+    function getOSMAddress() public view override returns (address) {
         return osmAddress;
     }
 
