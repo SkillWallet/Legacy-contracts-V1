@@ -497,7 +497,7 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         assert.isTrue(validationRequestIdSentEventEmitted)
         const requestId = validationTx.logs[0].args[0]
 
-        const fulfilTx = await this.mockOracle.fulfillOracleRequest(
+        const fulfilTx = await this.mockOracle.methods["fulfillOracleRequest(bytes32,bool)"](
           requestId,
           true,
         )
@@ -556,7 +556,7 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         assert.isTrue(validationRequestIdSentEventEmitted)
         const requestId = validationTx.logs[0].args[0]
 
-        const fulfilTx = await this.mockOracle.fulfillOracleRequest(
+        const fulfilTx = await this.mockOracle.methods["fulfillOracleRequest(bytes32,bool)"](
           requestId,
           false
         )

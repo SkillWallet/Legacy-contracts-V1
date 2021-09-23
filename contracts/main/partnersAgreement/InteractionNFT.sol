@@ -78,4 +78,8 @@ contract InteractionNFT is ERC1155Supply {
     function getUsersPerRole(uint role) view public returns(address[] memory) {
         return usersPerRole[RoleUtils.Roles(role)];
     }
+
+    function getTotalSupplyAll() view public returns (uint256) {
+        return totalSupply(1) + totalSupply(2) + totalSupply(3);
+    }
 }

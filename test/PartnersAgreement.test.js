@@ -30,6 +30,7 @@ contract('PartnersAgreement', function (accounts) {
     PartnersAgreement.link(this.roleUtils);
 
     this.partnersAgreement = await PartnersAgreement.new(
+      1,
       ZERO_ADDRESS, // partners contract
       accounts[0],
       this.minimumCommunity.address,
@@ -37,6 +38,7 @@ contract('PartnersAgreement', function (accounts) {
       100,
       this.mockOracle.address,
       this.linkTokenMock.address,
+      ZERO_ADDRESS,
       { from: accounts[0] }
     );
 
@@ -58,6 +60,7 @@ contract('PartnersAgreement', function (accounts) {
     it("should deploy inactive partners agreement contract", async function () {
 
       const partnersAgreement = await PartnersAgreement.new(
+        1,
         ZERO_ADDRESS, // partners contract
         accounts[0],
         this.minimumCommunity.address,
@@ -65,6 +68,7 @@ contract('PartnersAgreement', function (accounts) {
         100,
         this.mockOracle.address,
         this.linkTokenMock.address,
+        ZERO_ADDRESS,
         { from: accounts[0] }
       );
 
@@ -78,6 +82,7 @@ contract('PartnersAgreement', function (accounts) {
     it("should deploy and activate partners agreement contract", async function () {
 
       const partnersAgreement = await PartnersAgreement.new(
+        1,
         ZERO_ADDRESS, // partners contract
         accounts[0],
         this.minimumCommunity.address,
@@ -85,6 +90,7 @@ contract('PartnersAgreement', function (accounts) {
         100,
         this.mockOracle.address,
         this.linkTokenMock.address,
+        ZERO_ADDRESS,
         { from: accounts[0] }
       );
 
@@ -95,7 +101,6 @@ contract('PartnersAgreement', function (accounts) {
 
 
       const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
-      await community.joinNewMember('', 2000);
       await partnersAgreement.activatePA();
 
       isActive = await partnersAgreement.isActive();
@@ -103,10 +108,10 @@ contract('PartnersAgreement', function (accounts) {
 
       const allUsers = await partnersAgreement.getAllMembers();
       const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
-      const profitSharing = await partnersAgreement.profitSharing();
+      //const profitSharing = await partnersAgreement.profitSharing();
 
       assert.notEqual(ZERO_ADDRESS, interactionNFTAddress);
-      assert.equal(ZERO_ADDRESS, profitSharing);
+      //assert.equal(ZERO_ADDRESS, profitSharing);
       assert.equal(0, allUsers);
 
 
