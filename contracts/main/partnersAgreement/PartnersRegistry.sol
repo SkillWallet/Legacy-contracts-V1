@@ -8,12 +8,15 @@ import "../../imported/IDistributedTown.sol";
 import "../ISkillWallet.sol";
 
 contract PartnersRegistry {
+    uint256 constant public version = 1;
+
     event PartnersAgreementCreated(
         address partnersAgreementAddress,
         address communityAddress
     ); 
     IDistributedTown distributedTown;
     address[] agreements;
+    mapping (address => uint256) agreementIds;
     address oracle;
     address linkToken;
 
@@ -73,16 +76,49 @@ contract PartnersRegistry {
             partnersContractAddress = communityAddress;
 
         PartnersAgreement agreement = new PartnersAgreement(
+            version,
             partnersContractAddress,
             msg.sender,
             communityAddress,
             rolesCount,
             numberOfActions,
             oracle,
-            linkToken
+            linkToken,
+            address(0)
         );
         agreements.push(address(agreement));
 
         emit PartnersAgreementCreated(address(agreement), communityAddress);
+    }
+
+    function migrate(address _agreement) public {
+        require(agreements[agreementIds[_agreement]] == _agreement, "wrong agreement address");
+
+        (
+            uint256 agreementVersion,
+            address owner,
+            address communityAddress,
+            address[] memory partnersContracts, //there can be many?
+            uint256 rolesCount,
+            address partnersInteractionNFTContract,
+            uint256 numberOfActions
+        ) = PartnersAgreement(_agreement).getAgreementData();
+
+        require(agreementVersion < version, "already latest version");
+        require(owner == msg.sender, "not agreement owner");        
+
+        PartnersAgreement agreement = new PartnersAgreement(
+            version,
+            partnersContracts[0],
+            msg.sender,
+            communityAddress,
+            rolesCount,
+            numberOfActions,
+            oracle,
+            linkToken,
+            partnersInteractionNFTContract
+        );
+
+        agreements[agreementIds[_agreement]] = address(agreement);
     }
 }
