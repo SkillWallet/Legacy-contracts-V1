@@ -64,13 +64,18 @@ contract PartnersAgreement is ChainlinkClient {
     }
 
     function activatePA() public {
-        require(!isActive, 'PA already activated');
+        require(!isActive, "PA already activated");
         bool isMember = ICommunity(communityAddress).isMember(owner);
-        require(isMember, 'Owner not yet a member of the community.');
+        require(isMember, "Owner not yet a member of the community.");
         isActive = true;
     }
 
-    function getInteractionNFTContractAddress() public view onlyActive returns (address) {
+    function getInteractionNFTContractAddress()
+        public
+        view
+        onlyActive
+        returns (address)
+    {
         return address(partnersInteractionNFTContract);
     }
 
@@ -114,30 +119,53 @@ contract PartnersAgreement is ChainlinkClient {
         require(user != address(0), "req not found");
         ICommunity community = ICommunity(communityAddress);
         require(community.isMember(user), "Invalid user address");
-        partnersInteractionNFTContract.safeTransferFrom(
-            address(this),
-            user,
-            uint256(partnersInteractionNFTContract.userRoles(user)),
-            _result,
-            ""
-        );
+        if (_result > 0) {
+            partnersInteractionNFTContract.safeTransferFrom(
+                address(this),
+                user,
+                uint256(partnersInteractionNFTContract.userRoles(user)),
+                _result,
+                ""
+            );
+        }
     }
 
-    function getInteractionNFT(address user) public view onlyActive returns (uint256) {
+    function getInteractionNFT(address user)
+        public
+        view
+        onlyActive
+        returns (uint256)
+    {
         return partnersInteractionNFTContract.getActiveInteractions(user);
     }
 
-    function getUserRole(address _user) public view onlyActive returns (uint256) {
+    function getUserRole(address _user)
+        public
+        view
+        onlyActive
+        returns (uint256)
+    {
         return uint256(partnersInteractionNFTContract.userRoles(_user));
     }
 
-    function addNewContractAddressToAgreement(address contractAddress) onlyActive public {
+    function addNewContractAddressToAgreement(address contractAddress)
+        public
+        onlyActive
+    {
         Ownable con = Ownable(contractAddress);
-        require(con.owner() == msg.sender, 'Only the owner of the contract can import it!');
+        require(
+            con.owner() == msg.sender,
+            "Only the owner of the contract can import it!"
+        );
         partnersContracts.push(contractAddress);
     }
 
-    function getImportedAddresses() public view onlyActive returns (address[] memory) {
+    function getImportedAddresses()
+        public
+        view
+        onlyActive
+        returns (address[] memory)
+    {
         return partnersContracts;
     }
 }

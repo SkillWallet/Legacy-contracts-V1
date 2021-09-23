@@ -14,6 +14,7 @@ import "../main/ISkillWallet.sol";
 
 contract MinimumCommunity is ICommunity {
     address private skillWalletAddress;
+    mapping(address => bool) members;
 
     constructor(address _skillWalletAddress) public {
         skillWalletAddress = _skillWalletAddress;
@@ -66,8 +67,7 @@ contract MinimumCommunity is ICommunity {
 
 
     function isMember(address member) public view override returns (bool) {
-        ISkillWallet skillWallet = ISkillWallet(skillWalletAddress);
-        skillWallet.getSkillWalletIdByOwner(member) > 0;
+        return members[member];
     }
 
     function getMemberAddresses() public view override returns (address[] memory) {
@@ -87,7 +87,7 @@ contract MinimumCommunity is ICommunity {
         ISkillWallet skillWallet = ISkillWallet(skillWalletAddress);
         skillWallet.create(msg.sender, uri, false);
         uint256 token = skillWallet.getSkillWalletIdByOwner(msg.sender);
-
+        members[msg.sender] = true;
         emit MemberAdded(msg.sender, token, credits);
     }
 }
