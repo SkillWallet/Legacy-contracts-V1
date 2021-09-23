@@ -5,7 +5,9 @@ async function main () {
 
   const SkillWallet = await ethers.getContractFactory('SkillWallet');
   console.log('Upgrading SkillWallet...');
-  await upgrades.upgradeProxy('0xbc83Dff75363161616729B760AB8814c8CD55D1c', SkillWallet);
+  await upgrades.upgradeProxy('0xbc83Dff75363161616729B760AB8814c8CD55D1c', SkillWallet, {
+    initializer: 'initialize'
+});
   console.log('SkillWallet upgraded');
 }
 

@@ -85,7 +85,7 @@ contract MinimumCommunity is ICommunity {
         uint256 credits
     ) public override {
         ISkillWallet skillWallet = ISkillWallet(skillWalletAddress);
-        skillWallet.create(msg.sender, uri, true);
+        skillWallet.create(msg.sender, uri, false);
         uint256 token = skillWallet.getSkillWalletIdByOwner(msg.sender);
 
         emit MemberAdded(msg.sender, token, credits);

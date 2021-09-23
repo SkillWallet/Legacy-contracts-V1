@@ -50,7 +50,7 @@ contract SkillWallet is
     address private oracle;
     bytes32 private jobId;
     uint256 private fee;
-    OffchainSignatureMechanism osm;
+    address public osmAddress;
 
     mapping(bytes32 => Types.SWValidationRequest)
         private clReqIdToValidationRequest;
@@ -61,15 +61,17 @@ contract SkillWallet is
         public
         initializer
     {
+        __Ownable_init();
         __ERC721_init("SkillWallet", "SW");
+
         _skillWalletCounter.increment();
-        osm = new OffchainSignatureMechanism(_linkToken, _oracle);
+        osmAddress = address(new OffchainSignatureMechanism(_linkToken, _oracle));
     }
 
     function activateSkillWallet(uint256 skillWalletId) external override {
         require(
-            msg.sender == address(this),
-            "This function can be called only by the SW contract!"
+            msg.sender == osmAddress,
+            "This function can be called only by the OSM contract!"
         );
         require(
             skillWalletId < _skillWalletCounter.current(),
@@ -86,17 +88,6 @@ contract SkillWallet is
         _activatedSkillWallets[skillWalletId] = true;
 
         emit SkillWalletActivated(skillWalletId);
-    }
-
-    function validate(
-        string calldata signature,
-        uint256 tokenId,
-        uint256 action,
-        string[] memory stringParams,
-        uint256[] memory intParams,
-        address[] memory addressParams
-    ) public {
-        osm.validate(signature,tokenId, action, stringParams, intParams, addressParams);
     }
 
     function claim() external override {
@@ -346,6 +337,15 @@ contract SkillWallet is
             return gigAddress;
         }
         return address(0);
+    }
+
+     function getOSMAddress()
+        public
+        view
+        override
+        returns (address)
+    {
+        return osmAddress;
     }
 
     function onERC721Received(

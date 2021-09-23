@@ -3,13 +3,11 @@
 pragma solidity ^0.6.10;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../utils/RoleUtils.sol";
 import "../utils/ERC1155Supply.sol";
 
 contract InteractionNFT is ERC1155Supply {
     using Counters for Counters.Counter;
-    using SafeMath for uint256;
     Counters.Counter interactionId;
 
     event MarkedAsInactive();

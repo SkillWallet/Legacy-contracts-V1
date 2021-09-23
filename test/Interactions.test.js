@@ -46,7 +46,7 @@ contract('Interactions', function (accounts) {
         )
 
     });
-    describe('Interaction tests', async function () {
+    describe.only('Interaction tests', async function () {
 
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 3", async function () {
             const partnersAgreement = await PartnersAgreement.new(

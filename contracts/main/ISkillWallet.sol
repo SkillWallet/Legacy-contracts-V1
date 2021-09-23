@@ -88,4 +88,9 @@ interface ISkillWallet is IERC721Upgradeable, IERC721ReceiverUpgradeable {
         returns (bool status);
 
     function isRequestIdValid(bytes32 requestId) external view returns (bool);
+
+    function getOSMAddress()
+        external
+        view
+        returns (address);
 }

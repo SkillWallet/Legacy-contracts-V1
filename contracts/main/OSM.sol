@@ -13,9 +13,9 @@ import "../imported/ICommunity.sol";
 
 
 /**
- * @title DistributedTown SkillWallet
+ * @title SkillWallet OSM implementation
  *
- * @dev Implementation of the SkillWallet contract
+ * @dev Implementation of the Offchain Signature Mechanism contract using chainlink EA
  * @author DistributedTown
  */
 contract OffchainSignatureMechanism is ChainlinkClient

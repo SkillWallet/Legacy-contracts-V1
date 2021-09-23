@@ -1,14 +1,23 @@
-const skillWalletAddress = '0x1e79bE396CE37F7eB43aF0Ef0ffb3124F3fD23eF'
-const communityAddress = '0xec1380558d5A9e25bf258f2e341C6bF562ca7480'
+// const skillWalletAddress = '0x1e79bE396CE37F7eB43aF0Ef0ffb3124F3fD23eF'
+const skillWalletAddress = '0xbc83Dff75363161616729B760AB8814c8CD55D1c' // upgradable
+
+// const communityAddress = '0xec1380558d5A9e25bf258f2e341C6bF562ca7480'
+const communityAddress = '0xD8745cdf890075E04d7385686Def6432Ad80F565' //upgradable SW
 const { assert } = require('chai')
 var ethers = require('ethers')
 var abi = require('../artifacts/contracts/main/SkillWallet.sol/SkillWallet.json')
   .abi
 var communityAbi = require('./communityAbi')
 const helpers = require('../test/helpers')
-const memberAddress = '0x2CEF62C91Dd92FC35f008D1d6Ed08EADF64306bc'
+const fs = require("fs");
+
 function mnemonic() {
-  return undefined;
+  try {
+    return fs.readFileSync("./mnemonic.txt").toString().trim();
+  } catch (e) {
+    console.log(e);
+  }
+  return "";
 }
 
 
@@ -163,21 +172,21 @@ async function getLogins(nonce) {
 }
 
 async function test() {
-  const tokenId = 20;
+  const tokenId = 4;
   // const tokenId = await joinCommunity()
 
   await addPubKeyToSkillWallet(tokenId)
-  // const activateRes = await validateSW(tokenId, 0, 247810275);
-  const activateRes = await validateSW(tokenId, 0);
-  console.log(activateRes.requestId);
-  await isSkillWalletActivated(tokenId)
-  console.log(
-    '[sleep]',
-    'waiting 10 seconds for the chainlink validation to pass',
-  )
-  await sleep(10000)
-  await hasValidationPassed(activateRes.requestId)
-  await isSkillWalletActivated(tokenId)
+  // // const activateRes = await validateSW(tokenId, 0, 247810275);
+  // const activateRes = await validateSW(tokenId, 0);
+  // console.log(activateRes.requestId);
+  // await isSkillWalletActivated(tokenId)
+  // console.log(
+  //   '[sleep]',
+  //   'waiting 10 seconds for the chainlink validation to pass',
+  // )
+  // await sleep(10000)
+  // await hasValidationPassed(activateRes.requestId)
+  // await isSkillWalletActivated(tokenId)
 
 
 
