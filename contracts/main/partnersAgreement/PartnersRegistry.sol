@@ -8,15 +8,15 @@ import "../../imported/IDistributedTown.sol";
 import "../ISkillWallet.sol";
 
 contract PartnersRegistry {
-    uint256 constant public version = 1;
+    uint256 public version = 1;
 
     event PartnersAgreementCreated(
         address partnersAgreementAddress,
         address communityAddress
     ); 
     IDistributedTown distributedTown;
-    address[] agreements;
-    mapping (address => uint256) agreementIds;
+    address[] public agreements;
+    mapping (address => uint256) public agreementIds;
     address oracle;
     address linkToken;
 
@@ -28,6 +28,12 @@ contract PartnersRegistry {
         distributedTown = IDistributedTown(_distributedTownAddress);
         oracle = _oracle;
         linkToken = _linkToken;
+    }
+
+    //TODO: for tests only should be removed one upgradability is implemented
+    //Also possible to create PA factory and move version there
+    function setVersion(uint256 _version) public {
+        version = _version;
     }
 
     function getPartnerAgreementAddresses()
@@ -86,13 +92,16 @@ contract PartnersRegistry {
             linkToken,
             address(0)
         );
+        agreementIds[address(agreement)] = agreements.length;
         agreements.push(address(agreement));
 
         emit PartnersAgreementCreated(address(agreement), communityAddress);
     }
 
     function migrate(address _agreement) public {
-        require(agreements[agreementIds[_agreement]] == _agreement, "wrong agreement address");
+        uint256 agreementId = agreementIds[_agreement];
+
+        require(agreements[agreementId] == _agreement, "wrong agreement address");
 
         (
             uint256 agreementVersion,
@@ -119,6 +128,8 @@ contract PartnersRegistry {
             partnersInteractionNFTContract
         );
 
-        agreements[agreementIds[_agreement]] = address(agreement);
+        agreements[agreementId] = address(agreement);
+        agreementIds[_agreement] = 0;
+        agreementIds[address(agreement)] = agreementId;
     }
 }
