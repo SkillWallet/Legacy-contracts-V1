@@ -129,7 +129,7 @@ contract PartnersRegistry {
         );
 
         agreements[agreementId] = address(agreement);
-        agreementIds[_agreement] = 0;
+        delete agreementIds[_agreement];
         agreementIds[address(agreement)] = agreementId;
     }
 }
