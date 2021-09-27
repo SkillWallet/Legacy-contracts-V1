@@ -26,6 +26,8 @@ contract PartnersAgreement is ChainlinkClient {
     bytes32 private jobId;
     uint256 private fee;
 
+    uint256 deploymentBlock;
+
     /**
      * @dev Throws PA not yet activated.
      */
@@ -61,16 +63,23 @@ contract PartnersAgreement is ChainlinkClient {
         jobId = "e1e26fa27aa7436c95a78a40c21f5404";
         fee = 0.1 * 10**18; // 0.1 LINK
         isActive = false;
+
+        deploymentBlock = block.number;
     }
 
     function activatePA() public {
-        require(!isActive, 'PA already activated');
+        require(!isActive, "PA already activated");
         bool isMember = ICommunity(communityAddress).isMember(owner);
-        require(isMember, 'Owner not yet a member of the community.');
+        require(isMember, "Owner not yet a member of the community.");
         isActive = true;
     }
 
-    function getInteractionNFTContractAddress() public view onlyActive returns (address) {
+    function getInteractionNFTContractAddress()
+        public
+        view
+        onlyActive
+        returns (address)
+    {
         return address(partnersInteractionNFTContract);
     }
 
@@ -79,7 +88,7 @@ contract PartnersAgreement is ChainlinkClient {
         return community.getMemberAddresses();
     }
 
-    function queryForNewInteractions(address userAddress) public onlyActive {
+    function queryForNewInteractions(address userAddress) public {
         require(userAddress != address(0), "No user address passed!");
 
         for (uint256 i = 0; i < partnersContracts.length; i++) {
@@ -88,13 +97,10 @@ contract PartnersAgreement is ChainlinkClient {
                 address(this),
                 this.transferInteractionNFTs.selector
             );
-            req.add("userAddress", string(abi.encodePacked(userAddress)));
-            req.add(
-                "contractAddress",
-                string(abi.encodePacked(partnersContracts[i]))
-            );
-            req.add("chainId", "80001");
-            req.addUint("startBlock", lastBlockPerUserAddress[userAddress]);
+            req.add("userAddress", addressToString(userAddress));
+            req.add("contractAddress", addressToString(partnersContracts[i]));
+            req.addUint("chainID", 80001);
+            req.addUint("startBlock", 1);
             req.add("covalentAPIKey", "ckey_aae01fa51e024af3a2634d9d030");
 
             bytes32 reqId = sendChainlinkRequestTo(oracle, req, fee);
@@ -104,9 +110,25 @@ contract PartnersAgreement is ChainlinkClient {
         }
     }
 
+    function addressToString(address _address)
+        private
+        pure
+        returns (string memory)
+    {
+        bytes32 _bytes = bytes32(uint256(_address));
+        bytes memory HEX = "0123456789abcdef";
+        bytes memory _string = new bytes(42);
+        _string[0] = "0";
+        _string[1] = "x";
+        for (uint256 i = 0; i < 20; i++) {
+            _string[2 + i * 2] = HEX[uint8(_bytes[i + 12] >> 4)];
+            _string[3 + i * 2] = HEX[uint8(_bytes[i + 12] & 0x0f)];
+        }
+        return string(_string);
+    }
+
     function transferInteractionNFTs(bytes32 _requestId, uint256 _result)
         public
-        onlyActive
         recordChainlinkFulfillment(_requestId)
     {
         address user = userRequests[_requestId];
@@ -123,21 +145,42 @@ contract PartnersAgreement is ChainlinkClient {
         );
     }
 
-    function getInteractionNFT(address user) public view onlyActive returns (uint256) {
+    function getInteractionNFT(address user)
+        public
+        view
+        onlyActive
+        returns (uint256)
+    {
         return partnersInteractionNFTContract.getActiveInteractions(user);
     }
 
-    function getUserRole(address _user) public view onlyActive returns (uint256) {
+    function getUserRole(address _user)
+        public
+        view
+        onlyActive
+        returns (uint256)
+    {
         return uint256(partnersInteractionNFTContract.userRoles(_user));
     }
 
-    function addNewContractAddressToAgreement(address contractAddress) onlyActive public {
+    function addNewContractAddressToAgreement(address contractAddress)
+        public
+        onlyActive
+    {
         Ownable con = Ownable(contractAddress);
-        require(con.owner() == msg.sender, 'Only the owner of the contract can import it!');
+        require(
+            con.owner() == msg.sender,
+            "Only the owner of the contract can import it!"
+        );
         partnersContracts.push(contractAddress);
     }
 
-    function getImportedAddresses() public view onlyActive returns (address[] memory) {
+    function getImportedAddresses()
+        public
+        view
+        onlyActive
+        returns (address[] memory)
+    {
         return partnersContracts;
     }
 }
