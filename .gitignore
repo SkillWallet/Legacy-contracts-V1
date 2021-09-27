@@ -45,3 +45,6 @@ deployments
 mnemonic.txt
 tenderly.yaml
 test/chainlink.test.js
+
+.openzeppelin/*
+.openzeppelin/unknown-80001.json

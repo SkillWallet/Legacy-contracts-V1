@@ -7,11 +7,9 @@ const main = async () => {
 
     console.log("\n\n 📡 Deploying...\n");
 
-
     const RoleUtils = await ethers.getContractFactory('RoleUtils');
     const roleUtils = await RoleUtils.deploy();
     await roleUtils.deployed();
-
     console.log('roleUtilsAddress', roleUtils.address)
 
     const PartnersRegistry = await ethers.getContractFactory('PartnersRegistry', {
