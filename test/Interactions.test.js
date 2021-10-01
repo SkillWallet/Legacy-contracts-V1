@@ -39,6 +39,9 @@ contract('Interactions', function (accounts) {
             { from: accounts[0] }
         );
 
+        const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
+        await community.joinNewMember('', 2000, { from: accounts[0] });
+        await this.partnersAgreement.activatePA({from: accounts[0]});
 
         await this.linkTokenMock.transfer(
             this.partnersAgreement.address,
@@ -46,7 +49,7 @@ contract('Interactions', function (accounts) {
         )
 
     });
-    describe('Interaction tests', async function () {
+    describe.only('Interaction tests', async function () {
 
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 3", async function () {
             const partnersAgreement = await PartnersAgreement.new(
@@ -88,7 +91,7 @@ contract('Interactions', function (accounts) {
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 2", async function () {
             const partnersAgreement = await PartnersAgreement.new(
                 ZERO_ADDRESS, // partners contract
-                accounts[0],
+                accounts[1],
                 this.minimumCommunity.address,
                 2,
                 100,
@@ -97,10 +100,9 @@ contract('Interactions', function (accounts) {
                 { from: accounts[0] }
             );
 
-
             const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
-            await community.joinNewMember('', 2000);
-            await partnersAgreement.activatePA();
+            await community.joinNewMember('', 2000, { from: accounts[1] });
+            await partnersAgreement.activatePA({from: accounts[1]});
 
             const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
             const interactionNFTContract = await InteractionNFT.at(interactionNFTAddress);
@@ -119,10 +121,6 @@ contract('Interactions', function (accounts) {
 
         });
         it('transferInteractionNFTs should transfer the correct amount of NFTs after chainlink result is returned', async function () {
-            const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
-            await community.joinNewMember('', 2000);
-            await this.partnersAgreement.activatePA();
-
             const interactionNFTAddress = await this.partnersAgreement.getInteractionNFTContractAddress();
             const interactionNFTContract = await InteractionNFT.at(interactionNFTAddress);
             await interactionNFTContract.addUserToRole(accounts[0], 1);

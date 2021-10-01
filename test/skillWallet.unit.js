@@ -1,42 +1,68 @@
 const { assert } = require('chai')
 const truffleAssert = require('truffle-assertions')
+const { deployProxy } = require('@openzeppelin/truffle-upgrades');
+const { ethers, upgrades } = require('hardhat');
+let linkTokenMock;
+let mockOracle;
+let skillWallet;
+let community;
+let osmAddress;
+let osm;
 
-const Community = artifacts.require('MinimumCommunity')
-const SkillWallet = artifacts.require('SkillWallet')
-const MockOracle = artifacts.require('MockOracle')
-const LinkToken = artifacts.require('LinkToken')
 const metadataUrl =
   'https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice'
-var BN = web3.utils.BN
-const { expect } = require('chai')
 
-contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
-  before(async function () { })
+contract('SkillWallet', function () {
+
   beforeEach(async function () {
-    this.linkTokenMock = await LinkToken.new()
-    this.mockOracle = await MockOracle.new(this.linkTokenMock.address)
-    this.skillWallet = await SkillWallet.new(
-      this.linkTokenMock.address,
-      this.mockOracle.address,
-      { from: creator },
+    [creator, communitySign, skillWalletOwner, ...addrs] = await ethers.getSigners();
+
+    const LinkToken = await ethers.getContractFactory("LinkToken");
+    const MockOracle = await ethers.getContractFactory("MockOracle");
+    const SkillWallet = await ethers.getContractFactory("SkillWallet");
+    const Community = await ethers.getContractFactory("MinimumCommunity");
+    const OffchainSignatureMechanism = await ethers.getContractFactory('OffchainSignatureMechanism');
+
+    linkTokenMock = await LinkToken.deploy();
+    await linkTokenMock.deployed();
+
+    mockOracle = await MockOracle.deploy(linkTokenMock.address);
+    await mockOracle.deployed();
+
+    skillWallet = await upgrades.deployProxy(
+      SkillWallet,
+      [linkTokenMock.address, mockOracle.address],
+      { from: creator }
+    );
+    await skillWallet.deployed();
+
+
+    osmAddress = await skillWallet.getOSMAddress();
+    osm = await OffchainSignatureMechanism.attach(osmAddress);
+
+    community = await Community.deploy(skillWallet.address)
+    await community.deployed();
+
+    await linkTokenMock.transfer(
+      osmAddress,
+      '2000000000000000000',
     )
-    this.community = await Community.new(this.skillWallet.address)
   })
 
   describe('SkillWallet', async function () {
     describe('Creating a SkillWallet', async function () {
       it('should fail when there is already a SW to be claimed by this user', async function () {
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+        const tx = await (await skillWallet.create(
+          skillWalletOwner.address,
           metadataUrl,
           true
-        )
+        )).wait();
 
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        assert.equal(SWCreated, true)
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
 
-        const failingTx = this.skillWallet.create(
-          skillWalletOwner,
+        const failingTx = skillWallet.create(
+          skillWalletOwner.address,
           metadataUrl,
           true
         )
@@ -46,22 +72,22 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         )
       })
       it('should fail when the user already owns a SW', async function () {
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+        const tx = await (await skillWallet.create(
+          skillWalletOwner.address,
           metadataUrl,
           true
-        )
+        )).wait();
 
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        assert.equal(SWCreated, true)
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
 
-        const claimedTx = await this.skillWallet.claim({ from: skillWalletOwner });
-        const claimedTxEvent = claimedTx.logs[2].event === 'SkillWalletClaimed'
+        const claimedTx = await (await skillWallet.connect(skillWalletOwner).claim()).wait();
+        const claimedTxEvent = claimedTx.events.find(e => e.event === 'SkillWalletClaimed');
 
-        assert.equal(claimedTxEvent, true)
+        assert.isNotNull(claimedTxEvent)
 
-        const failingTx = this.skillWallet.create(
-          skillWalletOwner,
+        const failingTx = skillWallet.create(
+          skillWalletOwner.address,
           metadataUrl,
           true
         )
@@ -71,23 +97,23 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         )
       })
       it('should fail when the user already owns a SW', async function () {
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+        const tx = await (await skillWallet.create(
+          skillWalletOwner.address,
+          metadataUrl,
+          false
+        )).wait()
+
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
+
+        const failingTx1 = skillWallet.create(
+          skillWalletOwner.address,
           metadataUrl,
           false
         )
 
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        assert.equal(SWCreated, true)
-
-        const failingTx1 = this.skillWallet.create(
-          skillWalletOwner,
-          metadataUrl,
-          false
-        )
-
-        const failingTx2 = this.skillWallet.create(
-          skillWalletOwner,
+        const failingTx2 = skillWallet.create(
+          skillWalletOwner.address,
           metadataUrl,
           true
         )
@@ -101,165 +127,163 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
         )
       })
       it('should create a claimable inactive SW', async function () {
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+        const tx = await (await skillWallet.connect(communitySign).create(
+          skillWalletOwner.address,
           metadataUrl,
-          true,
-          { from: community },
-        )
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        const tokenId = tx.logs[1].args[2]
+          true
+        )).wait();
 
-        assert.equal(SWCreated, true)
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
+        const tokenId = SWCreated.args[2].toString();
 
-        const skillWalletClaimable = await this.skillWallet.isSkillWalletClaimable(
-          skillWalletOwner,
+        const skillWalletClaimable = await skillWallet.isSkillWalletClaimable(
+          skillWalletOwner.address,
         )
-        const skillWalletId = await this.skillWallet.getClaimableSkillWalletId(
-          skillWalletOwner
+        const skillWalletId = await skillWallet.getClaimableSkillWalletId(
+          skillWalletOwner.address
         )
-        const skillWalletActiveCommunity = await this.skillWallet.getActiveCommunity(
+        const skillWalletActiveCommunity = await skillWallet.getActiveCommunity(
           tokenId,
         )
-        const skillWalletCommunityHistory = await this.skillWallet.getCommunityHistory(
+        const skillWalletCommunityHistory = await skillWallet.getCommunityHistory(
           tokenId,
         )
-        const skillWalletActivated = await this.skillWallet.isSkillWalletActivated(
+        const skillWalletActivated = await skillWallet.isSkillWalletActivated(
           tokenId,
         )
 
         assert.equal(skillWalletClaimable, true)
         assert.equal(skillWalletId.toString(), tokenId.toString())
-        assert.equal(skillWalletActiveCommunity, community)
+        assert.equal(skillWalletActiveCommunity, communitySign.address)
         assert.equal(skillWalletActivated, false)
-        assert.equal(skillWalletCommunityHistory[0], community)
+        assert.equal(skillWalletCommunityHistory[0], communitySign.address)
       })
       it('should create an inactive SW', async function () {
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+
+        const tx = await (await skillWallet.connect(communitySign).create(
+          skillWalletOwner.address,
           metadataUrl,
           false,
-          { from: community },
-        )
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        const tokenId = tx.logs[1].args[2]
+        )).wait();
 
-        assert.equal(SWCreated, true)
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
 
-        const skillWalletClaimable = await this.skillWallet.isSkillWalletClaimable(
-          skillWalletOwner,
+        const tokenId = SWCreated.args[2].toString();
+
+        const skillWalletClaimable = await skillWallet.isSkillWalletClaimable(
+          skillWalletOwner.address,
         )
-        const skillWalletId = await this.skillWallet.getSkillWalletIdByOwner(
-          skillWalletOwner
+        const skillWalletId = await skillWallet.getSkillWalletIdByOwner(
+          skillWalletOwner.address
         )
-        const skillWalletActiveCommunity = await this.skillWallet.getActiveCommunity(
+        const skillWalletActiveCommunity = await skillWallet.getActiveCommunity(
           tokenId,
         )
-        const skillWalletCommunityHistory = await this.skillWallet.getCommunityHistory(
+        const skillWalletCommunityHistory = await skillWallet.getCommunityHistory(
           tokenId,
         )
-        const skillWalletActivated = await this.skillWallet.isSkillWalletActivated(
+        const skillWalletActivated = await skillWallet.isSkillWalletActivated(
           tokenId,
         )
 
         assert.equal(skillWalletClaimable, false)
         assert.equal(skillWalletId.toString(), tokenId.toString())
-        assert.equal(skillWalletActiveCommunity, community)
+        assert.equal(skillWalletActiveCommunity, communitySign.address)
         assert.equal(skillWalletActivated, false)
-        assert.equal(skillWalletCommunityHistory[0], community)
+        assert.equal(skillWalletCommunityHistory[0], communitySign.address)
       })
       it('should claim SW and transfer the token to the owner', async function () {
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+        const tx = await (await skillWallet.connect(communitySign).create(
+          skillWalletOwner.address,
           metadataUrl,
-          true,
-          { from: community },
-        )
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        const tokenId = tx.logs[1].args[2]
+          true
+        )).wait();
 
-        assert.equal(SWCreated, true)
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
 
-        const skillWalletClaimable = await this.skillWallet.isSkillWalletClaimable(
-          skillWalletOwner,
+        const tokenId = SWCreated.args[2].toString();
+
+        const skillWalletClaimable = await skillWallet.isSkillWalletClaimable(
+          skillWalletOwner.address,
         )
 
         assert.equal(skillWalletClaimable, true)
 
-        const claimedTx = await this.skillWallet.claim({ from: skillWalletOwner });
-        const claimedTxEvent = claimedTx.logs[2].event === 'SkillWalletClaimed'
+        const claimedTx = await (await skillWallet.connect(skillWalletOwner).claim()).wait();
 
-        assert.equal(claimedTxEvent, true);
+        const claimedTxEvent = claimedTx.events.find(e => e.event == 'SkillWalletClaimed');
+        assert.isNotNull(claimedTxEvent);
 
-        const owner = await this.skillWallet.ownerOf(
+        const owner = await skillWallet.ownerOf(
           tokenId
         );
 
-        const skillWalletId = await this.skillWallet.getSkillWalletIdByOwner(
-          skillWalletOwner
+        const skillWalletId = await skillWallet.getSkillWalletIdByOwner(
+          skillWalletOwner.address
         )
-        const skillWalletActivated = await this.skillWallet.isSkillWalletActivated(
+        const skillWalletActivated = await skillWallet.isSkillWalletActivated(
           tokenId,
         )
 
         assert.equal(skillWalletId.toString(), tokenId.toString())
-        assert.equal(owner, skillWalletOwner);
+        assert.equal(owner, skillWalletOwner.address);
         assert.equal(skillWalletActivated, false)
 
       })
       it('should transfer the token to the owner if not claimable', async function () {
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+        const tx = await (await skillWallet.connect(communitySign).create(
+          skillWalletOwner.address,
           metadataUrl,
           false,
-          { from: community },
-        )
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        const tokenId = tx.logs[1].args[2]
+        )).wait();
 
-        assert.equal(SWCreated, true)
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
 
-        const skillWalletClaimable = await this.skillWallet.isSkillWalletClaimable(
-          skillWalletOwner,
+        const tokenId = SWCreated.args[2].toString();
+
+        const skillWalletClaimable = await skillWallet.isSkillWalletClaimable(
+          skillWalletOwner.address,
         )
 
         assert.equal(skillWalletClaimable, false)
 
-        const owner = await this.skillWallet.ownerOf(
+        const owner = await skillWallet.ownerOf(
           tokenId
         );
 
-        const skillWalletId = await this.skillWallet.getSkillWalletIdByOwner(
-          skillWalletOwner
+        const skillWalletId = await skillWallet.getSkillWalletIdByOwner(
+          skillWalletOwner.address
         )
-        const skillWalletActivated = await this.skillWallet.isSkillWalletActivated(
+        const skillWalletActivated = await skillWallet.isSkillWalletActivated(
           tokenId,
         )
 
         assert.equal(skillWalletId.toString(), tokenId.toString())
-        assert.equal(owner, skillWalletOwner);
+        assert.equal(owner, skillWalletOwner.address);
         assert.equal(skillWalletActivated, false)
 
       })
       it('should fail claiming not claimable SW', async function () {
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+        const tx = await (await skillWallet.connect(communitySign).create(
+          skillWalletOwner.address,
           metadataUrl,
-          false,
-          { from: community },
-        )
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        const tokenId = tx.logs[1].args[2]
+          false
+        )).wait();
 
-        assert.equal(SWCreated, true)
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
 
-        const skillWalletClaimable = await this.skillWallet.isSkillWalletClaimable(
-          skillWalletOwner,
+        const skillWalletClaimable = await skillWallet.isSkillWalletClaimable(
+          skillWalletOwner.address,
         )
 
         assert.equal(skillWalletClaimable, false)
 
-        const claimedTx = this.skillWallet.claim({ from: skillWalletOwner });
+        const claimedTx = skillWallet.connect(skillWalletOwner).claim();
 
         await truffleAssert.reverts(
           claimedTx,
@@ -271,16 +295,14 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
 
     describe('Adding a pubKey to a SkillWallet', async function () {
       it('should fail when the SW is not created yet', async function () {
-        const failingTx = this.skillWallet.addPubKeyToSkillWallet(1000000, '', {
-          from: creator,
-        })
+        const failingTx = skillWallet.connect(creator).addPubKeyToSkillWallet(1000000, '')
         await truffleAssert.reverts(
           failingTx,
           'SkillWallet: skillWalletId out of range.',
         )
       })
       it('should fail when the call is not made by the owner', async function () {
-        const failingTx = this.skillWallet.addPubKeyToSkillWallet(1000000, '')
+        const failingTx = skillWallet.connect(skillWalletOwner).addPubKeyToSkillWallet(1, '')
         await truffleAssert.reverts(
           failingTx,
           'Ownable: caller is not the owner',
@@ -288,20 +310,19 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
       })
 
       it('should fail when the SW has not been claimed yet.', async function () {
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+        const tx = await (await skillWallet.connect(communitySign).create(
+          skillWalletOwner.address,
           metadataUrl,
-          { from: community },
-        )
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        const tokenId = tx.logs[1].args[2]
+          true
+        )).wait();
 
-        assert.equal(SWCreated, true)
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
+        const tokenId = SWCreated.args[2].toString();
 
-        const failingTx = this.skillWallet.addPubKeyToSkillWallet(
+        const failingTx = skillWallet.connect(creator).addPubKeyToSkillWallet(
           tokenId,
           'pubKey',
-          { from: creator },
         )
 
         await truffleAssert.reverts(
@@ -311,35 +332,28 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
       })
 
       it('should fail when the SW has pubKey already assigned.', async function () {
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+        const tx = await (await skillWallet.connect(communitySign).create(
+          skillWalletOwner.address,
           metadataUrl,
-          { from: community },
-        )
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        const tokenId = tx.logs[1].args[2]
+          false,
+        )).wait();
 
-        assert.equal(SWCreated, true)
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
+        const tokenId = SWCreated.args[2].toString();
 
-        const claimedTx = await this.skillWallet.claim({ from: skillWalletOwner });
-        const claimedTxEvent = claimedTx.logs[2].event === 'SkillWalletClaimed'
-
-        assert.equal(claimedTxEvent, true);
-
-        const pubKeyTx = await this.skillWallet.addPubKeyToSkillWallet(
+        const pubKeyTx = await (await skillWallet.connect(creator).addPubKeyToSkillWallet(
           tokenId,
           'pubKey',
-          { from: creator },
-        )
+        )).wait();
 
-        const pubKeyEventEmitted =
-          pubKeyTx.logs[0].event === 'PubKeyAddedToSkillWallet'
-        assert.equal(pubKeyEventEmitted, true)
 
-        const failingTx = this.skillWallet.addPubKeyToSkillWallet(
+        const pubKeyEventEmitted = pubKeyTx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(pubKeyEventEmitted)
+
+        const failingTx = skillWallet.connect(creator).addPubKeyToSkillWallet(
           tokenId,
           'pubKey',
-          { from: creator },
         )
 
         await truffleAssert.reverts(
@@ -349,223 +363,190 @@ contract('SkillWallet', function ([_, community, creator, skillWalletOwner]) {
       })
 
       it('should set pubKey properly', async function () {
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+        const tx = await (await skillWallet.connect(communitySign).create(
+          skillWalletOwner.address,
           metadataUrl,
           true,
-          { from: community },
-        )
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        const tokenId = tx.logs[1].args[2]
+        )).wait();
 
-        assert.equal(SWCreated, true)
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
+        const tokenId = SWCreated.args[2].toString();
 
-        const claimedTx = await this.skillWallet.claim({ from: skillWalletOwner });
-        const claimedTxEvent = claimedTx.logs[2].event === 'SkillWalletClaimed'
 
-        assert.equal(claimedTxEvent, true);
+        const claimedTx = await (await skillWallet.connect(skillWalletOwner).claim()).wait();
+        const claimedTxEvent = claimedTx.events.find(e => e.event == 'SkillWalletCreated');
 
-        const pubKeyTx = await this.skillWallet.addPubKeyToSkillWallet(
+        assert.isNotNull(claimedTxEvent)
+
+        const pubKeyTx = await (await skillWallet.connect(creator).addPubKeyToSkillWallet(
           tokenId,
           'pubKey',
-          { from: creator },
-        )
+        )).wait();
 
-        const pubKeyEventEmitted =
-          pubKeyTx.logs[0].event === 'PubKeyAddedToSkillWallet'
-        assert.equal(pubKeyEventEmitted, true)
+        const pubKeyEventEmitted = pubKeyTx.events.find(e => e.event == 'SkillWalletCreated');
 
-        const skillWalletRegistered = await this.skillWallet.isSkillWalletRegistered(
-          skillWalletOwner,
+        assert.isNotNull(pubKeyEventEmitted)
+
+        const skillWalletRegistered = await skillWallet.isSkillWalletRegistered(
+          skillWalletOwner.address,
         )
-        const skillWalletId = await this.skillWallet.getSkillWalletIdByOwner(
-          skillWalletOwner,
+        const skillWalletId = await skillWallet.getSkillWalletIdByOwner(
+          skillWalletOwner.address,
         )
-        const skillWalletActiveCommunity = await this.skillWallet.getActiveCommunity(
+        const skillWalletActiveCommunity = await skillWallet.getActiveCommunity(
           tokenId,
         )
-        const skillWalletCommunityHistory = await this.skillWallet.getCommunityHistory(
+        const skillWalletCommunityHistory = await skillWallet.getCommunityHistory(
           tokenId,
         )
-        const skillWalletActivated = await this.skillWallet.isSkillWalletActivated(
+        const skillWalletActivated = await skillWallet.isSkillWalletActivated(
           tokenId,
         )
 
-        const pubKey = await this.skillWallet.skillWalletToPubKey(tokenId)
+        const pubKey = await skillWallet.skillWalletToPubKey(tokenId)
         assert.equal(skillWalletRegistered, true)
         assert.equal(skillWalletId.toString(), tokenId.toString())
-        assert.equal(skillWalletActiveCommunity, community)
+        assert.equal(skillWalletActiveCommunity, communitySign.address)
         assert.equal(skillWalletActivated, false)
-        assert.equal(skillWalletCommunityHistory[0], community)
+        assert.equal(skillWalletCommunityHistory[0], communitySign.address)
         assert.equal(pubKey, 'pubKey')
       })
 
       it('should set pubKey properly', async function () {
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+        const tx = await (await skillWallet.connect(communitySign).create(
+          skillWalletOwner.address,
           metadataUrl,
-          false,
-          { from: community },
-        )
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        const tokenId = tx.logs[1].args[2]
+          false
+        )).wait();
 
-        assert.equal(SWCreated, true)
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
+        const tokenId = SWCreated.args[2].toString();
 
-        const pubKeyTx = await this.skillWallet.addPubKeyToSkillWallet(
+        const pubKeyTx = await (await skillWallet.connect(creator).addPubKeyToSkillWallet(
           tokenId,
           'pubKey',
-          { from: creator },
-        )
+        )).wait();
 
-        const pubKeyEventEmitted =
-          pubKeyTx.logs[0].event === 'PubKeyAddedToSkillWallet'
-        assert.equal(pubKeyEventEmitted, true)
+        const pubKeyEventEmitted = pubKeyTx.events.find(e => e.event == 'PubKeyAddedToSkillWallet');
+        assert.isNotNull(pubKeyEventEmitted)
 
-        const skillWalletRegistered = await this.skillWallet.isSkillWalletRegistered(
-          skillWalletOwner,
+        const skillWalletRegistered = await skillWallet.isSkillWalletRegistered(
+          skillWalletOwner.address,
         )
-        const skillWalletId = await this.skillWallet.getSkillWalletIdByOwner(
-          skillWalletOwner,
+        const skillWalletId = await skillWallet.getSkillWalletIdByOwner(
+          skillWalletOwner.address,
         )
-        const skillWalletActiveCommunity = await this.skillWallet.getActiveCommunity(
+        const skillWalletActiveCommunity = await skillWallet.getActiveCommunity(
           tokenId,
         )
-        const skillWalletCommunityHistory = await this.skillWallet.getCommunityHistory(
+        const skillWalletCommunityHistory = await skillWallet.getCommunityHistory(
           tokenId,
         )
-        const skillWalletActivated = await this.skillWallet.isSkillWalletActivated(
+        const skillWalletActivated = await skillWallet.isSkillWalletActivated(
           tokenId,
         )
 
-        const pubKey = await this.skillWallet.skillWalletToPubKey(tokenId)
+        const pubKey = await skillWallet.skillWalletToPubKey(tokenId)
         assert.equal(skillWalletRegistered, true)
         assert.equal(skillWalletId.toString(), tokenId.toString())
-        assert.equal(skillWalletActiveCommunity, community)
+        assert.equal(skillWalletActiveCommunity, communitySign.address)
         assert.equal(skillWalletActivated, false)
-        assert.equal(skillWalletCommunityHistory[0], community)
+        assert.equal(skillWalletCommunityHistory[0], communitySign.address)
         assert.equal(pubKey, 'pubKey')
       })
     })
 
     describe('Activate skillWallet', async function () {
-      it('should activate the SW if the response of the chainlink callback is true', async function () {
-        // Create SkillWallet
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
+
+      let tokenId;
+      beforeEach(async function () {
+        const tx = await (await skillWallet.connect(communitySign).create(
+          skillWalletOwner.address,
           metadataUrl,
-          { from: community },
-        )
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        const tokenId = tx.logs[1].args[2]
+          false
+        )).wait();
 
-        assert.isTrue(SWCreated)
-
-        const claimedTx = await this.skillWallet.claim({ from: skillWalletOwner });
-        const claimedTxEvent = claimedTx.logs[2].event === 'SkillWalletClaimed'
-
-        assert.equal(claimedTxEvent, true);
+        const SWCreated = tx.events.find(e => e.event == 'SkillWalletCreated');
+        assert.isNotNull(SWCreated)
+        tokenId = SWCreated.args[2].toString();
 
         // Add pubKey to the created SkillWallet
-        const pubKeyTx = await this.skillWallet.addPubKeyToSkillWallet(
+        const pubKeyTx = await (await skillWallet.connect(creator).addPubKeyToSkillWallet(
           tokenId,
           'pubKey',
-          { from: creator },
-        )
+        )).wait();
 
-        const pubKeyEventEmitted =
-          pubKeyTx.logs[0].event === 'PubKeyAddedToSkillWallet'
-        assert.isTrue(pubKeyEventEmitted)
+        const pubKeyEventEmitted = pubKeyTx.events.find(e => e.event == 'PubKeyAddedToSkillWallet')
 
+        assert.isNotNull(pubKeyEventEmitted)
+      });
+
+      it('should activate the SW if the response of the chainlink callback is true', async function () {
         const signature = ''
-
-        await this.linkTokenMock.transfer(
-          this.skillWallet.address,
-          '2000000000000000000',
-        )
-        const validationTx = await this.skillWallet.validate(
+        const validationTx = await (await osm.validate(
           signature,
           tokenId,
           0,
           [],
           [],
           [],
-        )
+        )).wait();
+
         const validationRequestIdSentEventEmitted =
-          validationTx.logs[1].event === 'ValidationRequestIdSent'
+          validationTx.events.find(e => e.event == 'ValidationRequestIdSent')
+        
+          const requestId = validationRequestIdSentEventEmitted.args[0]
 
-        assert.isTrue(validationRequestIdSentEventEmitted)
-        const requestId = validationTx.logs[0].args[0]
+        assert.isNotNull(validationRequestIdSentEventEmitted)
 
-        const fulfilTx = await this.mockOracle.fulfillOracleRequest(
+        const fulfilTx = await (await mockOracle.fulfillOracleRequest(
           requestId,
           true,
-        )
-        const fulfilTxEventEmitted = fulfilTx.logs[0].event === 'CallbackCalled'
+        )).wait();
 
-        assert.isTrue(fulfilTxEventEmitted)
-        const isSWActivated = await this.skillWallet.isSkillWalletActivated(
-          tokenId,
-        )
+        const fulfilTxEventEmitted = fulfilTx.events.find(e => e.event == 'CallbackCalled')
+
+        assert.isNotNull(fulfilTxEventEmitted);
+
+        const isSWActivated = await skillWallet.isSkillWalletActivated(
+          tokenId
+        );
+
         assert.isTrue(isSWActivated)
       })
       it('should not activate the SW if the response of the chainlink callback is false', async function () {
-        // Create SkillWallet
-        const tx = await this.skillWallet.create(
-          skillWalletOwner,
-          metadataUrl,
-          { from: community },
-        )
-        const SWCreated = tx.logs[1].event === 'SkillWalletCreated'
-        const tokenId = tx.logs[1].args[2]
-
-        assert.isTrue(SWCreated)
-
-        const claimedTx = await this.skillWallet.claim({ from: skillWalletOwner });
-        const claimedTxEvent = claimedTx.logs[2].event === 'SkillWalletClaimed'
-        assert.isTrue(claimedTxEvent);
-
-        // Add pubKey to the created SkillWallet
-        const pubKeyTx = await this.skillWallet.addPubKeyToSkillWallet(
-          tokenId,
-          'pubKey',
-          { from: creator },
-        )
-
-        const pubKeyEventEmitted =
-          pubKeyTx.logs[0].event === 'PubKeyAddedToSkillWallet'
-        assert.isTrue(pubKeyEventEmitted)
-
         const signature = '';
 
-        await this.linkTokenMock.transfer(
-          this.skillWallet.address,
-          '2000000000000000000',
-        )
-        const validationTx = await this.skillWallet.validate(
+        const validationTx = await (await osm.validate(
           signature,
           tokenId,
           0,
           [],
           [],
           [],
-        )
+        )).wait();
+        
         const validationRequestIdSentEventEmitted =
-          validationTx.logs[1].event === 'ValidationRequestIdSent'
+          validationTx.events.find(e => e.event == 'ValidationRequestIdSent')
 
-        assert.isTrue(validationRequestIdSentEventEmitted)
-        const requestId = validationTx.logs[0].args[0]
+        assert.isNotNull(validationRequestIdSentEventEmitted)
+        const requestId = validationRequestIdSentEventEmitted.args[0]
 
-        const fulfilTx = await this.mockOracle.fulfillOracleRequest(
+        const fulfilTx = await (await mockOracle.fulfillOracleRequest(
           requestId,
-          false
-        )
-        const fulfilTxEventEmitted = fulfilTx.logs[0].event === 'CallbackCalled'
+          false,
+        )).wait();
 
-        assert.isTrue(fulfilTxEventEmitted)
-        const isSWActivated = await this.skillWallet.isSkillWalletActivated(
-          tokenId,
-        )
+        const fulfilTxEventEmitted = fulfilTx.events.find(e => e.event == 'CallbackCalled')
+
+        assert.isNotNull(fulfilTxEventEmitted);
+
+        const isSWActivated = await skillWallet.isSkillWalletActivated(
+          tokenId
+        );
+
         assert.isFalse(isSWActivated)
       })
     })
