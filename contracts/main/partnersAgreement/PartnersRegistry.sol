@@ -4,12 +4,12 @@ pragma solidity ^0.6.10;
 import "./PartnersAgreement.sol";
 import "../../imported/ICommunity.sol";
 import "../../imported/IDistributedTown.sol";
-
 import "../ISkillWallet.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
-contract PartnersRegistry {
+contract PartnersRegistry is Initializable {
     uint256 public version = 1;
-
+    
     event PartnersAgreementCreated(
         address partnersAgreementAddress,
         address communityAddress
@@ -20,11 +20,11 @@ contract PartnersRegistry {
     address oracle;
     address linkToken;
 
-    constructor(
+    function initialize(
         address _distributedTownAddress,
         address _oracle,
         address _linkToken
-    ) public {
+    ) public initializer {
         distributedTown = IDistributedTown(_distributedTownAddress);
         oracle = _oracle;
         linkToken = _linkToken;

@@ -47,3 +47,5 @@ tenderly.yaml
 test/chainlink.test.js
 
 0x*
+.openzeppelin/*
+.openzeppelin/unknown-80001.json

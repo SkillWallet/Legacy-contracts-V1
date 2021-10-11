@@ -50,7 +50,7 @@ contract('Interactions', function (accounts) {
         )
 
     });
-    describe('Interaction tests', async function () {
+    describe.only('Interaction tests', async function () {
 
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 3", async function () {
             const partnersAgreement = await PartnersAgreement.new(
@@ -102,7 +102,6 @@ contract('Interactions', function (accounts) {
                 ZERO_ADDRESS,
                 { from: accounts[0] }
             );
-
 
             const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
             await community.joinNewMember('', 2000, { from: accounts[1] });

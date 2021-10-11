@@ -3,13 +3,11 @@
 pragma solidity ^0.6.10;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../utils/RoleUtils.sol";
 import "../utils/ERC1155Supply.sol";
 
 contract InteractionNFT is ERC1155Supply {
     using Counters for Counters.Counter;
-    using SafeMath for uint256;
     Counters.Counter interactionId;
 
     event MarkedAsInactive();
@@ -40,7 +38,6 @@ contract InteractionNFT is ERC1155Supply {
     function addUserToRole(address user, RoleUtils.Roles role) public {
         require(user != address(0), "No user passed");
         require(userRoles[user] == RoleUtils.Roles.NONE, "already has role");
-        //require(role >= 0 && role <= 2, "Invalid role!");
 
         userRoles[user] = role;
         usersPerRole[role].push(user);

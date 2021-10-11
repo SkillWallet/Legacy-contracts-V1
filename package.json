@@ -1,6 +1,6 @@
 {
   "name": "skill-wallet",
-  "version": "0.0.4-beta",
+  "version": "0.0.5-beta",
   "main": "index.js",
   "license": "MIT",
   "bugs": {
@@ -8,6 +8,7 @@
   },
   "files": [
     "/contracts/main/*.sol",
+    "/contracts/main/**/*.sol",
     "/contracts/mocks/LinkToken.sol",
     "/contracts/mocks/MockOracle.sol",
     "/contracts/imported/*.sol",
@@ -26,6 +27,7 @@
   "author": "DiTo Labs <team@distributed.town>",
   "homepage": "https://skillwallet.id/",
   "devDependencies": {
+    "@chainlink/token": "^1.1.0",
     "@nomiclabs/hardhat-truffle5": "2.0.0",
     "@nomiclabs/hardhat-web3": "^2.0.0",
     "@openzeppelin/test-environment": "0.1.9",
@@ -37,16 +39,18 @@
     "eslint-plugin-babel": "^5.3.1",
     "eslint-plugin-prettier": "^3.1.4",
     "truffle-assertions": "0.9.2",
-    "@chainlink/token": "^1.1.0"
+    "@openzeppelin/truffle-upgrades": "1.9.1"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.1.7",
+    "@chainlink/token": "^1.1.0",
     "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-etherscan": "^2.1.1",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
+    "@openzeppelin/hardhat-upgrades": "^1.10.0",
     "@openzeppelin/contracts": "3.4.2",
+    "@openzeppelin/contracts-upgradeable": "^3.4.2",
     "@tenderly/hardhat-tenderly": "^1.0.10",
-    "@chainlink/token": "^1.1.0",
     "chai": "^4.2.0",
     "chalk": "^4.1.0",
     "ethers": "^5.2.3",

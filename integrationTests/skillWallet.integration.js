@@ -1,14 +1,26 @@
-const skillWalletAddress = '0x1e79bE396CE37F7eB43aF0Ef0ffb3124F3fD23eF'
-const communityAddress = '0xec1380558d5A9e25bf258f2e341C6bF562ca7480'
+// const skillWalletAddress = '0x1e79bE396CE37F7eB43aF0Ef0ffb3124F3fD23eF'
+const skillWalletAddress = '0xe5f83A22342EaCC62E263064033Bf3A57739cBd2' // upgradable
+const dito = '0xbd3e6c9213eF3b90D6e31AfBbd5021c0f37046ff'
+// const communityAddress = '0xec1380558d5A9e25bf258f2e341C6bF562ca7480'
+const communityAddress = '0xE6979Db69E34130437f14AC4A99a82ce97dfa6C7' //upgradable SW
 const { assert } = require('chai')
 var ethers = require('ethers')
 var abi = require('../artifacts/contracts/main/SkillWallet.sol/SkillWallet.json')
   .abi
+
+var osmAbi = require('../artifacts/contracts/main/OSM.sol/OffchainSignatureMechanism.json')
+  .abi
 var communityAbi = require('./communityAbi')
 const helpers = require('../test/helpers')
-const memberAddress = '0x2CEF62C91Dd92FC35f008D1d6Ed08EADF64306bc'
+const fs = require("fs");
+
 function mnemonic() {
-  return undefined;
+  try {
+    return fs.readFileSync("./mnemonic.txt").toString().trim();
+  } catch (e) {
+    console.log(e);
+  }
+  return "";
 }
 
 
@@ -72,6 +84,7 @@ const communityContract = new ethers.Contract(
   signer,
 )
 
+
 async function joinCommunity() {
   // const newKeyPair = helpers.generateKeyPair();
   // keyPair = newKeyPair;
@@ -115,11 +128,39 @@ async function addPubKeyToSkillWallet(tokenId) {
   console.log('[addPubKeyToSkillWallet]:', 'PubKeyAddedToSW event emitted')
 }
 
+async function claim() {
+  const claimTx = await skillWalletContract.claim();
+
+  const claimTxResult = await claimTx.wait()
+  const { events } = claimTxResult
+  const claimEventEmitted = events.find(
+    (e) => e.event === 'SkillWalletClaimed'
+  );
+
+  if (claimEventEmitted) {
+    console.log('[Claim]:', 'Finished Successfully');
+  } else {
+    console.log('[Claim]:', 'Failed');
+  }
+}
+
+async function getOSMAddr() {
+  const osmAddr = await skillWalletContract.getOSMAddress();
+  console.log(osmAddr);
+}
 async function validateSW(tokenId, action, nonce) {
+  const osmAddr = await skillWalletContract.getOSMAddress();
+
+  const osmContract = new ethers.Contract(
+    osmAddr,
+    osmAbi,
+    signer
+  )
+
   if (!nonce)
     nonce = await helpers.getNonce(tokenId, action)
   const signature = await helpers.sign(keyPair.privKey, nonce.toString())
-  const validationTx = await skillWalletContract.validate(
+  const validationTx = await osmContract.validate(
     signature,
     tokenId,
     action,
@@ -128,6 +169,7 @@ async function validateSW(tokenId, action, nonce) {
     [],
   )
 
+  console.log(validationTx)
   // Wait for transaction to finish
   const validationTxResult = await validationTx.wait()
   const { events } = validationTxResult
@@ -163,23 +205,22 @@ async function getLogins(nonce) {
 }
 
 async function test() {
-  const tokenId = 20;
+  // await getOSMAddr();
+  // const tokenId = 4;
   // const tokenId = await joinCommunity()
+  // await claim();
 
-  await addPubKeyToSkillWallet(tokenId)
-  // const activateRes = await validateSW(tokenId, 0, 247810275);
-  const activateRes = await validateSW(tokenId, 0);
-  console.log(activateRes.requestId);
-  await isSkillWalletActivated(tokenId)
-  console.log(
-    '[sleep]',
-    'waiting 10 seconds for the chainlink validation to pass',
-  )
-  await sleep(10000)
-  await hasValidationPassed(activateRes.requestId)
-  await isSkillWalletActivated(tokenId)
-
-
+  // await addPubKeyToSkillWallet(tokenId)
+  // const activateRes = await validateSW(tokenId, 0);
+  // console.log(activateRes.requestId);
+  // await isSkillWalletActivated(tokenId)
+  // console.log(
+  //   '[sleep]',
+  //   'waiting 10 seconds for the chainlink validation to pass',
+  // )
+  // await sleep(10000)
+  // await hasValidationPassed(activateRes.requestId)
+  // await isSkillWalletActivated(tokenId)
 
   // const loginRes = await validateSW(tokenId, 1);
   // console.log('[login] nonce: ', loginRes.nonce)
