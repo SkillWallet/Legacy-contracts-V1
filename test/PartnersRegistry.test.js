@@ -19,9 +19,9 @@ const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndo
 
 contract("PartnersRegistry", (accounts) => {
     before(async () => {
-        const RoleUtils = await ethers.getContractFactory("RoleUtils");
-        roleUtils = await RoleUtils.deploy();
-        await roleUtils.deployed();
+        //const RoleUtils = await ethers.getContractFactory("RoleUtils");
+        //roleUtils = await RoleUtils.deploy();
+        //await roleUtils.deployed();
 
         const LinkToken = await ethers.getContractFactory("LinkToken");
         linkTokenMock = await LinkToken.deploy();
@@ -33,7 +33,11 @@ contract("PartnersRegistry", (accounts) => {
         distributedTownMock = await DistributedTownMock.deploy();
 
         const SkillWallet = await ethers.getContractFactory("SkillWallet");
-        skillWallet = await SkillWallet.deploy(linkTokenMock.address, mockOracle.address);
+        skillWallet = await upgrades.deployProxy(
+            SkillWallet,
+            [linkTokenMock.address, mockOracle.address]
+        );
+        await skillWallet.deployed();
 
         const MinimumCommunity = await ethers.getContractFactory("MinimumCommunity");
         minimumCommunity = await MinimumCommunity.deploy(skillWallet.address);
@@ -42,12 +46,17 @@ contract("PartnersRegistry", (accounts) => {
     });
     describe("Deployment", async () => {
         it("Should deploy Partners Registry contract", async () => {
-            const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry", {
+            const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry");
+            /*const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry", {
                 libraries: {
                     RoleUtils: roleUtils.address
                 }
-            });
-            partnersRegistry = await PartnersRegistry.deploy(distributedTownMock.address, mockOracle.address, linkTokenMock.address);
+            });*/
+            //partnersRegistry = await PartnersRegistry.deploy(distributedTownMock.address, mockOracle.address, linkTokenMock.address);
+            partnersRegistry = await upgrades.deployProxy(
+                PartnersRegistry,
+                [distributedTownMock.address, mockOracle.address, linkTokenMock.address]
+            );
             await partnersRegistry.deployed();
 
             expect(partnersRegistry.address).not.to.equal(ZERO_ADDRESS);

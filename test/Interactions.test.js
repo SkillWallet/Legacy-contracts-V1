@@ -24,9 +24,9 @@ contract('Interactions', function (accounts) {
         this.skillWallet = await SkillWallet.new(this.linkTokenMock.address, this.mockOracle.address);
 
         this.minimumCommunity = await MinimumCommunity.new(this.skillWallet.address);
-        this.roleUtils = await RoleUtils.new();
+        //this.roleUtils = await RoleUtils.new();
 
-        PartnersAgreement.link(this.roleUtils);
+        //PartnersAgreement.link(this.roleUtils);
 
         this.partnersAgreement = await PartnersAgreement.new(
             1,
@@ -50,7 +50,7 @@ contract('Interactions', function (accounts) {
         )
 
     });
-    describe.only('Interaction tests', async function () {
+    describe('Interaction tests', async function () {
 
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 3", async function () {
             const partnersAgreement = await PartnersAgreement.new(

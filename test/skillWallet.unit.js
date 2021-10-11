@@ -497,14 +497,17 @@ contract('SkillWallet', function () {
         const validationRequestIdSentEventEmitted =
           validationTx.events.find(e => e.event == 'ValidationRequestIdSent')
         
-          const requestId = validationRequestIdSentEventEmitted.args[0]
+          const requestId = validationRequestIdSentEventEmitted.args[0];
 
-        assert.isNotNull(validationRequestIdSentEventEmitted)
+        assert.isNotNull(validationRequestIdSentEventEmitted);
 
-        const fulfilTx = await this.mockOracle.methods["fulfillOracleRequest(bytes32,bool)"](
+        console.log(mockOracle.fulfillOracleRequest);
+        console.log(mockOracle.address);
+
+        const fulfilTx = await (await mockOracle["fulfillOracleRequest(bytes32,bool)"](
           requestId,
-          true,
-        ).wait();
+          true
+        )).wait();
 
         const fulfilTxEventEmitted = fulfilTx.events.find(e => e.event == 'CallbackCalled')
 
@@ -534,10 +537,10 @@ contract('SkillWallet', function () {
         assert.isNotNull(validationRequestIdSentEventEmitted)
         const requestId = validationRequestIdSentEventEmitted.args[0]
 
-        const fulfilTx = await this.mockOracle.methods["fulfillOracleRequest(bytes32,bool)"](
+        const fulfilTx = await (await mockOracle["fulfillOracleRequest(bytes32,bool)"](
           requestId,
-          false,
-        ).wait();
+          false
+        )).wait();
 
         const fulfilTxEventEmitted = fulfilTx.events.find(e => e.event == 'CallbackCalled')
 

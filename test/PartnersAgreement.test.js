@@ -25,9 +25,9 @@ contract('PartnersAgreement', function (accounts) {
     this.skillWallet = await SkillWallet.new(this.linkTokenMock.address, this.mockOracle.address);
 
     this.minimumCommunity = await MinimumCommunity.new(this.skillWallet.address);
-    this.roleUtils = await RoleUtils.new();
+    //this.roleUtils = await RoleUtils.new();
 
-    PartnersAgreement.link(this.roleUtils);
+    //PartnersAgreement.link(this.roleUtils);
 
     this.partnersAgreement = await PartnersAgreement.new(
       1,

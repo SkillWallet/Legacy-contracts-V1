@@ -8,7 +8,7 @@ import "../ISkillWallet.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 contract PartnersRegistry is Initializable {
-    uint256 public version = 1;
+    uint256 public version;
     
     event PartnersAgreementCreated(
         address partnersAgreementAddress,
@@ -28,6 +28,7 @@ contract PartnersRegistry is Initializable {
         distributedTown = IDistributedTown(_distributedTownAddress);
         oracle = _oracle;
         linkToken = _linkToken;
+        version = 1;
     }
 
     //TODO: for tests only should be removed one upgradability is implemented
