@@ -8,6 +8,7 @@ import "./InteractionNFT.sol";
 import "../../imported/ICommunity.sol";
 
 contract PartnersAgreement is ChainlinkClient {
+    uint256 public version;
     address public owner;
     address public communityAddress;
     address[] public partnersContracts;
@@ -37,27 +38,35 @@ contract PartnersAgreement is ChainlinkClient {
     }
 
     constructor(
+        uint256 _version,
         address _partnersContract,
         address _owner,
         address _communityAddress,
         uint256 _rolesCount,
         uint256 _numberOfActions,
         address _oracle,
-        address _chainlinkToken
+        address _chainlinkToken,
+        address _interactionsContract
     ) public {
         require(
             _rolesCount == 2 || _rolesCount == 3,
             "Only 2 or 3 roles accepted"
         );
+        version = _version;
         rolesCount = _rolesCount;
         partnersContracts.push(_partnersContract);
-        partnersInteractionNFTContract = new InteractionNFT(
-            _rolesCount,
-            _numberOfActions
-        );
-        owner = _owner;
-        communityAddress = _communityAddress;
 
+        if(_interactionsContract == address(0)) {
+            partnersInteractionNFTContract = new InteractionNFT(
+                _rolesCount,
+                _numberOfActions
+            );
+            owner = _owner;
+            communityAddress = _communityAddress;
+        } else {
+            partnersInteractionNFTContract = InteractionNFT(_interactionsContract);
+        }
+        
         setChainlinkToken(_chainlinkToken);
         oracle = _oracle;
         jobId = "e1e26fa27aa7436c95a78a40c21f5404";
@@ -136,13 +145,15 @@ contract PartnersAgreement is ChainlinkClient {
         require(user != address(0), "req not found");
         ICommunity community = ICommunity(communityAddress);
         require(community.isMember(user), "Invalid user address");
-        partnersInteractionNFTContract.safeTransferFrom(
-            address(this),
-            user,
-            uint256(partnersInteractionNFTContract.userRoles(user)),
-            _result,
-            ""
-        );
+        if (_result > 0) {
+            partnersInteractionNFTContract.safeTransferFrom(
+                address(this),
+                user,
+                uint256(partnersInteractionNFTContract.userRoles(user)),
+                _result,
+                ""
+            );
+        }
     }
 
     function getInteractionNFT(address user)
@@ -182,5 +193,25 @@ contract PartnersAgreement is ChainlinkClient {
         returns (address[] memory)
     {
         return partnersContracts;
+    }
+
+    function getAgreementData() public view onlyActive returns (
+        uint256, 
+        address, 
+        address, 
+        address[] memory, 
+        uint256,
+        address,
+        uint256
+    ) {
+        return (
+            version,
+            owner,
+            communityAddress,
+            partnersContracts,
+            rolesCount,
+            address(partnersInteractionNFTContract),
+            partnersInteractionNFTContract.getTotalSupplyAll()
+        );
     }
 }
