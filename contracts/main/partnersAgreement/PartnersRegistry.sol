@@ -5,17 +5,18 @@ import "./PartnersAgreement.sol";
 import "../../imported/ICommunity.sol";
 import "../../imported/IDistributedTown.sol";
 import "../ISkillWallet.sol";
-
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 contract PartnersRegistry is Initializable {
-
+    uint256 public version;
+    
     event PartnersAgreementCreated(
         address partnersAgreementAddress,
         address communityAddress
     ); 
     IDistributedTown distributedTown;
-    address[] agreements;
+    address[] public agreements;
+    mapping (address => uint256) public agreementIds;
     address oracle;
     address linkToken;
 
@@ -27,6 +28,13 @@ contract PartnersRegistry is Initializable {
         distributedTown = IDistributedTown(_distributedTownAddress);
         oracle = _oracle;
         linkToken = _linkToken;
+        version = 1;
+    }
+
+    //TODO: for tests only should be removed one upgradability is implemented
+    //Also possible to create PA factory and move version there
+    function setVersion(uint256 _version) public {
+        version = _version;
     }
 
     function getPartnerAgreementAddresses()
@@ -75,16 +83,54 @@ contract PartnersRegistry is Initializable {
             partnersContractAddress = communityAddress;
 
         PartnersAgreement agreement = new PartnersAgreement(
+            version,
             partnersContractAddress,
             msg.sender,
             communityAddress,
             rolesCount,
             numberOfActions,
             oracle,
-            linkToken
+            linkToken,
+            address(0)
         );
+        agreementIds[address(agreement)] = agreements.length;
         agreements.push(address(agreement));
 
         emit PartnersAgreementCreated(address(agreement), communityAddress);
+    }
+
+    function migrate(address _agreement) public {
+        uint256 agreementId = agreementIds[_agreement];
+
+        require(agreements[agreementId] == _agreement, "wrong agreement address");
+
+        (
+            uint256 agreementVersion,
+            address owner,
+            address communityAddress,
+            address[] memory partnersContracts, //there can be many?
+            uint256 rolesCount,
+            address partnersInteractionNFTContract,
+            uint256 numberOfActions
+        ) = PartnersAgreement(_agreement).getAgreementData();
+
+        require(agreementVersion < version, "already latest version");
+        require(owner == msg.sender, "not agreement owner");        
+
+        PartnersAgreement agreement = new PartnersAgreement(
+            version,
+            partnersContracts[0],
+            msg.sender,
+            communityAddress,
+            rolesCount,
+            numberOfActions,
+            oracle,
+            linkToken,
+            partnersInteractionNFTContract
+        );
+
+        agreements[agreementId] = address(agreement);
+        delete agreementIds[_agreement];
+        agreementIds[address(agreement)] = agreementId;
     }
 }

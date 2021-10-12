@@ -24,11 +24,12 @@ contract('Interactions', function (accounts) {
         this.skillWallet = await SkillWallet.new(this.linkTokenMock.address, this.mockOracle.address);
 
         this.minimumCommunity = await MinimumCommunity.new(this.skillWallet.address);
-        this.roleUtils = await RoleUtils.new();
+        //this.roleUtils = await RoleUtils.new();
 
-        PartnersAgreement.link(this.roleUtils);
+        //PartnersAgreement.link(this.roleUtils);
 
         this.partnersAgreement = await PartnersAgreement.new(
+            1,
             ZERO_ADDRESS, // partners contract
             accounts[0],
             this.minimumCommunity.address,
@@ -36,7 +37,7 @@ contract('Interactions', function (accounts) {
             100,
             this.mockOracle.address,
             this.linkTokenMock.address,
-            { from: accounts[0] }
+            ZERO_ADDRESS
         );
 
         const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
@@ -49,10 +50,11 @@ contract('Interactions', function (accounts) {
         )
 
     });
-    describe.only('Interaction tests', async function () {
+    describe('Interaction tests', async function () {
 
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 3", async function () {
             const partnersAgreement = await PartnersAgreement.new(
+                1,
                 ZERO_ADDRESS, // partners contract
                 accounts[0],
                 this.minimumCommunity.address,
@@ -60,11 +62,10 @@ contract('Interactions', function (accounts) {
                 100,
                 this.mockOracle.address,
                 this.linkTokenMock.address,
-                { from: accounts[0] }
+                ZERO_ADDRESS
             );
 
             const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
-            await community.joinNewMember('', 2000);
             await partnersAgreement.activatePA();
 
             const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
@@ -90,6 +91,7 @@ contract('Interactions', function (accounts) {
         });
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 2", async function () {
             const partnersAgreement = await PartnersAgreement.new(
+                1,
                 ZERO_ADDRESS, // partners contract
                 accounts[1],
                 this.minimumCommunity.address,
@@ -97,12 +99,13 @@ contract('Interactions', function (accounts) {
                 100,
                 this.mockOracle.address,
                 this.linkTokenMock.address,
+                ZERO_ADDRESS,
                 { from: accounts[0] }
             );
 
             const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
             await community.joinNewMember('', 2000, { from: accounts[1] });
-            await partnersAgreement.activatePA({from: accounts[1]});
+            await partnersAgreement.activatePA( { from: accounts[1] });
 
             const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
             const interactionNFTContract = await InteractionNFT.at(interactionNFTAddress);
