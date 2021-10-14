@@ -1,9 +1,10 @@
-const partnersRegistryAddress = '0x95488fA2A8CF3e80815A32D06439078974e548B4'
-const distributedTownAddress = '0xbd3e6c9213eF3b90D6e31AfBbd5021c0f37046ff'
+const partnersRegistryAddress = '0xb5E7878D3B3D64850d517A382C816beFce844328'
+const distributedTownAddress = '0xA8d584D6503568636658CbD370E2895AAFF085a1'
+
 // const partnersRegistryAddress = '0x7a95A9f0A99fb21548e58821059502C85c193956';
 // const distributedTownAddress = '0xf628bdee30627558aAe8c19d1522b08A2bfb6423';
-const partnersAgreementAddress = '0xB1102D8F28d3dfEF7e50A46b4fD51fEC7Db4C93c';
-const communityAddress = '0x200E16f678Ef8225A80e6b86495944c5a62cBB87';
+const partnersAgreementAddress = '0xb5515862dB3350436986ad1b35aB566C94732cE7';
+const communityAddress = '0x43B2739FD3B39E3Be01e24627c60636793A3903F';
 
 const { assert } = require('chai')
 const fs = require("fs");
@@ -21,6 +22,16 @@ var communityAbi = require('../artifacts/contracts/imported/ICommunity.sol/IComm
 
 const userAddress = '0x2CEF62C91Dd92FC35f008D1d6Ed08EADF64306bc';
 
+
+function mnemonic() {
+  try {
+      return fs.readFileSync("./mnemonic.txt").toString().trim();
+  } catch (e) {
+      console.log(e);
+  }
+  return "";
+}
+
 const provider = new ethers.providers.JsonRpcProvider(
   'https://rpc-mumbai.maticvigil.com/v1/9ca44fbe543c19857d4e47669aae2a9774e11c66'
 
@@ -28,6 +39,7 @@ const provider = new ethers.providers.JsonRpcProvider(
 
 // Wallet connected to a provider
 const senderWalletMnemonic = ethers.Wallet.fromMnemonic(
+  mnemonic(),
   "m/44'/60'/0'/0/0"
 );
 
@@ -162,7 +174,3 @@ async function test() {
 }
 
 test()
-
-
-// partnersAgreementAddress: '0xDB29E7D4598C164aE78a1a4075320Acb46d64D8d',
-// communityAddress: '0xC77406a6fA434dBDF64dD6e18745240De50cfbe4'

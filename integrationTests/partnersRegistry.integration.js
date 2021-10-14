@@ -1,4 +1,4 @@
-const partnersRegistryAddress = '0xc7A90aAF10c8B51516bF67a9c01b7445Ba145983'
+const partnersRegistryAddress = '0xE245539DA46Cae8605146cc42D31Ab3BA0A87e9f'
 const distributedTownAddress = '0xbd3e6c9213eF3b90D6e31AfBbd5021c0f37046ff'
 
 const { assert } = require('chai')
@@ -118,10 +118,12 @@ async function isActive(partnersAgreementAddress) {
 
 
 async function test() {
+
+    const partnersAgreement = '0xCFD73b53e7aaFF0B699Be0e904018534b99FfC72'
     // await setPartnersRegistryAddress();
-    await createPartnersAgreement()
-    // await activatePA('0xDB29E7D4598C164aE78a1a4075320Acb46d64D8d')
-    // await isActive('0xDB29E7D4598C164aE78a1a4075320Acb46d64D8d');
+    // await createPartnersAgreement()
+    await activatePA(partnersAgreement)
+    await isActive(partnersAgreement);
 }
 
 test()
