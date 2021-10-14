@@ -109,7 +109,7 @@ contract PartnersAgreement is ChainlinkClient {
             req.add("userAddress", addressToString(userAddress));
             req.add("contractAddress", addressToString(partnersContracts[i]));
             req.addUint("chainID", 80001);
-            req.addUint("startBlock", 1);
+            req.addUint("startBlock", lastBlockPerUserAddress[userAddress]);
             req.add("covalentAPIKey", "ckey_aae01fa51e024af3a2634d9d030");
 
             bytes32 reqId = sendChainlinkRequestTo(oracle, req, fee);
