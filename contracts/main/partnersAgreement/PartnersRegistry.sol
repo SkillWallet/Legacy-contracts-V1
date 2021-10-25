@@ -76,8 +76,6 @@ contract PartnersRegistry is Initializable {
             communityAddress != address(0),
             "Community failed to be created!"
         );
-        ICommunity community = ICommunity(communityAddress);
-        uint256 credits;
 
         if (partnersContractAddress == address(0))
             partnersContractAddress = communityAddress;
