@@ -6,6 +6,7 @@ import "../../imported/ICommunity.sol";
 import "../../imported/IDistributedTown.sol";
 import "../ISkillWallet.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "../../imported/Project.sol";
 
 contract PartnersRegistry is Initializable {
     uint256 public version;
@@ -15,6 +16,7 @@ contract PartnersRegistry is Initializable {
         address communityAddress
     ); 
     IDistributedTown distributedTown;
+    address public projectsAddrerss;
     address[] public agreements;
     mapping (address => uint256) public agreementIds;
     address oracle;
@@ -22,10 +24,12 @@ contract PartnersRegistry is Initializable {
 
     function initialize(
         address _distributedTownAddress,
+        address _projectAddrerss,
         address _oracle,
         address _linkToken
     ) public initializer {
         distributedTown = IDistributedTown(_distributedTownAddress);
+        projectsAddrerss = _projectAddrerss;
         oracle = _oracle;
         linkToken = _linkToken;
         version = 1;
@@ -62,20 +66,20 @@ contract PartnersRegistry is Initializable {
             "Number of actions should be between 1 and 100"
         );
 
-        distributedTown.createCommunity(
+        address communityAddress = address(0);
+        Projects(distributedTown.projectsAddress()).create(
             metadata,
-            template,
-            membersAllowed,
-            msg.sender
-        );
-        address communityAddress = distributedTown.getCommunityByOwner(
-            msg.sender
+            communityAddress
         );
 
-        require(
-            communityAddress != address(0),
-            "Community failed to be created!"
-        );
+        // address communityAddress = distributedTown.getCommunityByOwner(
+        //     msg.sender
+        // );
+
+        // require(
+        //     communityAddress != address(0),
+        //     "Community failed to be created!"
+        // );
 
         if (partnersContractAddress == address(0))
             partnersContractAddress = communityAddress;

@@ -20,7 +20,7 @@ interface IDistributedTown {
     function createCommunity(
         string calldata communityMetadata,
         uint256 template,
-        uint totalMembersAllowed,
+        uint256 totalMembersAllowed,
         address owner
     ) external;
 
@@ -28,7 +28,12 @@ interface IDistributedTown {
 
     function deployGenesisCommunities(uint256 template) external;
 
-    function getCommunityByOwner(address owner) external view returns(address);
+    function getCommunityByOwner(address owner) external view returns (address);
 
     function setPartnersRegistryAddress(address partnersRegistry) external;
+
+    function projectsAddress()
+        external
+        view
+        returns (address);
 }

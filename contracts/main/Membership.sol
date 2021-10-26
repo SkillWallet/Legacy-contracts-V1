@@ -20,51 +20,51 @@ contract Membership is IERC721Metadata, ERC721 {
     Counters.Counter private _membershipCounter;
     ISkillWallet skillWallet;
 
-    mapping(uint => MembershipID) membershipIDs;
-    mapping(uint => uint[]) userMemberships;
+    mapping(uint => uint) membershipIDToProject;
+    mapping(uint256 => uint256[]) userMemberships;
 
-    event MembershipCreated(uint membershipTokenId, uint skillWalletId, uint projectId);
-    struct MembershipID {
-        uint skillWalletId;
-        uint projectId;
-        bool isActive;
-    }
+    event MembershipCreated(
+        uint256 membershipTokenId,
+        uint256 skillWalletId,
+        uint256 projectId
+    );
 
     constructor(address skillWalletAddress) public ERC721("Membership", "MMB") {
         skillWallet = ISkillWallet(skillWalletAddress);
         _membershipCounter.increment();
     }
 
-    function create(
-        uint projectId,
-        string calldata url
-    ) external {
-       
-       require(
-           skillWallet.isSkillWalletRegistered(msg.sender), 'SkillWallet not yet registered'
-       );
+    function create(string calldata url, uint projectId) external {
+        require(
+            skillWallet.isSkillWalletRegistered(msg.sender),
+            "SkillWallet not yet registered"
+        );
 
-       uint skillWalletId = skillWallet.getSkillWalletIdByOwner(msg.sender);
+        uint256 skillWalletId = skillWallet.getSkillWalletIdByOwner(msg.sender);
 
-       require(
-           skillWallet.isSkillWalletActivated(skillWalletId),
-           "SkillWallet should be activated!"
-       );
+        require(
+            skillWallet.isSkillWalletActivated(skillWalletId),
+            "SkillWallet should be activated!"
+        );
 
-        uint tokenId = _membershipCounter.current();
+        uint256 tokenId = _membershipCounter.current();
 
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, url);
 
         userMemberships[skillWalletId].push(tokenId);
 
+        membershipIDToProject[skillWalletId] = projectId;
         _membershipCounter.increment();
-        membershipIDs[tokenId] = MembershipID(skillWalletId, projectId, false);
 
         emit MembershipCreated(tokenId, skillWalletId, projectId);
     }
 
-    function getSkillWalletMemberships(uint skillWalletID) public view returns (uint[] memory) {
+    function getSkillWalletMemberships(uint256 skillWalletID)
+        public
+        view
+        returns (uint256[] memory)
+    {
         return userMemberships[skillWalletID];
     }
 }
