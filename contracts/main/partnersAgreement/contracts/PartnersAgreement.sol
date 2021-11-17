@@ -4,17 +4,20 @@ pragma solidity ^0.6.10;
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "../interfaces/IPartnersAgreement.sol";
 import "./InteractionNFT.sol";
-import "../../imported/ICommunity.sol";
+import "../../../imported/ICommunity.sol";
+import "../interfaces/IMembershipFactory.sol";
+import "../interfaces/IMembership.sol";
 
-contract PartnersAgreement is ChainlinkClient {
+contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
     uint256 public version;
     address public owner;
-    address public communityAddress;
+    address public override communityAddress;
     address[] public partnersContracts;
     //address supportedTokens;
-    uint256 public rolesCount;
-    bool public isActive;
+    uint256 public override rolesCount;
+    bool public override isActive;
 
     mapping(address => uint256) lastBlockPerUserAddress;
     mapping(bytes32 => address) userRequests;
@@ -26,6 +29,7 @@ contract PartnersAgreement is ChainlinkClient {
     address private oracle;
     bytes32 private jobId;
     uint256 private fee;
+    address public override membershipAddress;
 
     /**
      * @dev Throws PA not yet activated.
@@ -44,7 +48,9 @@ contract PartnersAgreement is ChainlinkClient {
         uint256 _numberOfActions,
         address _oracle,
         address _chainlinkToken,
-        address _interactionsContract
+        address _membershipFactory,
+        address _interactionsContract,
+        address _membershipContract
     ) public {
         require(
             _rolesCount == 2 || _rolesCount == 3,
@@ -54,17 +60,27 @@ contract PartnersAgreement is ChainlinkClient {
         rolesCount = _rolesCount;
         partnersContracts.push(_partnersContract);
 
-        if(_interactionsContract == address(0)) {
-            partnersInteractionNFTContract = new InteractionNFT(
-                _rolesCount,
-                _numberOfActions
-            );
+        if (_interactionsContract == address(0)) {
             owner = _owner;
             communityAddress = _communityAddress;
+            membershipAddress = IMembershipFactory(_membershipFactory)
+                .createMembership(
+                    ICommunity(communityAddress).getSkillWalletAddress(),
+                    address(this)
+                );
+
+            partnersInteractionNFTContract = new InteractionNFT(
+                _rolesCount,
+                _numberOfActions,
+                membershipAddress
+            );
         } else {
-            partnersInteractionNFTContract = InteractionNFT(_interactionsContract);
+            partnersInteractionNFTContract = InteractionNFT(
+                _interactionsContract
+            );
+            membershipAddress = _membershipContract;
         }
-        
+
         setChainlinkToken(_chainlinkToken);
         oracle = _oracle;
         jobId = "e1e26fa27aa7436c95a78a40c21f5404";
@@ -72,7 +88,7 @@ contract PartnersAgreement is ChainlinkClient {
         isActive = false;
     }
 
-    function activatePA() public {
+    function activatePA() public override {
         require(!isActive, "PA already activated");
         bool isMember = ICommunity(communityAddress).isMember(owner);
         require(isMember, "Owner not yet a member of the community.");
@@ -82,18 +98,29 @@ contract PartnersAgreement is ChainlinkClient {
     function getInteractionNFTContractAddress()
         public
         view
+        override
         onlyActive
         returns (address)
     {
         return address(partnersInteractionNFTContract);
     }
 
-    function getAllMembers() public view onlyActive returns (address[] memory) {
+    function getAllMembers()
+        public
+        view
+        override
+        onlyActive
+        returns (address[] memory)
+    {
         ICommunity community = ICommunity(communityAddress);
         return community.getMemberAddresses();
     }
 
-    function queryForNewInteractions(address userAddress) public onlyActive {
+    function queryForNewInteractions(address userAddress)
+        public
+        override
+        onlyActive
+    {
         require(userAddress != address(0), "No user address passed!");
 
         for (uint256 i = 0; i < partnersContracts.length; i++) {
@@ -120,6 +147,7 @@ contract PartnersAgreement is ChainlinkClient {
 
     function transferInteractionNFTs(bytes32 _requestId, uint256 _result)
         public
+        override
         onlyActive
         recordChainlinkFulfillment(_requestId)
     {
@@ -132,7 +160,7 @@ contract PartnersAgreement is ChainlinkClient {
             partnersInteractionNFTContract.safeTransferFrom(
                 address(this),
                 user,
-                uint256(partnersInteractionNFTContract.userRoles(user)),
+                IMembership(membershipAddress).getRole(user),
                 _result,
                 ""
             );
@@ -142,23 +170,16 @@ contract PartnersAgreement is ChainlinkClient {
     function getInteractionNFT(address user)
         public
         view
+        override
         onlyActive
         returns (uint256)
     {
         return partnersInteractionNFTContract.getActiveInteractions(user);
     }
 
-    function getUserRole(address _user)
-        public
-        view
-        onlyActive
-        returns (uint256)
-    {
-        return uint256(partnersInteractionNFTContract.userRoles(_user));
-    }
-
     function addNewContractAddressToAgreement(address contractAddress)
         public
+        override
         onlyActive
     {
         Ownable con = Ownable(contractAddress);
@@ -172,21 +193,29 @@ contract PartnersAgreement is ChainlinkClient {
     function getImportedAddresses()
         public
         view
+        override
         onlyActive
         returns (address[] memory)
     {
         return partnersContracts;
     }
 
-    function getAgreementData() public view onlyActive returns (
-        uint256, 
-        address, 
-        address, 
-        address[] memory, 
-        uint256,
-        address,
-        uint256
-    ) {
+    function getAgreementData()
+        public
+        view
+        override
+        onlyActive
+        returns (
+            uint256,
+            address,
+            address,
+            address[] memory,
+            uint256,
+            address,
+            address,
+            uint256
+        )
+    {
         return (
             version,
             owner,
@@ -194,6 +223,7 @@ contract PartnersAgreement is ChainlinkClient {
             partnersContracts,
             rolesCount,
             address(partnersInteractionNFTContract),
+            membershipAddress,
             partnersInteractionNFTContract.getTotalSupplyAll()
         );
     }
