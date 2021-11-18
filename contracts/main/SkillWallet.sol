@@ -43,6 +43,8 @@ contract SkillWallet is
 
     mapping(uint256 => string) public skillWalletToPubKey;
 
+    mapping(uint256 => string) public skillWalletToDiscordID;
+
     mapping(address => uint256) public skillWalletClaimers;
 
     CountersUpgradeable.Counter private _skillWalletCounter;
@@ -90,6 +92,24 @@ contract SkillWallet is
         _activatedSkillWallets[skillWalletId] = true;
 
         emit SkillWalletActivated(skillWalletId);
+    }
+
+    function addDiscordIDToSkillWallet(string calldata discordID)
+        external
+        override
+    {
+        uint256 skillWalletId = _skillWalletsByOwner[msg.sender];
+        require(
+            _activeCommunities[skillWalletId] != address(0),
+            "SkillWallet: The SkillWallet is not in any community, invalid SkillWallet."
+        );
+        require(
+            _activatedSkillWallets[skillWalletId],
+            "SkillWallet: Skill wallet not yet activated"
+        );
+        skillWalletToDiscordID[skillWalletId] = discordID;
+
+        emit DiscordIDConnectedToSkillWallet(skillWalletId, discordID);
     }
 
     function claim() external override {
@@ -182,10 +202,6 @@ contract SkillWallet is
     }
 
     /// ERC 721 overrides
-
-    function _safeMint(address to, uint256 tokenId) internal override {
-        super._safeMint(to, tokenId);
-    }
 
     /// @notice ERC721 _transfer() Disabled
     /// @dev _transfer() has been overriden
