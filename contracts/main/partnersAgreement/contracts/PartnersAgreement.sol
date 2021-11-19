@@ -1,5 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
+pragma experimental ABIEncoderV2;
 
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -15,6 +16,8 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
     address public owner;
     address public override communityAddress;
     address[] public partnersContracts;
+    string[] public urls;
+    mapping (bytes32 => uint256) urlIds;
     //address supportedTokens;
     uint256 public override rolesCount;
     bool public override isActive;
@@ -59,10 +62,10 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         version = _version;
         rolesCount = _rolesCount;
         partnersContracts.push(_partnersContract);
+        owner = _owner;
+        communityAddress = _communityAddress;
 
         if (_interactionsContract == address(0)) {
-            owner = _owner;
-            communityAddress = _communityAddress;
             membershipAddress = IMembershipFactory(_membershipFactory)
                 .createMembership(
                     ICommunity(communityAddress).getSkillWalletAddress(),
@@ -93,6 +96,56 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         bool isMember = ICommunity(communityAddress).isMember(owner);
         require(isMember, "Owner not yet a member of the community.");
         isActive = true;
+    }
+
+    function addURL(string memory _url) public override {
+        require (msg.sender == owner, "not owner");
+
+        bytes32 urlHash = keccak256(bytes(_url));
+        bool exists = false;
+        if (urls.length != 0) {
+            if (urlIds[urlHash] != 0 || keccak256(bytes(urls[0])) == urlHash ) {
+                exists = true;
+            }
+        }
+        require(!exists, "url already exists");
+
+        urlIds[urlHash] = urls.length;
+        urls.push(_url);
+    }
+
+    function removeURL(string memory _url) public override {
+        require (msg.sender == owner, "not owner");
+        require (isURLListed(_url), "url doesnt exist");
+
+        bytes32 urlHash = keccak256(bytes(_url));
+        uint256 urlId = urlIds[urlHash];
+
+        if (urlId != urls.length - 1) {
+            string memory lastUrl = urls[urls.length - 1];
+            bytes32 lastUrlHash = keccak256(bytes(lastUrl));
+
+            urlIds[lastUrlHash] = urlId;
+            urls[urlId] = lastUrl;
+        }
+        
+        urls.pop();
+        delete urlIds[urlHash];
+    }
+
+    function getURLs() public view override returns (string[] memory) {
+        return urls;
+    }
+
+    function isURLListed(string memory _url) public view override returns (bool) {
+        if (urls.length == 0) return false;
+
+        bytes32 urlHash = keccak256(bytes(_url));
+
+        if (urlIds[urlHash] != 0) return true;
+        if (keccak256(bytes(urls[0])) == urlHash) return true;
+
+        return false;
     }
 
     function getInteractionNFTContractAddress()
