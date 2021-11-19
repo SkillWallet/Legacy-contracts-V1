@@ -1,8 +1,17 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
+pragma experimental ABIEncoderV2;
 
 interface IPartnersAgreement {
     function activatePA() external;
+
+    function addURL(string memory _url) external;
+
+    function removeURL(string memory _url) external;
+
+    function getURLs() external view returns (string[] memory);
+
+    function isURLListed(string memory _url) external view returns (bool);
 
     function getInteractionNFTContractAddress() external view returns (address);
 

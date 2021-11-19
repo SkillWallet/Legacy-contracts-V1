@@ -1,8 +1,8 @@
 const { expectEvent, singletons, constants } = require('@openzeppelin/test-helpers');
 const { assert } = require('chai');
-const { artifacts } = require('hardhat');
+const { expect } = require('chai');
+const { ethers, artifacts } = require('hardhat');
 const { ZERO_ADDRESS } = constants;
-const truffleAssert = require('truffle-assertions');
 
 const MinimumCommunity = artifacts.require('MinimumCommunity');
 const MembershipFactory = artifacts.require('MembershipFactory');
@@ -16,6 +16,8 @@ const OwnableTestContract = artifacts.require('OwnableTestContract');
 const SkillWallet = artifacts.require('skill-wallet/contracts/main/SkillWallet');
 const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
 var BN = web3.utils.BN;
+
+let partnersAgreement;
 
 contract('PartnersAgreement', function (accounts) {
   before(async function () {
@@ -52,6 +54,7 @@ contract('PartnersAgreement', function (accounts) {
     const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
     await community.joinNewMember('', 2000);
     await this.partnersAgreement.activatePA();
+    partnersAgreement = await ethers.getContractAt("PartnersAgreement", this.partnersAgreement.address);
 
     const isActive = await this.partnersAgreement.isActive();
     assert.isTrue(isActive);
@@ -172,5 +175,82 @@ contract('PartnersAgreement', function (accounts) {
       assert.equal(importedContracts[0], ZERO_ADDRESS)
       assert.equal(importedContracts[1], ownable.address)
     })
+  });
+  describe("Manage URLs", async () => {
+    it("Should return false when URL list is empty", async () => {
+      expect(await partnersAgreement.isURLListed("")).to.equal(false);
+    });
+    it("Should add an URL to the list", async () => {
+      await partnersAgreement.addURL("https://test1.test");
+      const urls = await partnersAgreement.getURLs();
+
+      expect(await partnersAgreement.isURLListed("https://test1.test")).to.equal(true);
+      expect(urls.length).to.equal(1);
+      expect(urls[0]).to.equal("https://test1.test");
+    });
+    it("Should remove an URL from the list", async () => {
+      await partnersAgreement.removeURL("https://test1.test");
+      const urls = await partnersAgreement.getURLs();
+
+      expect(await partnersAgreement.isURLListed("https://test1.test")).to.equal(false);
+      expect(urls.length).to.equal(0);
+    });
+    it("Should add 3 more URLs to the list", async () => {
+      await partnersAgreement.addURL("https://test1.test");
+      await partnersAgreement.addURL("https://test2.test");
+      await partnersAgreement.addURL("https://test3.test");
+      const urls = await partnersAgreement.getURLs();
+
+      expect(await partnersAgreement.isURLListed("https://test1.test")).to.equal(true);
+      expect(await partnersAgreement.isURLListed("https://test2.test")).to.equal(true);
+      expect(await partnersAgreement.isURLListed("https://test3.test")).to.equal(true);
+      expect(urls.length).to.equal(3);
+      expect(urls[0]).to.equal("https://test1.test");
+      expect(urls[1]).to.equal("https://test2.test");
+      expect(urls[2]).to.equal("https://test3.test");
+    });
+    it("Should not allow adding already existing URL to the list", async () => {
+      await expect(partnersAgreement.addURL("https://test2.test")).to.be.revertedWith("url already exists");
+    });
+    it("Should return false when URL is not listed", async () => {
+      expect(await partnersAgreement.isURLListed("https://test4.test")).to.equal(false);
+      expect(await partnersAgreement.isURLListed("")).to.equal(false);
+    });
+    it("Should not allow removing of non existing URL", async () => {
+      await expect(partnersAgreement.removeURL("https://test4.test")).to.be.revertedWith("url doesnt exist");
+      await expect(partnersAgreement.removeURL("")).to.be.revertedWith("url doesnt exist");
+    });
+    it("Should remove one of the URLs from the list", async () => {
+      await partnersAgreement.removeURL("https://test2.test");
+      const urls = await partnersAgreement.getURLs();
+
+      expect(await partnersAgreement.isURLListed("https://test1.test")).to.equal(true);
+      expect(await partnersAgreement.isURLListed("https://test2.test")).to.equal(false);
+      expect(await partnersAgreement.isURLListed("https://test3.test")).to.equal(true);
+      expect(urls.length).to.equal(2);
+      expect(urls[0]).to.equal("https://test1.test");
+      expect(urls[1]).to.equal("https://test3.test");
+    });
+    it("Should remove last URLs from the list", async () => {
+      await partnersAgreement.removeURL("https://test3.test");
+      const urls = await partnersAgreement.getURLs();
+
+      expect(await partnersAgreement.isURLListed("https://test1.test")).to.equal(true);
+      expect(await partnersAgreement.isURLListed("https://test2.test")).to.equal(false);
+      expect(await partnersAgreement.isURLListed("https://test3.test")).to.equal(false);
+      expect(urls.length).to.equal(1);
+      expect(urls[0]).to.equal("https://test1.test");
+    });
+    it("Should add one more URLs to the (end of) list", async () => {
+      await partnersAgreement.addURL("https://test2.test");
+      const urls = await partnersAgreement.getURLs();
+
+      expect(await partnersAgreement.isURLListed("https://test1.test")).to.equal(true);
+      expect(await partnersAgreement.isURLListed("https://test2.test")).to.equal(true);
+      expect(await partnersAgreement.isURLListed("https://test3.test")).to.equal(false);
+      expect(urls.length).to.equal(2);
+      expect(urls[0]).to.equal("https://test1.test");
+      expect(urls[1]).to.equal("https://test2.test");
+    });
   });
 });
