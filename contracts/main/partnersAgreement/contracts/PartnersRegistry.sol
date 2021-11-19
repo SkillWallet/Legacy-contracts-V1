@@ -1,31 +1,38 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
 
-import "./PartnersAgreement.sol";
-import "../../imported/ICommunity.sol";
-import "../../imported/IDistributedTown.sol";
-import "../ISkillWallet.sol";
+import "../interfaces/IPartnersRegistry.sol";
+import "../../../imported/IDistributedTown.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "../interfaces/IPartnersAgreementFactory.sol";
+import "../interfaces/IPartnersAgreement.sol";
 
-contract PartnersRegistry is Initializable {
+contract PartnersRegistry is IPartnersRegistry, Initializable {
     uint256 public version;
-    
+
     event PartnersAgreementCreated(
         address partnersAgreementAddress,
         address communityAddress
-    ); 
+    );
     IDistributedTown distributedTown;
     address[] public agreements;
-    mapping (address => uint256) public agreementIds;
+    mapping(address => uint256) public agreementIds;
     address oracle;
     address linkToken;
+    address partnersAgreementFactory;
+    address membershipFactory;
 
     function initialize(
         address _distributedTownAddress,
+        address _partnersAgreementFactoryAddress,
+        address _membershipFactory,
         address _oracle,
         address _linkToken
     ) public initializer {
         distributedTown = IDistributedTown(_distributedTownAddress);
+        partnersAgreementFactory = _partnersAgreementFactoryAddress;
+        membershipFactory = _membershipFactory;
+
         oracle = _oracle;
         linkToken = _linkToken;
         version = 1;
@@ -33,13 +40,14 @@ contract PartnersRegistry is Initializable {
 
     //TODO: for tests only should be removed one upgradability is implemented
     //Also possible to create PA factory and move version there
-    function setVersion(uint256 _version) public {
+    function setVersion(uint256 _version) public override {
         version = _version;
     }
 
     function getPartnerAgreementAddresses()
         public
         view
+        override
         returns (address[] memory)
     {
         return agreements;
@@ -52,7 +60,7 @@ contract PartnersRegistry is Initializable {
         uint256 numberOfActions,
         address partnersContractAddress,
         uint256 membersAllowed
-    ) public {
+    ) public override {
         require(
             template >= 0 && template <= 2,
             "Template should be between 0 and 2"
@@ -76,33 +84,38 @@ contract PartnersRegistry is Initializable {
             communityAddress != address(0),
             "Community failed to be created!"
         );
-        ICommunity community = ICommunity(communityAddress);
-        uint256 credits;
 
         if (partnersContractAddress == address(0))
             partnersContractAddress = communityAddress;
 
-        PartnersAgreement agreement = new PartnersAgreement(
-            version,
-            partnersContractAddress,
-            msg.sender,
-            communityAddress,
-            rolesCount,
-            numberOfActions,
-            oracle,
-            linkToken,
-            address(0)
-        );
-        agreementIds[address(agreement)] = agreements.length;
-        agreements.push(address(agreement));
+        address paAddr = IPartnersAgreementFactory(partnersAgreementFactory)
+            .createPartnersAgreement(
+                version,
+                partnersContractAddress,
+                msg.sender,
+                communityAddress,
+                rolesCount,
+                numberOfActions,
+                oracle,
+                linkToken,
+                membershipFactory,
+                address(0),
+                address(0)
+            );
 
-        emit PartnersAgreementCreated(address(agreement), communityAddress);
+        agreementIds[paAddr] = agreements.length;
+        agreements.push(paAddr);
+
+        emit PartnersAgreementCreated(paAddr, communityAddress);
     }
 
-    function migrate(address _agreement) public {
+    function migrate(address _agreement) public override {
         uint256 agreementId = agreementIds[_agreement];
 
-        require(agreements[agreementId] == _agreement, "wrong agreement address");
+        require(
+            agreements[agreementId] == _agreement,
+            "wrong agreement address"
+        );
 
         (
             uint256 agreementVersion,
@@ -111,13 +124,14 @@ contract PartnersRegistry is Initializable {
             address[] memory partnersContracts, //there can be many?
             uint256 rolesCount,
             address partnersInteractionNFTContract,
+            address membershipNFTContract,
             uint256 numberOfActions
-        ) = PartnersAgreement(_agreement).getAgreementData();
+        ) = IPartnersAgreement(_agreement).getAgreementData();
 
         require(agreementVersion < version, "already latest version");
-        require(owner == msg.sender, "not agreement owner");        
+        require(owner == msg.sender, "not agreement owner");
 
-        PartnersAgreement agreement = new PartnersAgreement(
+        address agreement = IPartnersAgreementFactory(partnersAgreementFactory).createPartnersAgreement(
             version,
             partnersContracts[0],
             msg.sender,
@@ -126,11 +140,13 @@ contract PartnersRegistry is Initializable {
             numberOfActions,
             oracle,
             linkToken,
-            partnersInteractionNFTContract
+            membershipFactory,
+            partnersInteractionNFTContract,
+            membershipNFTContract
         );
 
-        agreements[agreementId] = address(agreement);
+        agreements[agreementId] = agreement;
         delete agreementIds[_agreement];
-        agreementIds[address(agreement)] = agreementId;
+        agreementIds[agreement] = agreementId;
     }
 }

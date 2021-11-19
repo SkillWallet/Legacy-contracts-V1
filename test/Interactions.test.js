@@ -10,6 +10,8 @@ const MockOracle = artifacts.require('MockOracle');
 const PartnersAgreement = artifacts.require('PartnersAgreement');
 const RoleUtils = artifacts.require('RoleUtils');
 const InteractionNFT = artifacts.require('InteractionNFT');
+const Membership = artifacts.require('Membership');
+const MembershipFactory = artifacts.require('MembershipFactory');
 const SkillWallet = artifacts.require('skill-wallet/contracts/main/SkillWallet');
 const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
 var BN = web3.utils.BN;
@@ -27,6 +29,7 @@ contract('Interactions', function (accounts) {
         //this.roleUtils = await RoleUtils.new();
 
         //PartnersAgreement.link(this.roleUtils);
+        this.membershipFactory = await MembershipFactory.new(1);
 
         this.partnersAgreement = await PartnersAgreement.new(
             1,
@@ -37,12 +40,16 @@ contract('Interactions', function (accounts) {
             100,
             this.mockOracle.address,
             this.linkTokenMock.address,
-            ZERO_ADDRESS
+            this.membershipFactory.address,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
         );
+
+        this.membership = await Membership.at(await this.partnersAgreement.membershipAddress());
 
         const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
         await community.joinNewMember('', 2000, { from: accounts[0] });
-        await this.partnersAgreement.activatePA({from: accounts[0]});
+        await this.partnersAgreement.activatePA({ from: accounts[0] });
 
         await this.linkTokenMock.transfer(
             this.partnersAgreement.address,
@@ -62,6 +69,8 @@ contract('Interactions', function (accounts) {
                 100,
                 this.mockOracle.address,
                 this.linkTokenMock.address,
+      this.membershipFactory.address,
+                ZERO_ADDRESS,
                 ZERO_ADDRESS
             );
 
@@ -79,7 +88,7 @@ contract('Interactions', function (accounts) {
             const totalSupply0 = await interactionNFTContract.totalSupply(1);
             const totalSupply1 = await interactionNFTContract.totalSupply(2);
             const totalSupply2 = await interactionNFTContract.totalSupply(3);
-            
+
             assert.equal(balanceRole0.toString(), totalSupply0.toString());
             assert.equal(balanceRole1.toString(), totalSupply1.toString());
             assert.equal(balanceRole2.toString(), totalSupply2.toString());
@@ -99,13 +108,15 @@ contract('Interactions', function (accounts) {
                 100,
                 this.mockOracle.address,
                 this.linkTokenMock.address,
+                this.membershipFactory.address,
+                ZERO_ADDRESS,
                 ZERO_ADDRESS,
                 { from: accounts[0] }
             );
 
             const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
             await community.joinNewMember('', 2000, { from: accounts[1] });
-            await partnersAgreement.activatePA( { from: accounts[1] });
+            await partnersAgreement.activatePA({ from: accounts[1] });
 
             const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
             const interactionNFTContract = await InteractionNFT.at(interactionNFTAddress);
@@ -115,7 +126,7 @@ contract('Interactions', function (accounts) {
 
             const totalSupply0 = await interactionNFTContract.totalSupply(1);
             const totalSupply1 = await interactionNFTContract.totalSupply(2);
-            
+
             assert.equal(balanceRole0.toString(), totalSupply0.toString());
             assert.equal(balanceRole1.toString(), totalSupply1.toString());
 
@@ -124,11 +135,9 @@ contract('Interactions', function (accounts) {
 
         });
         it('transferInteractionNFTs should transfer the correct amount of NFTs after chainlink result is returned', async function () {
-            const interactionNFTAddress = await this.partnersAgreement.getInteractionNFTContractAddress();
-            const interactionNFTContract = await InteractionNFT.at(interactionNFTAddress);
-            await interactionNFTContract.addUserToRole(accounts[0], 1);
-
+            await this.membership.create('', 1);
             const initialInteractions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
+
             assert.equal(initialInteractions.toString(), '0');
 
             let tx = await this.partnersAgreement.queryForNewInteractions(

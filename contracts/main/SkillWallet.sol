@@ -183,9 +183,6 @@ contract SkillWallet is
 
     /// ERC 721 overrides
 
-    function _safeMint(address to, uint256 tokenId) internal override {
-        super._safeMint(to, tokenId);
-    }
 
     /// @notice ERC721 _transfer() Disabled
     /// @dev _transfer() has been overriden
@@ -196,7 +193,7 @@ contract SkillWallet is
         uint256 tokenId
     ) internal override {
         require(
-            msg.sender != address(this),
+            from == address(this),
             "SkillWallet: SkillWallet transfer disabled"
         );
         super._transfer(from, to, tokenId);
