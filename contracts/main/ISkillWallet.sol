@@ -25,6 +25,8 @@ interface ISkillWallet is IERC721Upgradeable, IERC721ReceiverUpgradeable {
 
     event SkillWalletClaimed(uint256 tokenId, address owner);
 
+    event DiscordIDConnectedToSkillWallet(uint256 tokenId, string discordId);
+
     function create(
         address skillWalletOwner,
         string memory url,
@@ -32,6 +34,8 @@ interface ISkillWallet is IERC721Upgradeable, IERC721ReceiverUpgradeable {
     ) external;
 
     function claim() external;
+    
+    function addDiscordIDToSkillWallet(string calldata discordID) external;
 
     function activateSkillWallet(uint256 skillWalletId) external;
 
