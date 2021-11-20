@@ -1,14 +1,16 @@
-const partnersRegistryAddress = '0xc7A90aAF10c8B51516bF67a9c01b7445Ba145983'
-const distributedTownAddress = '0xbd3e6c9213eF3b90D6e31AfBbd5021c0f37046ff'
+const partnersRegistryAddress = '0xEF76e657CE2b5a764a1707FdF23CeDf022BE64c4'
+const distributedTownAddress = '0x71aa16bF81407265956EFf5540F3D4B8D72F3982'
 
 const { assert } = require('chai')
 const fs = require("fs");
 
 var ethers = require('ethers')
 
-var partnersRegistryAbi = require('../artifacts/contracts/main/partnersAgreement/PartnersRegistry.sol/PartnersRegistry.json')
+var partnersRegistryAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/PartnersRegistry.sol/PartnersRegistry.json')
     .abi
-var partnersAgreementAbi = require('../artifacts/contracts/main/partnersAgreement/PartnersAgreement.sol/PartnersAgreement.json')
+var partnersAgreementAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/PartnersAgreement.sol/PartnersAgreement.json')
+    .abi
+var membershipAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/Membership.sol/Membership.json')
     .abi
 var distributedTownAbi = require('../artifacts/contracts/imported/IDistributedTown.sol/IDistributedTown.json')
     .abi
@@ -71,7 +73,7 @@ async function createPartnersAgreement() {
     const partnersAgreementCreatedEventEmitted = events.find(
         (e) => e.event === 'PartnersAgreementCreated',
     )
-    
+
     assert.isOk(
         partnersAgreementCreatedEventEmitted,
         'PartnersAgreementCreated event emitted',
@@ -116,12 +118,40 @@ async function isActive(partnersAgreementAddress) {
     console.log('isActive', isActive)
 }
 
+// create(string calldata url, uint256 role)
+async function createMembershipCard(partnersAgreementAddress, skillWalletId) {
+    const partnersAgreementContract = new ethers.Contract(
+        partnersAgreementAddress,
+        partnersAgreementAbi,
+        signer,
+    )
+
+    const membershipAddress = await partnersAgreementContract.membershipAddress();
+    console.log('membershipAddress', membershipAddress)
+    const membershipContract = new ethers.Contract(
+        membershipAddress,
+        membershipAbi,
+        signer,
+    )
+    const createTx = await membershipContract.create(
+        'https://hub.textile.io/ipfs/bafkreicezefuc6einewxdqhlpefelzjponwdqt4vmp2byosq5uwpn7hgoq', 2)
+    await createTx.wait();
+
+    const membershipID = await membershipContract.skillWalletToMembershipID(skillWalletId);
+    console.log('membershipID:', membershipID);
+}
+
 
 async function test() {
     // await setPartnersRegistryAddress();
-    await createPartnersAgreement()
-    // await activatePA('0xDB29E7D4598C164aE78a1a4075320Acb46d64D8d')
-    // await isActive('0xDB29E7D4598C164aE78a1a4075320Acb46d64D8d');
+    // await createPartnersAgreement();
+
+    // partnersAgreementAddress: '0xe470927feF4Aa20798C71fA43DDd5329D6162789',
+    // communityAddress: '0xb05Ee1F1B4E3cA8C5E7363C9004951341c669929'
+
+    await createMembershipCard('0xe470927feF4Aa20798C71fA43DDd5329D6162789', 5);
+    // await activatePA('0xe470927feF4Aa20798C71fA43DDd5329D6162789')
+    // await isActive('0xe470927feF4Aa20798C71fA43DDd5329D6162789');
 }
 
 test()

@@ -1,8 +1,8 @@
 // const skillWalletAddress = '0x1e79bE396CE37F7eB43aF0Ef0ffb3124F3fD23eF'
-const skillWalletAddress = '0xe5f83A22342EaCC62E263064033Bf3A57739cBd2' // upgradable
-const dito = '0xbd3e6c9213eF3b90D6e31AfBbd5021c0f37046ff'
+const skillWalletAddress = '0x57c872f66Efc452E5968578a83195EE3aB14FF59' // upgradable
+const dito = '0x71aa16bF81407265956EFf5540F3D4B8D72F3982'
 // const communityAddress = '0xec1380558d5A9e25bf258f2e341C6bF562ca7480'
-const communityAddress = '0xE6979Db69E34130437f14AC4A99a82ce97dfa6C7' //upgradable SW
+const communityAddress = '0xb05Ee1F1B4E3cA8C5E7363C9004951341c669929' //upgradable SW
 const { assert } = require('chai')
 var ethers = require('ethers')
 var abi = require('../artifacts/contracts/main/SkillWallet.sol/SkillWallet.json')
@@ -26,41 +26,7 @@ function mnemonic() {
 
 
 let keyPair = {
-  privKey: new Buffer([
-    142,
-    252,
-    198,
-    63,
-    45,
-    98,
-    39,
-    115,
-    124,
-    60,
-    235,
-    10,
-    91,
-    68,
-    135,
-    180,
-    231,
-    31,
-    64,
-    80,
-    87,
-    41,
-    92,
-    78,
-    194,
-    51,
-    48,
-    220,
-    180,
-    116,
-    64,
-    170,
-  ]),
-  pubKey: '440ac41f7fa85a68697877fff22217ace116cd56164ec4a5d6ddd675d03b1eaf',
+  pubKey: '0442f1fa140d9fcb8ddca188ffc83d1512bcb3be4de464512169c4555f3f7a6ca5e3afb51f7604cdbbf4234b6958852d0b4c57b0ba18af4350a652e889f7f6660a',
 }
 
 const provider = new ethers.providers.JsonRpcProvider(
@@ -144,6 +110,24 @@ async function claim() {
   }
 }
 
+
+
+async function addDiscordID() {
+  const addDiscordIDTx = await skillWalletContract.addDiscordIDToSkillWallet('migrenaa#4690');
+
+  const addDiscordIDTxResult = await addDiscordIDTx.wait()
+  const { events } = addDiscordIDTxResult
+  const discordIDAddedEventEmitted = events.find(
+    (e) => e.event === 'DiscordIDConnectedToSkillWallet'
+  );
+
+  if (discordIDAddedEventEmitted) {
+    console.log('[DiscordIDConnectedToSkillWallet]:', 'Finished Successfully');
+  } else {
+    console.log('[DiscordIDConnectedToSkillWallet]:', 'Failed');
+  }
+}
+
 async function getOSMAddr() {
   const osmAddr = await skillWalletContract.getOSMAddress();
   console.log(osmAddr);
@@ -159,7 +143,8 @@ async function validateSW(tokenId, action, nonce) {
 
   if (!nonce)
     nonce = await helpers.getNonce(tokenId, action)
-  const signature = await helpers.sign(keyPair.privKey, nonce.toString())
+  // const signature = await helpers.sign(keyPair.privKey, nonce.toString())
+  const signature = '304402207f6139c3fb2772e43c6a43ed1ff7205d29386d44415bb4307455aa87a3362ab4022072a926ba8eedd169760c96911043b538a477089f20044985506fa4d5c20f0bc2';
   const validationTx = await osmContract.validate(
     signature,
     tokenId,
@@ -206,7 +191,7 @@ async function getLogins(nonce) {
 
 async function test() {
   // await getOSMAddr();
-  // const tokenId = 4;
+  const tokenId = 5;
   // const tokenId = await joinCommunity()
   // await claim();
 
@@ -221,19 +206,7 @@ async function test() {
   // await sleep(10000)
   // await hasValidationPassed(activateRes.requestId)
   // await isSkillWalletActivated(tokenId)
-
-  // const loginRes = await validateSW(tokenId, 1);
-  // console.log('[login] nonce: ', loginRes.nonce)
-
-  // console.log(
-  //   '[sleep]',
-  //   'waiting 10 seconds for the chainlink validation to pass',
-  // )
-  // await sleep(10000)
-
-  // await getLogins(loginRes.nonce);
-
-  // await hasValidationPassed(loginRes.requestId);
+  await addDiscordID();
 }
 
 test()
