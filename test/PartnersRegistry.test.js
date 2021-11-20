@@ -47,15 +47,19 @@ contract("PartnersRegistry", (accounts) => {
     describe("Deployment", async () => {
         it("Should deploy Partners Registry contract", async () => {
             const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry");
-            /*const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry", {
-                libraries: {
-                    RoleUtils: roleUtils.address
-                }
-            });*/
-            //partnersRegistry = await PartnersRegistry.deploy(distributedTownMock.address, mockOracle.address, linkTokenMock.address);
+            const PartnersAgreementFactory = await ethers.getContractFactory("PartnersAgreementFactory");
+            const MembershipFactory = await ethers.getContractFactory("MembershipFactory");
+
+            const membershipFactory = await MembershipFactory.deploy(1);
+            const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1);
+
             partnersRegistry = await upgrades.deployProxy(
                 PartnersRegistry,
-                [distributedTownMock.address, mockOracle.address, linkTokenMock.address]
+                [distributedTownMock.address,
+                partnersAgreementFactory.address,
+                membershipFactory.address,
+                mockOracle.address,
+                linkTokenMock.address]
             );
             await partnersRegistry.deployed();
 
@@ -81,7 +85,7 @@ contract("PartnersRegistry", (accounts) => {
             expect(String(await partnersRegistry.agreementIds(agreementAddress))).to.equal("0");
             expect(String(await agreement.version())).to.equal("1");
         });
-        it("Should create 2 more agreements", async() => {
+        it("Should create 2 more agreements", async () => {
             await partnersRegistry.create(
                 metadataUrl,
                 1,

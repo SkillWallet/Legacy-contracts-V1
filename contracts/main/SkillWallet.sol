@@ -212,7 +212,7 @@ contract SkillWallet is
         uint256 tokenId
     ) internal override {
         require(
-            msg.sender != address(this),
+            from == address(this),
             "SkillWallet: SkillWallet transfer disabled"
         );
         super._transfer(from, to, tokenId);
