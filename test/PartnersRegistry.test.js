@@ -41,7 +41,7 @@ contract("PartnersRegistry", (accounts) => {
 
         const MinimumCommunity = await ethers.getContractFactory("MinimumCommunity");
         minimumCommunity = await MinimumCommunity.deploy(skillWallet.address);
-        await minimumCommunity.joinNewMember('', 2000);
+        await minimumCommunity.joinNewMember('', 1, 2000);
         await distributedTownMock.addCommunity(accounts[0], minimumCommunity.address);
     });
     describe("Deployment", async () => {

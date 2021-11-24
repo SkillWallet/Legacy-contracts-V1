@@ -48,7 +48,7 @@ contract('Interactions', function (accounts) {
         this.membership = await Membership.at(await this.partnersAgreement.membershipAddress());
 
         const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
-        await community.joinNewMember('', 2000, { from: accounts[0] });
+        await community.joinNewMember('', 1, 2000, { from: accounts[0] });
         await this.partnersAgreement.activatePA({ from: accounts[0] });
 
         await this.linkTokenMock.transfer(
@@ -115,7 +115,7 @@ contract('Interactions', function (accounts) {
             );
 
             const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
-            await community.joinNewMember('', 2000, { from: accounts[1] });
+            await community.joinNewMember('', 1, 2000, { from: accounts[1] });
             await partnersAgreement.activatePA({ from: accounts[1] });
 
             const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
@@ -135,7 +135,7 @@ contract('Interactions', function (accounts) {
 
         });
         it('transferInteractionNFTs should transfer the correct amount of NFTs after chainlink result is returned', async function () {
-            await this.membership.create('', 1);
+            await this.membership.create('');
             const initialInteractions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
 
             assert.equal(initialInteractions.toString(), '0');

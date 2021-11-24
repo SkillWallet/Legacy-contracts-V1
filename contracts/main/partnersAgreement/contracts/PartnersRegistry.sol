@@ -8,17 +8,22 @@ import "../interfaces/IPartnersAgreementFactory.sol";
 import "../interfaces/IPartnersAgreement.sol";
 
 contract PartnersRegistry is IPartnersRegistry, Initializable {
+
+    //versioning
     uint256 public version;
 
-    event PartnersAgreementCreated(
-        address partnersAgreementAddress,
-        address communityAddress
-    );
+    // distributedTown contract
     IDistributedTown distributedTown;
+
+    // agreements
     address[] public agreements;
     mapping(address => uint256) public agreementIds;
+
+    // chainlink
     address oracle;
     address linkToken;
+
+    // factories
     address partnersAgreementFactory;
     address membershipFactory;
 

@@ -2,7 +2,7 @@
 const skillWalletAddress = '0x57c872f66Efc452E5968578a83195EE3aB14FF59' // upgradable
 const dito = '0x71aa16bF81407265956EFf5540F3D4B8D72F3982'
 // const communityAddress = '0xec1380558d5A9e25bf258f2e341C6bF562ca7480'
-const communityAddress = '0xb05Ee1F1B4E3cA8C5E7363C9004951341c669929' //upgradable SW
+const communityAddress = '0xCBD8DA830262a287d73fF3eF07b0A0b350453C00' //upgradable SW
 const { assert } = require('chai')
 var ethers = require('ethers')
 var abi = require('../artifacts/contracts/main/SkillWallet.sol/SkillWallet.json')
@@ -60,6 +60,7 @@ async function joinCommunity() {
   const wei = ethers.utils.parseEther('2220').toString()
   const joinedTx = await communityContract.joinNewMember(
     url,
+    1,
     wei,
   )
   const joinCommunityTxResult = await joinedTx.wait()
@@ -180,6 +181,10 @@ async function isSkillWalletActivated(tokenId) {
   console.log('isActivated:', isActivated)
 }
 
+async function getmetadata(tokenId) {
+  const isActivated = await communityContract.metadataUri()
+  console.log('isActivated:', isActivated)
+}
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -191,22 +196,24 @@ async function getLogins(nonce) {
 
 async function test() {
   // await getOSMAddr();
-  const tokenId = 5;
+  const tokenId = 10;
   // const tokenId = await joinCommunity()
   // await claim();
 
-  // await addPubKeyToSkillWallet(tokenId)
-  // const activateRes = await validateSW(tokenId, 0);
-  // console.log(activateRes.requestId);
-  // await isSkillWalletActivated(tokenId)
-  // console.log(
-  //   '[sleep]',
-  //   'waiting 10 seconds for the chainlink validation to pass',
-  // )
-  // await sleep(10000)
+  await addPubKeyToSkillWallet(tokenId)
+  const activateRes = await validateSW(tokenId, 0);
+  console.log(activateRes.requestId);
+  await isSkillWalletActivated(tokenId)
+  console.log(
+    '[sleep]',
+    'waiting 10 seconds for the chainlink validation to pass',
+  )
+  await sleep(10000)
   // await hasValidationPassed(activateRes.requestId)
-  // await isSkillWalletActivated(tokenId)
-  await addDiscordID();
+  await isSkillWalletActivated(tokenId)
+
+  // await getmetadata(tokenId)
+  // await addDiscordID();
 }
 
 test()

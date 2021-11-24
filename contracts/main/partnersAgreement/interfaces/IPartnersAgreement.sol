@@ -31,10 +31,18 @@ interface IPartnersAgreement {
     function membershipAddress() external view returns (address);
 
     function rolesCount() external view returns (uint256);
-    
+
     function communityAddress() external view returns (address);
 
     function isActive() external view returns (bool);
+
+    function isCoreTeamMember(address member) external view returns (bool);
+
+    function coreTeamMembersCount() external view returns (uint256);
+
+    function addNewCoreTeamMembers(address member) external;
+
+    function getCoreTeamMembers() external view returns (address[] memory);
 
     function getAgreementData()
         external

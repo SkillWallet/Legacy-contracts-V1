@@ -8,25 +8,32 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IPartnersAgreement.sol";
 import "./InteractionNFT.sol";
 import "../../../imported/ICommunity.sol";
+import "../../ISkillWallet.sol";
 import "../interfaces/IMembershipFactory.sol";
-import "../interfaces/IMembership.sol";
 
 contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
     uint256 public version;
     address public owner;
+
     address public override communityAddress;
     address[] public partnersContracts;
     string[] public urls;
-    mapping (bytes32 => uint256) urlIds;
-    //address supportedTokens;
+
+    mapping(bytes32 => uint256) urlIds;
+
     uint256 public override rolesCount;
     bool public override isActive;
 
     mapping(address => uint256) lastBlockPerUserAddress;
     mapping(bytes32 => address) userRequests;
 
-    //TokenDistribution treasury;
+    mapping(address => bool) public override isCoreTeamMember;
+    address[] coreTeamMemberWhitelist;
+
+    uint256 public override coreTeamMembersCount;
+
     InteractionNFT partnersInteractionNFTContract;
+    ISkillWallet skillWallet;
 
     // Chainlink params
     address private oracle;
@@ -39,6 +46,12 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
      */
     modifier onlyActive() {
         require(isActive, "PA: not yet activated");
+        _;
+    }
+
+    modifier onlyCoreTeamMember() {
+        require(isCoreTeamMember[msg.sender], "The signer is not whitelisted as core team member!");
+        require(skillWallet.balanceOf(msg.sender) > 0, "SkillWallet not created by the whitelisted member");
         _;
     }
 
@@ -65,6 +78,7 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         owner = _owner;
         communityAddress = _communityAddress;
 
+        skillWallet = ISkillWallet(ICommunity(communityAddress).getSkillWalletAddress());
         if (_interactionsContract == address(0)) {
             membershipAddress = IMembershipFactory(_membershipFactory)
                 .createMembership(
@@ -74,8 +88,7 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
 
             partnersInteractionNFTContract = new InteractionNFT(
                 _rolesCount,
-                _numberOfActions,
-                membershipAddress
+                _numberOfActions
             );
         } else {
             partnersInteractionNFTContract = InteractionNFT(
@@ -96,15 +109,22 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         bool isMember = ICommunity(communityAddress).isMember(owner);
         require(isMember, "Owner not yet a member of the community.");
         isActive = true;
+        isCoreTeamMember[msg.sender] = true;
+        coreTeamMemberWhitelist.push(msg.sender);
     }
 
-    function addURL(string memory _url) public override {
-        require (msg.sender == owner, "not owner");
+    function addURL(string memory _url)
+        public
+        override
+        onlyActive
+        onlyCoreTeamMember
+    {
+        require(msg.sender == owner, "not owner");
 
         bytes32 urlHash = keccak256(bytes(_url));
         bool exists = false;
         if (urls.length != 0) {
-            if (urlIds[urlHash] != 0 || keccak256(bytes(urls[0])) == urlHash ) {
+            if (urlIds[urlHash] != 0 || keccak256(bytes(urls[0])) == urlHash) {
                 exists = true;
             }
         }
@@ -114,9 +134,14 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         urls.push(_url);
     }
 
-    function removeURL(string memory _url) public override {
-        require (msg.sender == owner, "not owner");
-        require (isURLListed(_url), "url doesnt exist");
+    function removeURL(string memory _url)
+        public
+        override
+        onlyActive
+        onlyCoreTeamMember
+    {
+        require(msg.sender == owner, "not owner");
+        require(isURLListed(_url), "url doesnt exist");
 
         bytes32 urlHash = keccak256(bytes(_url));
         uint256 urlId = urlIds[urlHash];
@@ -128,7 +153,7 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
             urlIds[lastUrlHash] = urlId;
             urls[urlId] = lastUrl;
         }
-        
+
         urls.pop();
         delete urlIds[urlHash];
     }
@@ -137,7 +162,12 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         return urls;
     }
 
-    function isURLListed(string memory _url) public view override returns (bool) {
+    function isURLListed(string memory _url)
+        public
+        view
+        override
+        returns (bool)
+    {
         if (urls.length == 0) return false;
 
         bytes32 urlHash = keccak256(bytes(_url));
@@ -213,7 +243,7 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
             partnersInteractionNFTContract.safeTransferFrom(
                 address(this),
                 user,
-                IMembership(membershipAddress).getRole(user),
+                uint(skillWallet.getRole(user)),
                 _result,
                 ""
             );
@@ -234,6 +264,7 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         public
         override
         onlyActive
+        onlyCoreTeamMember
     {
         Ownable con = Ownable(contractAddress);
         require(
@@ -242,6 +273,33 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         );
         partnersContracts.push(contractAddress);
     }
+
+
+    function addNewCoreTeamMembers(address member)
+        public
+        override
+        onlyActive
+        onlyCoreTeamMember
+    {
+        require(
+            coreTeamMembersCount > coreTeamMemberWhitelist.length,
+            "Core team member spots are filled."
+        );
+        coreTeamMemberWhitelist.push(member);
+        isCoreTeamMember[member] = true;
+    }
+
+
+    function getCoreTeamMembers()
+        public
+        view
+        override
+        onlyActive
+        returns (address[] memory)
+    {
+        return coreTeamMemberWhitelist;
+    }
+
 
     function getImportedAddresses()
         public
@@ -253,6 +311,7 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         return partnersContracts;
     }
 
+    // add core tema members array
     function getAgreementData()
         public
         view

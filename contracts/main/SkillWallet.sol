@@ -7,6 +7,7 @@ import "../imported/CommonTypes.sol";
 import "./ISWActionExecutor.sol";
 import "../imported/ICommunity.sol";
 import "./OSM.sol";
+import "./utils/RoleUtils.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
@@ -31,6 +32,9 @@ contract SkillWallet is
 
     // Mapping from token ID to active community that the SW is part of
     mapping(uint256 => address) private _activeCommunities;
+
+    // Mapping for skillWallet to Role
+    mapping(uint256 => RoleUtils.Roles) public skillWalletToRole;
 
     // Mapping from token ID to list of community addresses
     mapping(uint256 => address[]) private _communityHistory;
@@ -130,6 +134,7 @@ contract SkillWallet is
     function create(
         address skillWalletOwner,
         string memory url,
+        RoleUtils.Roles role,
         bool isClaimable
     ) external override {
         // TODO: Verify that the msg.sender is valid community
@@ -156,6 +161,7 @@ contract SkillWallet is
         _activeCommunities[tokenId] = msg.sender;
         _communityHistory[tokenId].push(msg.sender);
         _skillWalletsByOwner[skillWalletOwner] = tokenId;
+        skillWalletToRole[tokenId] = role;
         _skillWalletCounter.increment();
 
         emit SkillWalletCreated(skillWalletOwner, msg.sender, tokenId);
@@ -364,6 +370,19 @@ contract SkillWallet is
 
     function getOSMAddress() public view override returns (address) {
         return osmAddress;
+    }
+
+    function getRole(address skillWalletHolderAddress)
+        public
+        view
+        override
+        returns (RoleUtils.Roles)
+    {
+        require(
+            balanceOf(skillWalletHolderAddress) == 1,
+            "SkillWallet: The SkillWallet owner is invalid."
+        );
+        return skillWalletToRole[_skillWalletsByOwner[skillWalletHolderAddress]];
     }
 
     function onERC721Received(

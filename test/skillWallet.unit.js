@@ -55,6 +55,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           true
         )).wait();
 
@@ -64,6 +65,7 @@ contract('SkillWallet', function () {
         const failingTx = skillWallet.create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           true
         )
         await truffleAssert.reverts(
@@ -75,6 +77,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           true
         )).wait();
 
@@ -89,6 +92,7 @@ contract('SkillWallet', function () {
         const failingTx = skillWallet.create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           true
         )
         await truffleAssert.reverts(
@@ -100,6 +104,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           false
         )).wait()
 
@@ -109,12 +114,14 @@ contract('SkillWallet', function () {
         const failingTx1 = skillWallet.create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           false
         )
 
         const failingTx2 = skillWallet.create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           true
         )
         await truffleAssert.reverts(
@@ -130,6 +137,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.connect(communitySign).create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           true
         )).wait();
 
@@ -164,6 +172,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.connect(communitySign).create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           false,
         )).wait();
 
@@ -198,6 +207,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.connect(communitySign).create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           true
         )).wait();
 
@@ -237,6 +247,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.connect(communitySign).create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           false,
         )).wait();
 
@@ -271,6 +282,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.connect(communitySign).create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           false
         )).wait();
 
@@ -313,6 +325,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.connect(communitySign).create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           true
         )).wait();
 
@@ -335,6 +348,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.connect(communitySign).create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           false,
         )).wait();
 
@@ -366,6 +380,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.connect(communitySign).create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           true,
         )).wait();
 
@@ -417,6 +432,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.connect(communitySign).create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           false
         )).wait();
 
@@ -465,6 +481,7 @@ contract('SkillWallet', function () {
         const tx = await (await skillWallet.connect(communitySign).create(
           skillWalletOwner.address,
           metadataUrl,
+          1,
           false
         )).wait();
 
