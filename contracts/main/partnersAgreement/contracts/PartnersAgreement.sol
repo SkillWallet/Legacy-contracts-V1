@@ -62,6 +62,7 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         address _communityAddress,
         uint256 _rolesCount,
         uint256 _numberOfActions,
+        uint256 _coreTeamMembers,
         address _oracle,
         address _chainlinkToken,
         address _membershipFactory,
@@ -77,6 +78,7 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         partnersContracts.push(_partnersContract);
         owner = _owner;
         communityAddress = _communityAddress;
+        coreTeamMembersCount = _coreTeamMembers;
 
         skillWallet = ISkillWallet(ICommunity(communityAddress).getSkillWalletAddress());
         if (_interactionsContract == address(0)) {
@@ -325,6 +327,7 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
             uint256,
             address,
             address,
+            uint256,
             uint256
         )
     {
@@ -336,7 +339,8 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
             rolesCount,
             address(partnersInteractionNFTContract),
             membershipAddress,
-            partnersInteractionNFTContract.getTotalSupplyAll()
+            partnersInteractionNFTContract.getTotalSupplyAll(),
+            coreTeamMembersCount
         );
     }
 }

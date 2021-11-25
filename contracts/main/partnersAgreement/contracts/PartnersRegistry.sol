@@ -64,7 +64,8 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         uint256 rolesCount,
         uint256 numberOfActions,
         address partnersContractAddress,
-        uint256 membersAllowed
+        uint256 membersAllowed,
+        uint256 coreTeamMembers
     ) public override {
         require(
             template >= 0 && template <= 2,
@@ -101,6 +102,7 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
                 communityAddress,
                 rolesCount,
                 numberOfActions,
+                coreTeamMembers,
                 oracle,
                 linkToken,
                 membershipFactory,
@@ -130,12 +132,13 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
             uint256 rolesCount,
             address partnersInteractionNFTContract,
             address membershipNFTContract,
-            uint256 numberOfActions
+            uint256 numberOfActions,
         ) = IPartnersAgreement(_agreement).getAgreementData();
 
         require(agreementVersion < version, "already latest version");
         require(owner == msg.sender, "not agreement owner");
 
+        // todo: fix hard coded core team members
         address agreement = IPartnersAgreementFactory(partnersAgreementFactory).createPartnersAgreement(
             version,
             partnersContracts[0],
@@ -143,6 +146,7 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
             communityAddress,
             rolesCount,
             numberOfActions,
+            10,
             oracle,
             linkToken,
             membershipFactory,

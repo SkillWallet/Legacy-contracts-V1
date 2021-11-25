@@ -22,7 +22,8 @@ interface IPartnersRegistry {
         uint256 rolesCount,
         uint256 numberOfActions,
         address partnersContractAddress,
-        uint256 membersAllowed
+        uint256 membersAllowed,
+        uint256 coreTeamMembers
     ) external;
 
     function migrate(address _agreement) external;

@@ -11,6 +11,7 @@ interface IPartnersAgreementFactory {
         address _communityAddress,
         uint256 _rolesCount,
         uint256 _numberOfActions,
+        uint256 _coreTeamMembersCount,
         address _oracle,
         address _chainlinkToken,
         address _membershipFactory,

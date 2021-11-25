@@ -1,9 +1,7 @@
 const { getContractFactory } = require('@nomiclabs/hardhat-ethers/types');
 const { expectEvent, singletons, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
-const { Contract } = require('ethers');
 const { ZERO_ADDRESS } = constants;
-const hre = require("hardhat");
 const { ethers } = require("hardhat");
 
 let partnersRegistry;
@@ -12,17 +10,12 @@ let linkTokenMock;
 let skillWallet;
 let minimumCommunity;
 let distributedTownMock;
-let roleUtils;
 let agreementAddress;
 
 const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
 
 contract("PartnersRegistry", (accounts) => {
     before(async () => {
-        //const RoleUtils = await ethers.getContractFactory("RoleUtils");
-        //roleUtils = await RoleUtils.deploy();
-        //await roleUtils.deployed();
-
         const LinkToken = await ethers.getContractFactory("LinkToken");
         linkTokenMock = await LinkToken.deploy();
 
@@ -74,7 +67,8 @@ contract("PartnersRegistry", (accounts) => {
                 2,
                 100,
                 ZERO_ADDRESS,
-                10
+                10,
+                3
             );
 
             agreementAddress = await partnersRegistry.agreements(0);
@@ -92,7 +86,8 @@ contract("PartnersRegistry", (accounts) => {
                 2,
                 100,
                 ZERO_ADDRESS,
-                10
+                10,
+                3
             );
 
             const agreementAddress1 = await partnersRegistry.agreements(1);
@@ -103,7 +98,8 @@ contract("PartnersRegistry", (accounts) => {
                 2,
                 100,
                 ZERO_ADDRESS,
-                10
+                10,
+                3
             );
 
             const agreementAddress2 = await partnersRegistry.agreements(2);

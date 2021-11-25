@@ -1,167 +1,176 @@
-const { expectEvent, singletons, constants } = require('@openzeppelin/test-helpers');
+const { singletons, constants } = require('@openzeppelin/test-helpers');
 const { assert } = require('chai');
 const { expect } = require('chai');
-const { ethers, artifacts } = require('hardhat');
+const { ethers } = require('hardhat');
 const { ZERO_ADDRESS } = constants;
-const truffleAssert = require('truffle-assertions')
-
-const MinimumCommunity = artifacts.require('MinimumCommunity');
-const MembershipFactory = artifacts.require('MembershipFactory');
-const LinkToken = artifacts.require('LinkToken');
-const MockOracle = artifacts.require('MockOracle');
-const PartnersAgreement = artifacts.require('PartnersAgreement');
-const Membership = artifacts.require('Membership');
-const RoleUtils = artifacts.require('RoleUtils');
-const InteractionNFT = artifacts.require('InteractionNFT');
-const OwnableTestContract = artifacts.require('OwnableTestContract');
-const SkillWallet = artifacts.require('skill-wallet/contracts/main/SkillWallet');
-const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
-var BN = web3.utils.BN;
 
 let partnersAgreement;
+let membershipFactory;
+let minimumCommunity;
+let mockOracle;
 
 contract('PartnersAgreement', function (accounts) {
+
   before(async function () {
-    this.erc1820 = await singletons.ERC1820Registry(accounts[1]);
+    [signer, paOwner, coreTeamMember1, coreTeamMember2, coreTeamMember2, notACoreTeamMember, ...addrs] = await ethers.getSigners();
+    erc1820 = await singletons.ERC1820Registry(signer.address);
 
-    this.linkTokenMock = await LinkToken.new()
-    this.mockOracle = await MockOracle.new(this.linkTokenMock.address)
+    const LinkToken = await ethers.getContractFactory("LinkToken");
+    const MockOracle = await ethers.getContractFactory("MockOracle");
+    const SkillWallet = await ethers.getContractFactory("SkillWallet");
+    const OffchainSignatureMechanism = await ethers.getContractFactory('OffchainSignatureMechanism');
+    const MembershipFactory = await ethers.getContractFactory('MembershipFactory');
+    const Membership = await ethers.getContractFactory('Membership');
+    const MinimumCommunity = await ethers.getContractFactory('MinimumCommunity');
+    const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
 
-    this.skillWallet = await SkillWallet.new(this.linkTokenMock.address, this.mockOracle.address);
+    linkTokenMock = await LinkToken.deploy();
+    await linkTokenMock.deployed();
 
-    this.minimumCommunity = await MinimumCommunity.new(this.skillWallet.address);
-    this.membershipFactory = await MembershipFactory.new(1);
-    //this.roleUtils = await RoleUtils.new();
+    mockOracle = await MockOracle.deploy(linkTokenMock.address);
+    await mockOracle.deployed();
 
-    //PartnersAgreement.link(this.roleUtils);
-
-    this.partnersAgreement = await PartnersAgreement.new(
-      1,
-      ZERO_ADDRESS, // partners contract
-      accounts[0],
-      this.minimumCommunity.address,
-      3,
-      100,
-      this.mockOracle.address,
-      this.linkTokenMock.address,
-      this.membershipFactory.address,
-      ZERO_ADDRESS,
-      ZERO_ADDRESS,
-      { from: accounts[0] }
+    skillWallet = await upgrades.deployProxy(
+      SkillWallet,
+      [linkTokenMock.address, mockOracle.address],
     );
+    await skillWallet.deployed();
 
-    console.log(await this.partnersAgreement.membershipAddress());
-    this.membership = await Membership.at(await this.partnersAgreement.membershipAddress());
-    const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
-    await community.joinNewMember('', 1, 2000);
-    await this.partnersAgreement.activatePA();
-    partnersAgreement = await ethers.getContractAt("PartnersAgreement", this.partnersAgreement.address);
+    osmAddress = await skillWallet.getOSMAddress();
+    osm = await OffchainSignatureMechanism.attach(osmAddress);
 
-    const isActive = await this.partnersAgreement.isActive();
-    assert.isTrue(isActive);
+    minimumCommunity = await MinimumCommunity.deploy(skillWallet.address);
 
-    await this.linkTokenMock.transfer(
-      this.partnersAgreement.address,
+    membershipFactory = await MembershipFactory.deploy(1);
+
+    await linkTokenMock.transfer(
+      osmAddress,
       '2000000000000000000',
     )
 
-  });
+    partnersAgreement = await PartnersAgreement.deploy(
+      1,
+      ZERO_ADDRESS, // partners contract
+      signer.address,
+      minimumCommunity.address,
+      3,
+      100,
+      3,
+      mockOracle.address,
+      linkTokenMock.address,
+      membershipFactory.address,
+      ZERO_ADDRESS,
+      ZERO_ADDRESS
+    );
+
+    membership = await Membership.attach(await partnersAgreement.membershipAddress());
+    const community = await MinimumCommunity.attach(partnersAgreement.communityAddress());
+    await community.joinNewMember('', 1, 2000);
+    await partnersAgreement.activatePA();
+
+    const isActive = await partnersAgreement.isActive();
+    assert.isTrue(isActive);
+
+    await linkTokenMock.transfer(
+      partnersAgreement.address,
+      '2000000000000000000',
+    )
+  })
   describe('Create partners agreement', async function () {
 
     it("should deploy inactive partners agreement contract", async function () {
+      const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
 
-      const partnersAgreement = await PartnersAgreement.new(
+      const pa = await PartnersAgreement.deploy(
         1,
         ZERO_ADDRESS, // partners contract
         accounts[0],
-        this.minimumCommunity.address,
+        minimumCommunity.address,
         3,
         100,
-        this.mockOracle.address,
-        this.linkTokenMock.address,
-        this.membershipFactory.address,
+        3,
+        mockOracle.address,
+        linkTokenMock.address,
+        membershipFactory.address,
         ZERO_ADDRESS,
         ZERO_ADDRESS,
-        { from: accounts[0] }
       );
 
-      const isActive = await partnersAgreement.isActive();
+      await pa.deployed();
+      const isActive = await pa.isActive();
 
-      assert.notEqual(ZERO_ADDRESS, partnersAgreement.address);
-      assert.isFalse(isActive);
+      expect(pa.address).not.to.eq(ZERO_ADDRESS);
+      expect(isActive).to.be.false;
     });
-
 
     it("should deploy and activate partners agreement contract", async function () {
 
-      const partnersAgreement = await PartnersAgreement.new(
+      const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
+
+      const pa = await PartnersAgreement.deploy(
         1,
         ZERO_ADDRESS, // partners contract
         accounts[0],
-        this.minimumCommunity.address,
+        minimumCommunity.address,
         3,
         100,
-        this.mockOracle.address,
-        this.linkTokenMock.address,
-        this.membershipFactory.address,
+        3,
+        mockOracle.address,
+        linkTokenMock.address,
+        membershipFactory.address,
         ZERO_ADDRESS,
         ZERO_ADDRESS,
-        { from: accounts[0] }
       );
 
-      let isActive = await partnersAgreement.isActive();
+      await pa.deployed();
+      let isActive = await pa.isActive();
 
-      assert.notEqual(ZERO_ADDRESS, partnersAgreement.address);
-      assert.isFalse(isActive);
+      expect(pa.address).not.to.eq(ZERO_ADDRESS);
+      expect(isActive).to.be.false;
 
+      await pa.activatePA();
 
-      const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
-      await partnersAgreement.activatePA();
+      isActive = await pa.isActive();
+      expect(isActive).to.be.true;
 
-      isActive = await partnersAgreement.isActive();
-      assert.isTrue(isActive);
+      const allUsers = await pa.getAllMembers();
+      const interactionNFTAddress = await pa.getInteractionNFTContractAddress();
 
-      const allUsers = await partnersAgreement.getAllMembers();
-      const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
-      //const profitSharing = await partnersAgreement.profitSharing();
-
-      assert.notEqual(ZERO_ADDRESS, interactionNFTAddress);
-      //assert.equal(ZERO_ADDRESS, profitSharing);
-      assert.equal(0, allUsers);
-
+      expect(interactionNFTAddress).not.to.eq(ZERO_ADDRESS);
+      expect(allUsers.length).to.eq(0);
 
     });
 
     it('transferInteractionNFTs should transfer the corrent amount of NFTs depending on the chainlink fulfilled request', async function () {
-      await this.membership.create('', {from: accounts[0]});
-      const initialInteractions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
+      const initialInteractions = await partnersAgreement.getInteractionNFT(signer.address);
       assert.equal(initialInteractions.toString(), '0');
 
-      let tx = await this.partnersAgreement.queryForNewInteractions(
-        accounts[0]
-      )
-      let chainlinkRequestedEventEmitted =
-        tx.logs[0].event === 'ChainlinkRequested'
-      assert.isTrue(chainlinkRequestedEventEmitted)
+      let tx = await (await partnersAgreement.queryForNewInteractions(
+        signer.address
+      )).wait();
 
-      const requestId = tx.logs[0].args[0]
-      const fulfilTx = await this.mockOracle.fulfillOracleRequest(
+      let chainlinkRequestedEventEmitted =
+        tx.events.find(event => event.event === 'ChainlinkRequested');
+      expect(chainlinkRequestedEventEmitted).not.to.be.undefined;
+
+      const requestId = chainlinkRequestedEventEmitted.args.id;
+      const fulfilTx = await (await mockOracle["fulfillOracleRequest(bytes32,uint256)"](
         requestId,
         10
-      )
+      )).wait();
 
-      const fulfilTxEventEmitted = fulfilTx.logs[0].event === 'CallbackCalled'
-      assert.isTrue(fulfilTxEventEmitted)
+      const fulfilTxEventEmitted = fulfilTx.events.find(event => event.event === 'CallbackCalled');
+      expect(fulfilTxEventEmitted).not.to.be.undefined;
 
-      const interactions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
+      const interactions = await partnersAgreement.getInteractionNFT(signer.address);
       assert.equal(interactions.toString(), '10');
     })
 
     it('should add new contract address if owner is the signer', async function () {
 
-      console.log('isActive', await this.partnersAgreement.isActive());
-      console.log('isCoreTeamMember', await this.partnersAgreement.isCoreTeamMember(accounts[0]));
-      const ownable = await OwnableTestContract.new({ from: accounts[1] });
+      console.log('isActive', await partnersAgreement.isActive());
+      console.log('isCoreTeamMember', await partnersAgreement.isCoreTeamMember(signer.address));
+      // const ownable = await OwnableTestContract.new({ from: accounts[1] });
 
       // await truffleAssert.reverts(
       //   this.partnersAgreement.addNewContractAddressToAgreement(this.skillWallet.address, { from: accounts[0] }),
@@ -255,6 +264,51 @@ contract('PartnersAgreement', function (accounts) {
       expect(urls.length).to.equal(2);
       expect(urls[0]).to.equal("https://test1.test");
       expect(urls[1]).to.equal("https://test2.test");
+    });
+  });
+  describe("Core team members", async () => {
+
+    it("Should add owner as core team member after activation", async () => {
+      const isActive = await partnersAgreement.isActive();
+      const isCoreTeamMember = await partnersAgreement.isCoreTeamMember(signer.address);
+      expect(isActive).to.be.true;
+      expect(isCoreTeamMember).to.be.true;
+    });
+    it("Should succeed when the owner adds new core team members to the whitelist", async () => {
+      await partnersAgreement.addNewCoreTeamMembers(coreTeamMember1.address);
+      const teamMembers = await partnersAgreement.getCoreTeamMembers();
+      expect(teamMembers.length).to.eq(2);
+      expect(teamMembers[0]).to.eq(signer.address)
+      expect(teamMembers[1]).to.eq(coreTeamMember1.address)
+    });
+
+    it("Should fail if the core team member hasn't created SW yet", async () => {
+      expect(
+        partnersAgreement.connect(coreTeamMember1).addNewCoreTeamMembers(coreTeamMember2.address)
+      ).to.be.revertedWith("SkillWallet not created by the whitelisted member");
+    });
+
+    it("Should fail if the core team member hasn't created SW yet", async () => {
+      expect(
+        partnersAgreement.connect(coreTeamMember1).addNewCoreTeamMembers(coreTeamMember2.address)
+      ).to.be.revertedWith("SkillWallet not created by the whitelisted member");
+    });
+
+    it("Should fail if unlisted core team member attepts to add other core team members", async () => {
+      expect(
+        partnersAgreement.connect(coreTeamMember2).addNewCoreTeamMembers(coreTeamMember2.address)
+      ).to.be.revertedWith("SkillWallet not created by the whitelisted member");
+    });
+    it("Should fail if core team member spots are filled", async () => {
+      await partnersAgreement.addNewCoreTeamMembers(coreTeamMember2.address);
+      const coreTeamMembers = await partnersAgreement.getCoreTeamMembers();
+      expect(
+        partnersAgreement.addNewCoreTeamMembers(notACoreTeamMember.address)
+      ).to.be.revertedWith("Core team member spots are filled.");
+      expect(coreTeamMembers.length).to.eq(3);
+      expect(coreTeamMembers[0]).to.eq(signer.address);
+      expect(coreTeamMembers[1]).to.eq(coreTeamMember1.address);
+      expect(coreTeamMembers[2]).to.eq(coreTeamMember2.address);
     });
   });
 });

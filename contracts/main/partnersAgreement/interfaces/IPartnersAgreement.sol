@@ -55,6 +55,7 @@ interface IPartnersAgreement {
             uint256,
             address,
             address,
+            uint256,
             uint256
         );
 }
