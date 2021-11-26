@@ -10,6 +10,7 @@ import "./InteractionNFT.sol";
 import "../../../imported/ICommunity.sol";
 import "../../ISkillWallet.sol";
 import "../interfaces/IMembershipFactory.sol";
+import "../../../imported/CommonTypes.sol";
 
 contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
     uint256 public version;
@@ -50,38 +51,40 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
     }
 
     modifier onlyCoreTeamMember() {
-        require(isCoreTeamMember[msg.sender], "The signer is not whitelisted as core team member!");
-        require(skillWallet.balanceOf(msg.sender) > 0, "SkillWallet not created by the whitelisted member");
+        require(
+            isCoreTeamMember[msg.sender],
+            "The signer is not whitelisted as core team member!"
+        );
+        require(
+            skillWallet.balanceOf(msg.sender) > 0,
+            "SkillWallet not created by the whitelisted member"
+        );
         _;
     }
 
     constructor(
-        uint256 _version,
-        address _partnersContract,
-        address _owner,
-        address _communityAddress,
-        uint256 _rolesCount,
-        uint256 _numberOfActions,
-        uint256 _coreTeamMembers,
-        address _oracle,
         address _chainlinkToken,
+        address _oracle,
         address _membershipFactory,
-        address _interactionsContract,
-        address _membershipContract
+        Types.PartnersAgreementData memory pa
     ) public {
         require(
-            _rolesCount == 2 || _rolesCount == 3,
+            pa.rolesCount == 2 || pa.rolesCount == 3,
             "Only 2 or 3 roles accepted"
         );
-        version = _version;
-        rolesCount = _rolesCount;
-        partnersContracts.push(_partnersContract);
-        owner = _owner;
-        communityAddress = _communityAddress;
-        coreTeamMembersCount = _coreTeamMembers;
+        version = pa.version;
+        rolesCount = pa.rolesCount;
+        owner = pa.owner;
+        communityAddress = pa.communityAddress;
+        coreTeamMembersCount = pa.coreTeamMembersCount;
 
-        skillWallet = ISkillWallet(ICommunity(communityAddress).getSkillWalletAddress());
-        if (_interactionsContract == address(0)) {
+        for (uint256 i = 0; i < pa.partnersContracts.length; i++)
+            partnersContracts.push(pa.partnersContracts[i]);
+
+        skillWallet = ISkillWallet(
+            ICommunity(communityAddress).getSkillWalletAddress()
+        );
+        if (pa.interactionContract == address(0)) {
             membershipAddress = IMembershipFactory(_membershipFactory)
                 .createMembership(
                     ICommunity(communityAddress).getSkillWalletAddress(),
@@ -89,21 +92,28 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
                 );
 
             partnersInteractionNFTContract = new InteractionNFT(
-                _rolesCount,
-                _numberOfActions
+                pa.rolesCount,
+                pa.interactionsCount
             );
+
+            isActive = false;
         } else {
             partnersInteractionNFTContract = InteractionNFT(
-                _interactionsContract
+                pa.interactionContract
             );
-            membershipAddress = _membershipContract;
+
+            coreTeamMemberWhitelist = pa.whitelistedTeamMembers;
+            for (uint256 i = 0; i < pa.whitelistedTeamMembers.length; i++)
+                isCoreTeamMember[pa.whitelistedTeamMembers[i]] = true;
+
+            membershipAddress = pa.membershipContract;
+            isActive = isCoreTeamMember[owner];
         }
 
         setChainlinkToken(_chainlinkToken);
         oracle = _oracle;
         jobId = "e1e26fa27aa7436c95a78a40c21f5404";
         fee = 0.1 * 10**18; // 0.1 LINK
-        isActive = false;
     }
 
     function activatePA() public override {
@@ -245,7 +255,7 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
             partnersInteractionNFTContract.safeTransferFrom(
                 address(this),
                 user,
-                uint(skillWallet.getRole(user)),
+                uint256(skillWallet.getRole(user)),
                 _result,
                 ""
             );
@@ -276,7 +286,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         partnersContracts.push(contractAddress);
     }
 
-
     function addNewCoreTeamMembers(address member)
         public
         override
@@ -291,7 +300,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         isCoreTeamMember[member] = true;
     }
 
-
     function getCoreTeamMembers()
         public
         view
@@ -301,7 +309,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
     {
         return coreTeamMemberWhitelist;
     }
-
 
     function getImportedAddresses()
         public
@@ -318,29 +325,20 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         public
         view
         override
-        onlyActive
-        returns (
-            uint256,
-            address,
-            address,
-            address[] memory,
-            uint256,
-            address,
-            address,
-            uint256,
-            uint256
-        )
+        returns (Types.PartnersAgreementData memory)
     {
-        return (
-            version,
-            owner,
-            communityAddress,
-            partnersContracts,
-            rolesCount,
-            address(partnersInteractionNFTContract),
-            membershipAddress,
-            partnersInteractionNFTContract.getTotalSupplyAll(),
-            coreTeamMembersCount
-        );
+        return
+            Types.PartnersAgreementData(
+                version,
+                owner,
+                communityAddress,
+                partnersContracts,
+                rolesCount,
+                address(partnersInteractionNFTContract),
+                membershipAddress,
+                partnersInteractionNFTContract.getTotalSupplyAll(),
+                coreTeamMembersCount,
+                coreTeamMemberWhitelist
+            );
     }
 }

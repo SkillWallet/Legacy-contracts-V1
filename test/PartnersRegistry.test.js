@@ -72,6 +72,7 @@ contract("PartnersRegistry", (accounts) => {
             );
 
             agreementAddress = await partnersRegistry.agreements(0);
+            console.log(agreementAddress);
             const agreement = await ethers.getContractAt("PartnersAgreement", agreementAddress);
             await agreement.activatePA();
 
@@ -112,15 +113,27 @@ contract("PartnersRegistry", (accounts) => {
     });
     describe("Partners Agreement Migrations", async () => {
         it("Should migrate new Partners Agreement", async () => {
-            await partnersRegistry.setVersion(2);
+            await (await partnersRegistry.setVersion(2)).wait();
+            
+            const oldAgreement = await ethers.getContractAt("PartnersAgreement", agreementAddress);
+            const oldData = await oldAgreement.getAgreementData();
 
             await partnersRegistry.migrate(agreementAddress);
 
             const newAgreementAddress = await partnersRegistry.agreements(0);
             const agreement = await ethers.getContractAt("PartnersAgreement", newAgreementAddress);
+            const newData = await agreement.getAgreementData();
 
-            expect(newAgreementAddress).not.to.equal(agreementAddress);
+            expect(oldData.owner).to.equal(newData.owner);
             expect(newAgreementAddress).not.to.equal(ZERO_ADDRESS);
+            expect(oldData.rolesCount).to.equal(newData.rolesCount);
+            expect(newAgreementAddress).not.to.equal(agreementAddress);
+            expect(oldData.communityAddress).to.equal(newData.communityAddress);
+            expect(oldData.interactionsCount).to.equal(newData.interactionsCount);
+            expect(oldData.membershipContract).to.equal(newData.membershipContract);
+            expect(oldData.interactionContract).to.equal(newData.interactionContract);
+            expect(oldData.coreTeamMembersCount).to.equal(newData.coreTeamMembersCount);
+            expect(oldData.whitelistedTeamMembers.length).to.equal(newData.whitelistedTeamMembers.length);
             expect(String(await partnersRegistry.agreementIds(newAgreementAddress))).to.equal("0");
             expect(String(await agreement.version())).to.equal("2");
         });

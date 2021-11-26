@@ -49,18 +49,21 @@ contract('PartnersAgreement', function (accounts) {
     )
 
     partnersAgreement = await PartnersAgreement.deploy(
-      1,
-      ZERO_ADDRESS, // partners contract
-      signer.address,
-      minimumCommunity.address,
-      3,
-      100,
-      3,
-      mockOracle.address,
       linkTokenMock.address,
+      mockOracle.address,
       membershipFactory.address,
-      ZERO_ADDRESS,
-      ZERO_ADDRESS
+      {
+          version: 1,
+          owner: accounts[0],
+          communityAddress: minimumCommunity.address,
+          partnersContracts: [ZERO_ADDRESS],
+          rolesCount: 3,
+          interactionContract: ZERO_ADDRESS,
+          membershipContract: ZERO_ADDRESS,
+          interactionsCount: 100,
+          coreTeamMembersCount: 3,
+          whitelistedTeamMembers: [ZERO_ADDRESS]
+      }
     );
 
     membership = await Membership.attach(await partnersAgreement.membershipAddress());
@@ -82,18 +85,21 @@ contract('PartnersAgreement', function (accounts) {
       const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
 
       const pa = await PartnersAgreement.deploy(
-        1,
-        ZERO_ADDRESS, // partners contract
-        accounts[0],
-        minimumCommunity.address,
-        3,
-        100,
-        3,
-        mockOracle.address,
         linkTokenMock.address,
+        mockOracle.address,
         membershipFactory.address,
-        ZERO_ADDRESS,
-        ZERO_ADDRESS,
+        {
+            version: 1,
+            owner: accounts[0],
+            communityAddress: minimumCommunity.address,
+            partnersContracts: [ZERO_ADDRESS],
+            rolesCount: 3,
+            interactionContract: ZERO_ADDRESS,
+            membershipContract: ZERO_ADDRESS,
+            interactionsCount: 100,
+            coreTeamMembersCount: 3,
+            whitelistedTeamMembers: [ZERO_ADDRESS]
+        }
       );
 
       await pa.deployed();
@@ -108,18 +114,21 @@ contract('PartnersAgreement', function (accounts) {
       const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
 
       const pa = await PartnersAgreement.deploy(
-        1,
-        ZERO_ADDRESS, // partners contract
-        accounts[0],
-        minimumCommunity.address,
-        3,
-        100,
-        3,
-        mockOracle.address,
         linkTokenMock.address,
+        mockOracle.address,
         membershipFactory.address,
-        ZERO_ADDRESS,
-        ZERO_ADDRESS,
+        {
+            version: 1,
+            owner: accounts[0],
+            communityAddress: minimumCommunity.address,
+            partnersContracts: [ZERO_ADDRESS],
+            rolesCount: 3,
+            interactionContract: ZERO_ADDRESS,
+            membershipContract: ZERO_ADDRESS,
+            interactionsCount: 100,
+            coreTeamMembersCount: 3,
+            whitelistedTeamMembers: [ZERO_ADDRESS]
+        }
       );
 
       await pa.deployed();
