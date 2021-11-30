@@ -14,7 +14,7 @@ let minimumCommunity;
 let distributedTownMock;
 let roleUtils;
 let agreementAddress;
-
+const interactionsQueryServer = '0xFd41aA424787704D174B613e03C740553095d63a';
 const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
 
 contract("PartnersRegistry", (accounts) => {
@@ -55,11 +55,12 @@ contract("PartnersRegistry", (accounts) => {
 
             partnersRegistry = await upgrades.deployProxy(
                 PartnersRegistry,
-                [distributedTownMock.address,
-                partnersAgreementFactory.address,
-                membershipFactory.address,
-                mockOracle.address,
-                linkTokenMock.address]
+                [
+                    distributedTownMock.address,
+                    partnersAgreementFactory.address,
+                    membershipFactory.address,
+                    interactionsQueryServer
+                ]
             );
             await partnersRegistry.deployed();
 
@@ -92,7 +93,8 @@ contract("PartnersRegistry", (accounts) => {
                 2,
                 100,
                 ZERO_ADDRESS,
-                10
+                10,
+
             );
 
             const agreementAddress1 = await partnersRegistry.agreements(1);

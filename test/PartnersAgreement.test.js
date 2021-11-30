@@ -41,11 +41,10 @@ contract('PartnersAgreement', function (accounts) {
       this.minimumCommunity.address,
       3,
       100,
-      this.mockOracle.address,
-      this.linkTokenMock.address,
       this.membershipFactory.address,
       ZERO_ADDRESS,
       ZERO_ADDRESS,
+      accounts[3],
       { from: accounts[0] }
     );
 
@@ -76,11 +75,10 @@ contract('PartnersAgreement', function (accounts) {
         this.minimumCommunity.address,
         3,
         100,
-        this.mockOracle.address,
-        this.linkTokenMock.address,
         this.membershipFactory.address,
         ZERO_ADDRESS,
         ZERO_ADDRESS,
+        accounts[3],
         { from: accounts[0] }
       );
 
@@ -100,11 +98,10 @@ contract('PartnersAgreement', function (accounts) {
         this.minimumCommunity.address,
         3,
         100,
-        this.mockOracle.address,
-        this.linkTokenMock.address,
         this.membershipFactory.address,
         ZERO_ADDRESS,
         ZERO_ADDRESS,
+        accounts[3],
         { from: accounts[0] }
       );
 
@@ -131,27 +128,16 @@ contract('PartnersAgreement', function (accounts) {
 
     });
 
-    it('transferInteractionNFTs should transfer the corrent amount of NFTs depending on the chainlink fulfilled request', async function () {
-      const a = await this.membership.create('', 1, {from: accounts[0]});
+    it('transferInteractionNFTs should transfer the corrent amount of NFTs', async function () {
+      const a = await this.membership.create('', 1, { from: accounts[0] });
       const initialInteractions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
       assert.equal(initialInteractions.toString(), '0');
 
-      let tx = await this.partnersAgreement.queryForNewInteractions(
-        accounts[0]
+      await this.partnersAgreement.transferInteractionNFTs(
+        accounts[0],
+        10,
+        { from: accounts[3] }
       )
-      let chainlinkRequestedEventEmitted =
-        tx.logs[0].event === 'ChainlinkRequested'
-      assert.isTrue(chainlinkRequestedEventEmitted)
-
-      const requestId = tx.logs[0].args[0]
-      const fulfilTx = await this.mockOracle.fulfillOracleRequest(
-        requestId,
-        10
-      )
-
-      const fulfilTxEventEmitted = fulfilTx.logs[0].event === 'CallbackCalled'
-      assert.isTrue(fulfilTxEventEmitted)
-
       const interactions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
       assert.equal(interactions.toString(), '10');
     })

@@ -17,24 +17,21 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
     IDistributedTown distributedTown;
     address[] public agreements;
     mapping(address => uint256) public agreementIds;
-    address oracle;
-    address linkToken;
     address partnersAgreementFactory;
     address membershipFactory;
+    address interactionsQueryServer;
 
     function initialize(
         address _distributedTownAddress,
         address _partnersAgreementFactoryAddress,
         address _membershipFactory,
-        address _oracle,
-        address _linkToken
+        address _interactionsQueryServer
     ) public initializer {
         distributedTown = IDistributedTown(_distributedTownAddress);
         partnersAgreementFactory = _partnersAgreementFactoryAddress;
         membershipFactory = _membershipFactory;
+        interactionsQueryServer = _interactionsQueryServer;
 
-        oracle = _oracle;
-        linkToken = _linkToken;
         version = 1;
     }
 
@@ -96,11 +93,10 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
                 communityAddress,
                 rolesCount,
                 numberOfActions,
-                oracle,
-                linkToken,
                 membershipFactory,
                 address(0),
-                address(0)
+                address(0),
+                interactionsQueryServer
             );
 
         agreementIds[paAddr] = agreements.length;
@@ -138,11 +134,10 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
             communityAddress,
             rolesCount,
             numberOfActions,
-            oracle,
-            linkToken,
             membershipFactory,
             partnersInteractionNFTContract,
-            membershipNFTContract
+            membershipNFTContract,
+            interactionsQueryServer
         );
 
         agreements[agreementId] = agreement;

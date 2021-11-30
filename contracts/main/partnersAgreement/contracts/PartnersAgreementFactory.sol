@@ -20,11 +20,10 @@ contract PartnersAgreementFactory is IPartnersAgreementFactory {
         address _communityAddress,
         uint256 _rolesCount,
         uint256 _numberOfActions,
-        address _oracle,
-        address _chainlinkToken,
         address _membershipFactory,
         address _interactionsContract,
-        address _membershipContract
+        address _membershipContract,
+        address _interactionsQueryServer
     ) public override returns (address) {
         address paAddr = address(
             new PartnersAgreement(
@@ -34,11 +33,10 @@ contract PartnersAgreementFactory is IPartnersAgreementFactory {
                 _communityAddress,
                 _rolesCount,
                 _numberOfActions,
-                _oracle,
-                _chainlinkToken,
                 _membershipFactory,
                 _interactionsContract,
-                _membershipContract
+                _membershipContract,
+                _interactionsQueryServer
             )
         );
 

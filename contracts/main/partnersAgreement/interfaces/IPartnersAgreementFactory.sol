@@ -11,10 +11,9 @@ interface IPartnersAgreementFactory {
         address _communityAddress,
         uint256 _rolesCount,
         uint256 _numberOfActions,
-        address _oracle,
-        address _chainlinkToken,
         address _membershipFactory,
         address _interactionsContract,
-        address _membershipContract
+        address _membershipContract,
+        address _interactionsQueryServer
     ) external returns (address);
 }

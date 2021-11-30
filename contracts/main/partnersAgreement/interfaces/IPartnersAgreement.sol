@@ -17,10 +17,7 @@ interface IPartnersAgreement {
 
     function getAllMembers() external view returns (address[] memory);
 
-    function queryForNewInteractions(address userAddress) external;
-
-    function transferInteractionNFTs(bytes32 _requestId, uint256 _result)
-        external;
+    function transferInteractionNFTs(address userAddress, uint256 amountOfInteractions) external;
 
     function getInteractionNFT(address user) external view returns (uint256);
 
