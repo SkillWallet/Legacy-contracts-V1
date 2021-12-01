@@ -15,19 +15,10 @@ contract PartnersAgreementFactory is IPartnersAgreementFactory {
     }
 
     function createPartnersAgreement(
-        address _chainlinkToken,
-        address _oracle,
         address _membershipFactory,
         Types.PartnersAgreementData memory pa
     ) public override returns (address) {
-        address paAddr = address(
-            new PartnersAgreement(
-                _chainlinkToken,
-                _oracle,
-                _membershipFactory,
-                pa
-            )
-        );
+        address paAddr = address(new PartnersAgreement(_membershipFactory, pa));
 
         return paAddr;
     }

@@ -49,8 +49,6 @@ contract('PartnersAgreement', function (accounts) {
     )
 
     partnersAgreement = await PartnersAgreement.deploy(
-      linkTokenMock.address,
-      mockOracle.address,
       membershipFactory.address,
       {
           version: 1,
@@ -62,7 +60,8 @@ contract('PartnersAgreement', function (accounts) {
           membershipContract: ZERO_ADDRESS,
           interactionsCount: 100,
           coreTeamMembersCount: 3,
-          whitelistedTeamMembers: [ZERO_ADDRESS]
+          whitelistedTeamMembers: [ZERO_ADDRESS],
+          interactionsQueryServer: accounts[3]
       }
     );
 
@@ -85,8 +84,6 @@ contract('PartnersAgreement', function (accounts) {
       const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
 
       const pa = await PartnersAgreement.deploy(
-        linkTokenMock.address,
-        mockOracle.address,
         membershipFactory.address,
         {
             version: 1,
@@ -98,7 +95,8 @@ contract('PartnersAgreement', function (accounts) {
             membershipContract: ZERO_ADDRESS,
             interactionsCount: 100,
             coreTeamMembersCount: 3,
-            whitelistedTeamMembers: [ZERO_ADDRESS]
+            whitelistedTeamMembers: [ZERO_ADDRESS],
+            interactionsQueryServer: accounts[3]
         }
       );
 
@@ -114,8 +112,6 @@ contract('PartnersAgreement', function (accounts) {
       const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
 
       const pa = await PartnersAgreement.deploy(
-        linkTokenMock.address,
-        mockOracle.address,
         membershipFactory.address,
         {
             version: 1,
@@ -127,7 +123,8 @@ contract('PartnersAgreement', function (accounts) {
             membershipContract: ZERO_ADDRESS,
             interactionsCount: 100,
             coreTeamMembersCount: 3,
-            whitelistedTeamMembers: [ZERO_ADDRESS]
+            whitelistedTeamMembers: [ZERO_ADDRESS],
+            interactionsQueryServer: accounts[3]
         }
       );
 
@@ -149,32 +146,6 @@ contract('PartnersAgreement', function (accounts) {
       expect(allUsers.length).to.eq(0);
 
     });
-
-    it('transferInteractionNFTs should transfer the corrent amount of NFTs depending on the chainlink fulfilled request', async function () {
-      const initialInteractions = await partnersAgreement.getInteractionNFT(signer.address);
-      assert.equal(initialInteractions.toString(), '0');
-
-      let tx = await (await partnersAgreement.queryForNewInteractions(
-        signer.address
-      )).wait();
-
-      let chainlinkRequestedEventEmitted =
-        tx.events.find(event => event.event === 'ChainlinkRequested');
-      expect(chainlinkRequestedEventEmitted).not.to.be.undefined;
-
-      const requestId = chainlinkRequestedEventEmitted.args.id;
-      const fulfilTx = await (await mockOracle["fulfillOracleRequest(bytes32,uint256)"](
-        requestId,
-        10
-      )).wait();
-
-      const fulfilTxEventEmitted = fulfilTx.events.find(event => event.event === 'CallbackCalled');
-      expect(fulfilTxEventEmitted).not.to.be.undefined;
-
-      const interactions = await partnersAgreement.getInteractionNFT(signer.address);
-      assert.equal(interactions.toString(), '10');
-    })
-
     it('should add new contract address if owner is the signer', async function () {
 
       console.log('isActive', await partnersAgreement.isActive());

@@ -48,11 +48,12 @@ contract("PartnersRegistry", (accounts) => {
 
             partnersRegistry = await upgrades.deployProxy(
                 PartnersRegistry,
-                [distributedTownMock.address,
-                partnersAgreementFactory.address,
-                membershipFactory.address,
-                mockOracle.address,
-                linkTokenMock.address]
+                [
+                    distributedTownMock.address,
+                    partnersAgreementFactory.address,
+                    membershipFactory.address,
+                    accounts[3]
+                ]
             );
             await partnersRegistry.deployed();
 
@@ -114,7 +115,7 @@ contract("PartnersRegistry", (accounts) => {
     describe("Partners Agreement Migrations", async () => {
         it("Should migrate new Partners Agreement", async () => {
             await (await partnersRegistry.setVersion(2)).wait();
-            
+
             const oldAgreement = await ethers.getContractAt("PartnersAgreement", agreementAddress);
             const oldData = await oldAgreement.getAgreementData();
 
@@ -134,6 +135,7 @@ contract("PartnersRegistry", (accounts) => {
             expect(oldData.interactionContract).to.equal(newData.interactionContract);
             expect(oldData.coreTeamMembersCount).to.equal(newData.coreTeamMembersCount);
             expect(oldData.whitelistedTeamMembers.length).to.equal(newData.whitelistedTeamMembers.length);
+            expect(oldData.interactionsQueryServer).to.equal(newData.interactionsQueryServer);
             expect(String(await partnersRegistry.agreementIds(newAgreementAddress))).to.equal("0");
             expect(String(await agreement.version())).to.equal("2");
         });
