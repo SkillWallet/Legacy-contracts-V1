@@ -1,24 +1,30 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
+pragma experimental ABIEncoderV2;
 
 import "../interfaces/IPartnersRegistry.sol";
 import "../../../imported/IDistributedTown.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "../interfaces/IPartnersAgreementFactory.sol";
 import "../interfaces/IPartnersAgreement.sol";
+import "../../../imported/CommonTypes.sol";
 
 contract PartnersRegistry is IPartnersRegistry, Initializable {
+    //versioning
     uint256 public version;
 
-    event PartnersAgreementCreated(
-        address partnersAgreementAddress,
-        address communityAddress
-    );
+    // distributedTown contract
     IDistributedTown distributedTown;
+
+    // agreements
     address[] public agreements;
     mapping(address => uint256) public agreementIds;
+
+    // chainlink
     address oracle;
     address linkToken;
+
+    // factories
     address partnersAgreementFactory;
     address membershipFactory;
 
@@ -59,7 +65,8 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         uint256 rolesCount,
         uint256 numberOfActions,
         address partnersContractAddress,
-        uint256 membersAllowed
+        uint256 membersAllowed,
+        uint256 coreTeamMembers
     ) public override {
         require(
             template >= 0 && template <= 2,
@@ -88,19 +95,26 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         if (partnersContractAddress == address(0))
             partnersContractAddress = communityAddress;
 
+        address[] storage partnersContracts;
+        partnersContracts.push(partnersContractAddress);
+        address[] storage whitelistMembers;
         address paAddr = IPartnersAgreementFactory(partnersAgreementFactory)
             .createPartnersAgreement(
-                version,
-                partnersContractAddress,
-                msg.sender,
-                communityAddress,
-                rolesCount,
-                numberOfActions,
-                oracle,
                 linkToken,
+                oracle,
                 membershipFactory,
-                address(0),
-                address(0)
+                Types.PartnersAgreementData(
+                    version,
+                    msg.sender,
+                    communityAddress,
+                    partnersContracts,
+                    rolesCount,
+                    address(0),
+                    address(0),
+                    numberOfActions,
+                    coreTeamMembers,
+                    whitelistMembers
+                )
             );
 
         agreementIds[paAddr] = agreements.length;
@@ -117,33 +131,16 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
             "wrong agreement address"
         );
 
-        (
-            uint256 agreementVersion,
-            address owner,
-            address communityAddress,
-            address[] memory partnersContracts, //there can be many?
-            uint256 rolesCount,
-            address partnersInteractionNFTContract,
-            address membershipNFTContract,
-            uint256 numberOfActions
-        ) = IPartnersAgreement(_agreement).getAgreementData();
+        Types.PartnersAgreementData memory pa = IPartnersAgreement(_agreement)
+            .getAgreementData();
 
-        require(agreementVersion < version, "already latest version");
-        require(owner == msg.sender, "not agreement owner");
+        require(pa.version < version, "already latest version");
+        require(pa.owner == msg.sender, "not agreement owner");
 
-        address agreement = IPartnersAgreementFactory(partnersAgreementFactory).createPartnersAgreement(
-            version,
-            partnersContracts[0],
-            msg.sender,
-            communityAddress,
-            rolesCount,
-            numberOfActions,
-            oracle,
-            linkToken,
-            membershipFactory,
-            partnersInteractionNFTContract,
-            membershipNFTContract
-        );
+        pa.version = version;
+        // todo: fix hard coded core team members
+        address agreement = IPartnersAgreementFactory(partnersAgreementFactory)
+            .createPartnersAgreement(linkToken, oracle, membershipFactory, pa);
 
         agreements[agreementId] = agreement;
         delete agreementIds[_agreement];

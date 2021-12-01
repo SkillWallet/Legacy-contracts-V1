@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
 
-interface IPartnersRegistry  {
+interface IPartnersRegistry {
     event PartnersAgreementCreated(
         address partnersAgreementAddress,
         address communityAddress
@@ -22,7 +22,8 @@ interface IPartnersRegistry  {
         uint256 rolesCount,
         uint256 numberOfActions,
         address partnersContractAddress,
-        uint256 membersAllowed
+        uint256 membersAllowed,
+        uint256 coreTeamMembers
     ) external;
 
     function migrate(address _agreement) external;

@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 
+import "./utils/RoleUtils.sol";
 import "../imported/CommonTypes.sol";
 
 interface ISkillWallet is IERC721Upgradeable, IERC721ReceiverUpgradeable {
@@ -30,11 +31,12 @@ interface ISkillWallet is IERC721Upgradeable, IERC721ReceiverUpgradeable {
     function create(
         address skillWalletOwner,
         string memory url,
+        RoleUtils.Roles role,
         bool isClaimable
     ) external;
 
     function claim() external;
-    
+
     function addDiscordIDToSkillWallet(string calldata discordID) external;
 
     function activateSkillWallet(uint256 skillWalletId) external;
@@ -93,8 +95,10 @@ interface ISkillWallet is IERC721Upgradeable, IERC721ReceiverUpgradeable {
 
     function isRequestIdValid(bytes32 requestId) external view returns (bool);
 
-    function getOSMAddress()
+    function getOSMAddress() external view returns (address);
+
+    function getRole(address skillWalletHolderAddress)
         external
         view
-        returns (address);
+        returns (RoleUtils.Roles);
 }

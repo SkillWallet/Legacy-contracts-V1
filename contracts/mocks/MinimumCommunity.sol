@@ -82,10 +82,11 @@ contract MinimumCommunity is ICommunity {
     // check if it's called only from deployer.
     function joinNewMember(
         string memory uri,
+        RoleUtils.Roles role,
         uint256 credits
     ) public override {
         ISkillWallet skillWallet = ISkillWallet(skillWalletAddress);
-        skillWallet.create(msg.sender, uri, false);
+        skillWallet.create(msg.sender, uri, role,false);
         uint256 token = skillWallet.getSkillWalletIdByOwner(msg.sender);
         members[msg.sender] = true;
         emit MemberAdded(msg.sender, token, credits);

@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
+import "../main/utils/RoleUtils.sol";
 
 /**
  * @title DistributedTown Community
@@ -20,6 +21,7 @@ interface ICommunity {
     // check if it's called only from deployer.
     function joinNewMember(
         string memory uri,
+        RoleUtils.Roles role,
         uint256 credits
     ) external;
 

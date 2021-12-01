@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
+import "../../../imported/CommonTypes.sol";
 
 interface IPartnersAgreement {
     function activatePA() external;
@@ -31,22 +32,21 @@ interface IPartnersAgreement {
     function membershipAddress() external view returns (address);
 
     function rolesCount() external view returns (uint256);
-    
+
     function communityAddress() external view returns (address);
 
     function isActive() external view returns (bool);
 
+    function isCoreTeamMember(address member) external view returns (bool);
+
+    function coreTeamMembersCount() external view returns (uint256);
+
+    function addNewCoreTeamMembers(address member) external;
+
+    function getCoreTeamMembers() external view returns (address[] memory);
+
     function getAgreementData()
         external
         view
-        returns (
-            uint256,
-            address,
-            address,
-            address[] memory,
-            uint256,
-            address,
-            address,
-            uint256
-        );
+        returns (Types.PartnersAgreementData memory data);
 }

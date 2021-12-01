@@ -1,9 +1,7 @@
 const { getContractFactory } = require('@nomiclabs/hardhat-ethers/types');
 const { expectEvent, singletons, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
-const { Contract } = require('ethers');
 const { ZERO_ADDRESS } = constants;
-const hre = require("hardhat");
 const { ethers } = require("hardhat");
 
 let partnersRegistry;
@@ -12,17 +10,12 @@ let linkTokenMock;
 let skillWallet;
 let minimumCommunity;
 let distributedTownMock;
-let roleUtils;
 let agreementAddress;
 
 const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
 
 contract("PartnersRegistry", (accounts) => {
     before(async () => {
-        //const RoleUtils = await ethers.getContractFactory("RoleUtils");
-        //roleUtils = await RoleUtils.deploy();
-        //await roleUtils.deployed();
-
         const LinkToken = await ethers.getContractFactory("LinkToken");
         linkTokenMock = await LinkToken.deploy();
 
@@ -41,7 +34,7 @@ contract("PartnersRegistry", (accounts) => {
 
         const MinimumCommunity = await ethers.getContractFactory("MinimumCommunity");
         minimumCommunity = await MinimumCommunity.deploy(skillWallet.address);
-        await minimumCommunity.joinNewMember('', 2000);
+        await minimumCommunity.joinNewMember('', 1, 2000);
         await distributedTownMock.addCommunity(accounts[0], minimumCommunity.address);
     });
     describe("Deployment", async () => {
@@ -74,10 +67,12 @@ contract("PartnersRegistry", (accounts) => {
                 2,
                 100,
                 ZERO_ADDRESS,
-                10
+                10,
+                3
             );
 
             agreementAddress = await partnersRegistry.agreements(0);
+            console.log(agreementAddress);
             const agreement = await ethers.getContractAt("PartnersAgreement", agreementAddress);
             await agreement.activatePA();
 
@@ -92,7 +87,8 @@ contract("PartnersRegistry", (accounts) => {
                 2,
                 100,
                 ZERO_ADDRESS,
-                10
+                10,
+                3
             );
 
             const agreementAddress1 = await partnersRegistry.agreements(1);
@@ -103,7 +99,8 @@ contract("PartnersRegistry", (accounts) => {
                 2,
                 100,
                 ZERO_ADDRESS,
-                10
+                10,
+                3
             );
 
             const agreementAddress2 = await partnersRegistry.agreements(2);
@@ -116,15 +113,27 @@ contract("PartnersRegistry", (accounts) => {
     });
     describe("Partners Agreement Migrations", async () => {
         it("Should migrate new Partners Agreement", async () => {
-            await partnersRegistry.setVersion(2);
+            await (await partnersRegistry.setVersion(2)).wait();
+            
+            const oldAgreement = await ethers.getContractAt("PartnersAgreement", agreementAddress);
+            const oldData = await oldAgreement.getAgreementData();
 
             await partnersRegistry.migrate(agreementAddress);
 
             const newAgreementAddress = await partnersRegistry.agreements(0);
             const agreement = await ethers.getContractAt("PartnersAgreement", newAgreementAddress);
+            const newData = await agreement.getAgreementData();
 
-            expect(newAgreementAddress).not.to.equal(agreementAddress);
+            expect(oldData.owner).to.equal(newData.owner);
             expect(newAgreementAddress).not.to.equal(ZERO_ADDRESS);
+            expect(oldData.rolesCount).to.equal(newData.rolesCount);
+            expect(newAgreementAddress).not.to.equal(agreementAddress);
+            expect(oldData.communityAddress).to.equal(newData.communityAddress);
+            expect(oldData.interactionsCount).to.equal(newData.interactionsCount);
+            expect(oldData.membershipContract).to.equal(newData.membershipContract);
+            expect(oldData.interactionContract).to.equal(newData.interactionContract);
+            expect(oldData.coreTeamMembersCount).to.equal(newData.coreTeamMembersCount);
+            expect(oldData.whitelistedTeamMembers.length).to.equal(newData.whitelistedTeamMembers.length);
             expect(String(await partnersRegistry.agreementIds(newAgreementAddress))).to.equal("0");
             expect(String(await agreement.version())).to.equal("2");
         });

@@ -2,30 +2,16 @@
 pragma solidity ^0.6.10;
 
 library Types {
-    struct SkillSet {
-        Skill skill1;
-        Skill skill2;
-        Skill skill3;
-    }
-    struct Skill {
-        uint64 displayStringId;
-        uint8 level;
-    }
     enum Template {
-        OpenSource, 
-        Art, 
+        OpenSource,
+        Art,
         Local,
         Other
     }
 
-    struct LatestSkills {
-        uint8 posValue;
-        uint256 categoryID;
-    }
-
     enum Action {
         Activate,
-        Login, 
+        Login,
         CreateGig,
         TakeGig,
         SubmitGig,
@@ -40,8 +26,20 @@ library Types {
 
     struct Params {
         string[] stringParams;
-        uint[] intParams;
+        uint256[] intParams;
         address[] addressParams;
     }
-
+    
+    struct PartnersAgreementData {
+        uint256 version;
+        address owner;
+        address communityAddress;
+        address[] partnersContracts;
+        uint256 rolesCount;
+        address interactionContract;
+        address membershipContract;
+        uint256 interactionsCount;
+        uint256 coreTeamMembersCount;
+        address[] whitelistedTeamMembers;
+    }
 }

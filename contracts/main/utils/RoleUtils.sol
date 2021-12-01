@@ -10,7 +10,10 @@ library RoleUtils {
         NONE,
         ROLE1,
         ROLE2,
-        ROLE3
+        ROLE3,
+        CORE_TEAM_ROLE1,
+        CORE_TEAM_ROLE2,
+        CORE_TEAM_ROLE3
     }
 
     function getRolesCoefs(uint256 _roleNum) internal pure returns (uint256[3] memory) {

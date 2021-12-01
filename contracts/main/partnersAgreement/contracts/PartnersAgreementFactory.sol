@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "./PartnersAgreement.sol";
 import "../interfaces/IPartnersAgreementFactory.sol";
+import "../../../imported/CommonTypes.sol";
 
 contract PartnersAgreementFactory is IPartnersAgreementFactory {
     //TODO: Change to constant before prod
@@ -14,31 +15,17 @@ contract PartnersAgreementFactory is IPartnersAgreementFactory {
     }
 
     function createPartnersAgreement(
-        uint256 _version,
-        address _partnersContract,
-        address _owner,
-        address _communityAddress,
-        uint256 _rolesCount,
-        uint256 _numberOfActions,
-        address _oracle,
         address _chainlinkToken,
+        address _oracle,
         address _membershipFactory,
-        address _interactionsContract,
-        address _membershipContract
+        Types.PartnersAgreementData memory pa
     ) public override returns (address) {
         address paAddr = address(
             new PartnersAgreement(
-                _version,
-                _partnersContract,
-                _owner,
-                _communityAddress,
-                _rolesCount,
-                _numberOfActions,
-                _oracle,
                 _chainlinkToken,
+                _oracle,
                 _membershipFactory,
-                _interactionsContract,
-                _membershipContract
+                pa
             )
         );
 
