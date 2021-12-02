@@ -1,5 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol";
@@ -15,11 +16,16 @@ contract Activities is ERC721 {
         CommunityCall
     }
 
+    enum TaskStatus {
+        Created,
+        Taken,
+        Finished
+    }
+
     struct Task {
         uint256 activityId;
         uint256 createdOn;
-        uint256 status;
-        string description;
+        TaskStatus status;
         address creator;
         address taker;
     }
@@ -28,7 +34,7 @@ contract Activities is ERC721 {
     address public botAddress;
     mapping (uint256 => Type) public idTypes;
     Counters.Counter private idCounter;
-    mapping (uint256 => uint256) activityToTask;
+    mapping (uint256 => uint256) public activityToTask;
     Task[] public tasks;
     mapping (uint256 => bool) public isFinalized;
 
@@ -51,7 +57,7 @@ contract Activities is ERC721 {
 
     function finalizeActivity(uint256 _id, string memory _uri) public {
         require(msg.sender == botAddress, "noy bot");
-        require(idTypes[_id] != Type.None && idTypes[_id] != Type.CoreTeamTask, "activity doesn't exist");
+        require(idTypes[_id] != Type.None && idTypes[_id] != Type.CoreTeamTask, "activity doesnt exist");
         require(!isFinalized[_id], "already finalized");
 
         if(bytes(_uri).length > 0) {
@@ -74,14 +80,14 @@ contract Activities is ERC721 {
 
     //core team member task functions
 
-    function createTask(string memory _uri, string memory _description, address _creator) public {
+    function createTask(string memory _uri, address _creator) public {
         require(msg.sender == partnersAgreement, "Not PA");
         require(bytes(_uri).length > 0, "No URI");
 
         uint256 activityId = _addActivity(Type.CoreTeamTask, _uri);
         uint256 taskId = tasks.length;
 
-        tasks.push(Task(activityId, block.timestamp, 0, _description, _creator, address(0)));
+        tasks.push(Task(activityId, block.timestamp, TaskStatus.Created, _creator, address(0)));
         activityToTask[activityId] = taskId;     
     }
 
@@ -90,10 +96,10 @@ contract Activities is ERC721 {
         require(idTypes[_activityId] == Type.CoreTeamTask, "Not core team task");
 
         uint256 taskId = activityToTask[_activityId];
-        require(tasks[taskId].status == 0, "wrong status");
+        require(tasks[taskId].status == TaskStatus.Created, "wrong status");
 
         tasks[taskId].taker = _taker;
-        tasks[taskId].status = 1;
+        tasks[taskId].status = TaskStatus.Taken;
     }
 
     function finilizeTask(uint256 _activityId, address _taker) public {
@@ -101,10 +107,40 @@ contract Activities is ERC721 {
         require(idTypes[_activityId] == Type.CoreTeamTask, "Not core team task");
 
         uint256 taskId = activityToTask[_activityId];
-        require(tasks[taskId].status == 1, "wrong status");
+        require(tasks[taskId].status == TaskStatus.Taken, "wrong status");
         require(tasks[taskId].taker == _taker, "wrong taker");
 
-        tasks[taskId].status = 2;
+        tasks[taskId].status = TaskStatus.Finished;
         isFinalized[_activityId] = true;
+    }
+
+    //getters
+
+    function getActivitiesByType(uint256 _type) public view returns (uint256[] memory) {
+        require(_type <= 3, "Wrong type");
+
+        uint256[] memory ids = new uint256[](idCounter.current());
+        uint256 num = 0;
+
+        for (uint256 i = 0; i < idCounter.current(); i++) {
+            if (idTypes[i] == Type(_type)) {
+                ids[num] = i;
+                num++;
+            }
+        }
+
+        uint256[] memory idsTrimmed = new uint256[](num);
+
+        for (uint256 i = 0; i < num; i++) {
+            idsTrimmed[i] = ids[i];
+        }
+
+        return idsTrimmed;
+    }
+
+    function getTaskByActivityId(uint256 _activityId) public view returns (Task memory) {
+        require(idTypes[_activityId] == Type.CoreTeamTask, "Not core team task");
+
+        return tasks[activityToTask[_activityId]];
     }
 }
