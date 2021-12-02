@@ -9,6 +9,11 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 contract Activities is ERC721 {
     using Counters for Counters.Counter;
 
+    event ActivityCreated(uint256 _id, Type _type, string _uri);
+    event ActivityFinalized(uint256 _id, Type _type, string _uri);
+    event TaskTaken(uint256 _activityId, uint256 _taskId, address _taker);
+    event TaskFinalized(uint256 _activityId, uint256 _taskId, address _taker);
+
     enum Type {
         None,
         CoreTeamTask,
@@ -65,6 +70,8 @@ contract Activities is ERC721 {
         }
 
         isFinalized[_id] = true;
+
+        emit ActivityFinalized(_id, idTypes[_id], _uri);
     }
 
     function _addActivity(Type _type, string memory _uri) internal returns (uint256) {
@@ -74,6 +81,8 @@ contract Activities is ERC721 {
         _setTokenURI(tokenId, _uri);
         idTypes[tokenId] = _type;
         idCounter.increment();
+
+        emit ActivityCreated(tokenId, _type, _uri);
 
         return tokenId;
     }
@@ -100,6 +109,8 @@ contract Activities is ERC721 {
 
         tasks[taskId].taker = _taker;
         tasks[taskId].status = TaskStatus.Taken;
+
+        emit TaskTaken(_activityId, taskId, _taker);
     }
 
     function finilizeTask(uint256 _activityId, address _taker) public {
@@ -112,6 +123,8 @@ contract Activities is ERC721 {
 
         tasks[taskId].status = TaskStatus.Finished;
         isFinalized[_activityId] = true;
+
+        emit TaskFinalized(_activityId, taskId, _taker);
     }
 
     //getters
