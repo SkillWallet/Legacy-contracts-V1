@@ -46,13 +46,14 @@ contract("Activities", (accounts) => {
         const membershipFactory = await MembershipFactory.deploy(1);
         const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1);
 
-        const partnersRegistry = await upgrades.deployProxy(
+        partnersRegistry = await upgrades.deployProxy(
             PartnersRegistry,
-            [distributedTownMock.address,
-            partnersAgreementFactory.address,
-            membershipFactory.address,
-            mockOracle.address,
-            linkTokenMock.address]
+            [
+                distributedTownMock.address,
+                partnersAgreementFactory.address,
+                membershipFactory.address,
+                accounts[3]
+            ]
         );
         await partnersRegistry.deployed();
 
@@ -64,7 +65,7 @@ contract("Activities", (accounts) => {
             100,
             ZERO_ADDRESS,
             10,
-            3
+            5
         );
 
         const agreementAddress = await partnersRegistry.agreements(0);

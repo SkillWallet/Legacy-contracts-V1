@@ -1,6 +1,6 @@
-const partnersRegistryAddress = '0xEF76e657CE2b5a764a1707FdF23CeDf022BE64c4'
-const distributedTownAddress = '0x71aa16bF81407265956EFf5540F3D4B8D72F3982'
-
+const partnersRegistryAddress = '0x90836827F77E2402c78630f2295E3A828894885c'
+const distributedTownAddress = '0xe60a5C15Cf3C4F820f9771Ea68dA8CE41376B577'
+const partnersAgreement = '0x13bfe76779F414222E72fb53Fc8D3c5A2573c573';
 const { assert } = require('chai')
 const fs = require("fs");
 
@@ -55,6 +55,15 @@ async function setPartnersRegistryAddress() {
     )
     const res = await createTx.wait()
 }
+
+
+async function getPAs() {
+    const createTx = await partnersRegistryContract.getPartnerAgreementAddresses(
+    );
+    console.log(createTx);
+}
+
+
 async function createPartnersAgreement() {
     const url =
         'https://hub.textile.io/ipfs/bafkreicezefuc6einewxdqhlpefelzjponwdqt4vmp2byosq5uwpn7hgoq'
@@ -118,8 +127,34 @@ async function isActive(partnersAgreementAddress) {
     console.log('isActive', isActive)
 }
 
+
+async function getMemContract(partnersAgreementAddress) {
+    const partnersAgreementContract = new ethers.Contract(
+        partnersAgreementAddress,
+        partnersAgreementAbi,
+        signer,
+    )
+
+    const membershipAddress = await partnersAgreementContract.getAgreementData();
+    console.log('membershipAddress', membershipAddress)
+}
+
+
+
+
+async function isCoreTeamMember(partnersAgreementAddress, user) {
+    const partnersAgreementContract = new ethers.Contract(
+        partnersAgreementAddress,
+        partnersAgreementAbi,
+        signer,
+    )
+
+    const isCoreTeamMember = await partnersAgreementContract.isCoreTeamMember(user);
+    console.log('isCoreTeamMember', isCoreTeamMember)
+}
+
 // create(string calldata url, uint256 role)
-async function createMembershipCard(partnersAgreementAddress, skillWalletId) {
+async function createMembershipCard(partnersAgreementAddress, skillWalletId) {  
     const partnersAgreementContract = new ethers.Contract(
         partnersAgreementAddress,
         partnersAgreementAbi,
@@ -149,9 +184,12 @@ async function test() {
     // partnersAgreementAddress: '0xe470927feF4Aa20798C71fA43DDd5329D6162789',
     // communityAddress: '0xb05Ee1F1B4E3cA8C5E7363C9004951341c669929'
 
-    await createMembershipCard('0xe470927feF4Aa20798C71fA43DDd5329D6162789', 5);
+    // await createMembershipCard('0xe470927feF4Aa20798C71fA43DDd5329D6162789', 5);
     // await activatePA('0xe470927feF4Aa20798C71fA43DDd5329D6162789')
-    // await isActive('0xe470927feF4Aa20798C71fA43DDd5329D6162789');
+    // await isActive(partnersAgreement);
+    // await getMemContract(partnersAgreement);
+    // await getPAs();
+    await isCoreTeamMember('0x2f152fF9Edc8b99c3a5c018C95D5a4011627c409','0xCa05bcE175e9c39Fe015A5fC1E98d2B735fF51d9')
 }
 
 test()

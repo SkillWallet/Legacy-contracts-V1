@@ -5,8 +5,6 @@ import "../../../imported/CommonTypes.sol";
 
 interface IPartnersAgreementFactory {
     function createPartnersAgreement(
-        address _chainlinkToken,
-        address _oracle,
         address _membershipFactory,
         Types.PartnersAgreementData memory data
     ) external returns (address);

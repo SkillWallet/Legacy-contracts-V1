@@ -3,8 +3,9 @@ pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
 import "./PartnersAgreement.sol";
+import "../interfaces/IPartnersAgreementFactory.sol";
 
-contract PartnersAgreementFactory {
+contract PartnersAgreementFactory is IPartnersAgreementFactory {
     //TODO: Change to constant before prod
     uint256 public version;
 
@@ -13,19 +14,10 @@ contract PartnersAgreementFactory {
     }
 
     function createPartnersAgreement(
-        address _chainlinkToken,
-        address _oracle,
         address _membershipFactory,
         Types.PartnersAgreementData memory pa
-    ) public returns (address) {
-        address paAddr = address(
-            new PartnersAgreement(
-                _chainlinkToken,
-                _oracle,
-                _membershipFactory,
-                pa
-            )
-        );
+    ) public override returns (address) {
+        address paAddr = address(new PartnersAgreement(_membershipFactory, pa));
 
         return paAddr;
     }

@@ -20,27 +20,22 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
     address[] public agreements;
     mapping(address => uint256) public agreementIds;
 
-    // chainlink
-    address oracle;
-    address linkToken;
-
     // factories
     address partnersAgreementFactory;
     address membershipFactory;
+    address interactionsQueryServer;
 
     function initialize(
         address _distributedTownAddress,
         address _partnersAgreementFactoryAddress,
         address _membershipFactory,
-        address _oracle,
-        address _linkToken
+        address _interactionsQueryServer
     ) public initializer {
         distributedTown = IDistributedTown(_distributedTownAddress);
         partnersAgreementFactory = _partnersAgreementFactoryAddress;
         membershipFactory = _membershipFactory;
+        interactionsQueryServer = _interactionsQueryServer;
 
-        oracle = _oracle;
-        linkToken = _linkToken;
         version = 1;
     }
 
@@ -100,8 +95,6 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         address[] storage whitelistMembers;
         address paAddr = IPartnersAgreementFactory(partnersAgreementFactory)
             .createPartnersAgreement(
-                linkToken,
-                oracle,
                 membershipFactory,
                 Types.PartnersAgreementData(
                     version,
@@ -113,7 +106,8 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
                     address(0),
                     numberOfActions,
                     coreTeamMembers,
-                    whitelistMembers
+                    whitelistMembers,
+                    interactionsQueryServer
                 )
             );
 
@@ -140,7 +134,10 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         pa.version = version;
         // todo: fix hard coded core team members
         address agreement = IPartnersAgreementFactory(partnersAgreementFactory)
-            .createPartnersAgreement(linkToken, oracle, membershipFactory, pa);
+            .createPartnersAgreement(
+                membershipFactory,
+                pa
+            );
 
         agreements[agreementId] = agreement;
         delete agreementIds[_agreement];

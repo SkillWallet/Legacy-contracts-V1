@@ -2,7 +2,6 @@
 pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
-import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "./IOwnable.sol";
 
 import "./InteractionNFT.sol";
@@ -13,37 +12,34 @@ import "../../../imported/CommonTypes.sol";
 import "./IActivities.sol";
 import "./IActivitiesFactory.sol";
 
-contract PartnersAgreement is ChainlinkClient {
+contract PartnersAgreement is IPartnersAgreement {
     uint256 public version;
     address public owner;
 
-    address public communityAddress;
+    address public override communityAddress;
     address[] public partnersContracts;
     string[] public urls;
 
     mapping(bytes32 => uint256) urlIds;
 
-    uint256 public rolesCount;
-    bool public isActive;
+    uint256 public override rolesCount;
+    bool public override isActive;
 
     mapping(address => uint256) lastBlockPerUserAddress;
     mapping(bytes32 => address) userRequests;
 
-    mapping(address => bool) public isCoreTeamMember;
+    mapping(address => bool) public override isCoreTeamMember;
     address[] coreTeamMemberWhitelist;
 
-    uint256 public coreTeamMembersCount;
+    uint256 public override coreTeamMembersCount;
 
     InteractionNFT partnersInteractionNFTContract;
     ISkillWallet skillWallet;
 
+    address public override membershipAddress;
+    address interactionsQueryServer;
     IActivities public activities;
 
-    // Chainlink params
-    address private oracle;
-    bytes32 private jobId;
-    uint256 private fee;
-    address public membershipAddress;
 
     /**
      * @dev Throws PA not yet activated.
@@ -65,9 +61,15 @@ contract PartnersAgreement is ChainlinkClient {
         _;
     }
 
+    modifier onlyInteractionsQueryServer() {
+        require(
+            msg.sender == interactionsQueryServer,
+            "Only interactions query server!"
+        );
+        _;
+    }
+
     constructor(
-        address _chainlinkToken,
-        address _oracle,
         address _membershipFactory,
         Types.PartnersAgreementData memory pa
     ) public {
@@ -80,6 +82,7 @@ contract PartnersAgreement is ChainlinkClient {
         owner = pa.owner;
         communityAddress = pa.communityAddress;
         coreTeamMembersCount = pa.coreTeamMembersCount;
+        interactionsQueryServer = pa.interactionsQueryServer;
 
         for (uint256 i = 0; i < pa.partnersContracts.length; i++)
             partnersContracts.push(pa.partnersContracts[i]);
@@ -112,14 +115,9 @@ contract PartnersAgreement is ChainlinkClient {
             membershipAddress = pa.membershipContract;
             isActive = isCoreTeamMember[owner];
         }
-
-        setChainlinkToken(_chainlinkToken);
-        oracle = _oracle;
-        jobId = "e1e26fa27aa7436c95a78a40c21f5404";
-        fee = 0.1 * 10**18; // 0.1 LINK
     }
 
-    function activatePA() public {
+    function activatePA() override public {
         require(!isActive, "PA already activated");
         bool isMember = ICommunity(communityAddress).isMember(owner);
         require(isMember, "Owner not yet a member of the community.");
@@ -132,30 +130,31 @@ contract PartnersAgreement is ChainlinkClient {
         require(msg.sender == owner, "not owner");
         require(address(activities) == address(0), "already deployed");
 
-        activities = IActivities(IActivitiesFactory(_factory).deployActivities(_bot));
+        activities = IActivities(
+            IActivitiesFactory(_factory).deployActivities(_bot)
+        );
     }
 
-    function createActivity(uint256 _type, string memory _uri) public onlyCoreTeamMember() {
-        if(_type == 1) {
+    function createActivity(uint256 _type, string memory _uri)
+        public
+        onlyCoreTeamMember
+    {
+        if (_type == 1) {
             activities.createTask(_uri, msg.sender);
         } else {
             activities.createActivity(_type, _uri);
         }
     }
 
-    function takeTask(uint256 _activityId) public onlyCoreTeamMember() {
+    function takeTask(uint256 _activityId) public onlyCoreTeamMember {
         activities.takeTask(_activityId, msg.sender);
     }
 
-    function finilizeTask(uint256 _activityId) public onlyCoreTeamMember() {
+    function finilizeTask(uint256 _activityId) public onlyCoreTeamMember {
         activities.finilizeTask(_activityId, msg.sender);
     }
 
-    function addURL(string memory _url)
-        public
-        onlyActive
-        onlyCoreTeamMember
-    {
+    function addURL(string memory _url) public override onlyActive onlyCoreTeamMember {
         require(msg.sender == owner, "not owner");
 
         bytes32 urlHash = keccak256(bytes(_url));
@@ -173,6 +172,7 @@ contract PartnersAgreement is ChainlinkClient {
 
     function removeURL(string memory _url)
         public
+        override
         onlyActive
         onlyCoreTeamMember
     {
@@ -194,15 +194,11 @@ contract PartnersAgreement is ChainlinkClient {
         delete urlIds[urlHash];
     }
 
-    function getURLs() public view returns (string[] memory) {
+    function getURLs() public view override returns (string[] memory) {
         return urls;
     }
 
-    function isURLListed(string memory _url)
-        public
-        view
-        returns (bool)
-    {
+    function isURLListed(string memory _url) public view override returns (bool) {
         if (urls.length == 0) return false;
 
         bytes32 urlHash = keccak256(bytes(_url));
@@ -216,74 +212,41 @@ contract PartnersAgreement is ChainlinkClient {
     function getInteractionNFTContractAddress()
         public
         view
+        override
         onlyActive
         returns (address)
     {
         return address(partnersInteractionNFTContract);
     }
 
-    function getAllMembers()
-        public
-        view
-        onlyActive
-        returns (address[] memory)
-    {
+    function getAllMembers() public view onlyActive override returns (address[] memory) {
         ICommunity community = ICommunity(communityAddress);
         return community.getMemberAddresses();
     }
 
-    function queryForNewInteractions(address userAddress)
+    function transferInteractionNFTs(address user, uint256 amountOfInteractions)
         public
+        override
         onlyActive
+        onlyInteractionsQueryServer
     {
-        require(userAddress != address(0), "No user address passed!");
-
-        for (uint256 i = 0; i < partnersContracts.length; i++) {
-            Chainlink.Request memory req = buildChainlinkRequest(
-                jobId,
-                address(this),
-                this.transferInteractionNFTs.selector
-            );
-            req.add("userAddress", string(abi.encodePacked(userAddress)));
-            req.add(
-                "contractAddress",
-                string(abi.encodePacked(partnersContracts[i]))
-            );
-            req.add("chainId", "80001");
-            req.addUint("startBlock", lastBlockPerUserAddress[userAddress]);
-            req.add("covalentAPIKey", "ckey_aae01fa51e024af3a2634d9d030");
-
-            bytes32 reqId = sendChainlinkRequestTo(oracle, req, fee);
-
-            lastBlockPerUserAddress[userAddress] = block.number;
-            userRequests[reqId] = userAddress;
-        }
-    }
-
-    function transferInteractionNFTs(bytes32 _requestId, uint256 _result)
-        public
-        onlyActive
-        recordChainlinkFulfillment(_requestId)
-    {
-        address user = userRequests[_requestId];
-
-        require(user != address(0), "req not found");
+        require(user != address(0), "Invalid user address");
+        require(amountOfInteractions > 0, "Invalid amount of interactions");
         ICommunity community = ICommunity(communityAddress);
         require(community.isMember(user), "Invalid user address");
-        if (_result > 0) {
-            partnersInteractionNFTContract.safeTransferFrom(
-                address(this),
-                user,
-                uint256(skillWallet.getRole(user)),
-                _result,
-                ""
-            );
-        }
+        partnersInteractionNFTContract.safeTransferFrom(
+            address(this),
+            user,
+            uint256(skillWallet.getRole(user)),
+            amountOfInteractions,
+            ""
+        );
     }
 
     function getInteractionNFT(address user)
         public
         view
+        override
         onlyActive
         returns (uint256)
     {
@@ -292,6 +255,7 @@ contract PartnersAgreement is ChainlinkClient {
 
     function addNewContractAddressToAgreement(address contractAddress)
         public
+        override
         onlyActive
         onlyCoreTeamMember
     {
@@ -305,6 +269,7 @@ contract PartnersAgreement is ChainlinkClient {
 
     function addNewCoreTeamMembers(address member)
         public
+        override
         onlyActive
         onlyCoreTeamMember
     {
@@ -319,6 +284,7 @@ contract PartnersAgreement is ChainlinkClient {
     function getCoreTeamMembers()
         public
         view
+        override
         onlyActive
         returns (address[] memory)
     {
@@ -328,6 +294,7 @@ contract PartnersAgreement is ChainlinkClient {
     function getImportedAddresses()
         public
         view
+        override
         onlyActive
         returns (address[] memory)
     {
@@ -337,6 +304,7 @@ contract PartnersAgreement is ChainlinkClient {
     // add core tema members array
     function getAgreementData()
         public
+        override
         view
         returns (Types.PartnersAgreementData memory)
     {
@@ -351,7 +319,8 @@ contract PartnersAgreement is ChainlinkClient {
                 membershipAddress,
                 partnersInteractionNFTContract.getTotalSupplyAll(),
                 coreTeamMembersCount,
-                coreTeamMemberWhitelist
+                coreTeamMemberWhitelist,
+                interactionsQueryServer
             );
     }
 }

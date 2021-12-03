@@ -32,8 +32,6 @@ contract('Interactions', function (accounts) {
         this.membershipFactory = await MembershipFactory.new(1);
 
         this.partnersAgreement = await PartnersAgreement.new(
-            this.linkTokenMock.address,
-            this.mockOracle.address,
             this.membershipFactory.address,
             {
                 version: 1,
@@ -45,7 +43,8 @@ contract('Interactions', function (accounts) {
                 membershipContract: ZERO_ADDRESS,
                 interactionsCount: 100,
                 coreTeamMembersCount: 3,
-                whitelistedTeamMembers: [ZERO_ADDRESS]
+                whitelistedTeamMembers: [ZERO_ADDRESS],
+                interactionsQueryServer: accounts[3]
             }
         );
 
@@ -65,8 +64,6 @@ contract('Interactions', function (accounts) {
 
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 3", async function () {
             const partnersAgreement = await PartnersAgreement.new(
-                this.linkTokenMock.address,
-                this.mockOracle.address,
                 this.membershipFactory.address,
                 {
                     version: 1,
@@ -78,7 +75,8 @@ contract('Interactions', function (accounts) {
                     membershipContract: ZERO_ADDRESS,
                     interactionsCount: 100,
                     coreTeamMembersCount: 3,
-                    whitelistedTeamMembers: []
+                    whitelistedTeamMembers: [],
+                    interactionsQueryServer: accounts[3]
                 }
             );
 
@@ -108,8 +106,6 @@ contract('Interactions', function (accounts) {
         });
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 2", async function () {
             const partnersAgreement = await PartnersAgreement.new(
-                this.linkTokenMock.address,
-                this.mockOracle.address,
                 this.membershipFactory.address,
                 {
                     version: 1,
@@ -121,7 +117,8 @@ contract('Interactions', function (accounts) {
                     membershipContract: ZERO_ADDRESS,
                     interactionsCount: 100,
                     coreTeamMembersCount: 3,
-                    whitelistedTeamMembers: []
+                    whitelistedTeamMembers: [],
+                    interactionsQueryServer: accounts[3]
                 },
                 { from: accounts[0] }
             );
@@ -146,30 +143,63 @@ contract('Interactions', function (accounts) {
             assert.equal(balanceRole0.toString(), '57');
 
         });
-        it('transferInteractionNFTs should transfer the correct amount of NFTs after chainlink result is returned', async function () {
+        it('transferInteractionNFTs should transfer the correct amount of NFTs', async function () {
             const initialInteractions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
 
             assert.equal(initialInteractions.toString(), '0');
 
-            let tx = await this.partnersAgreement.queryForNewInteractions(
-                accounts[0]
+            let tx = await this.partnersAgreement.transferInteractionNFTs(
+                accounts[0],
+                10,
+                { from: accounts[3] }
             )
-            let chainlinkRequestedEventEmitted =
-                tx.logs[0].event === 'ChainlinkRequested'
-            assert.isTrue(chainlinkRequestedEventEmitted)
-
-            const requestId = tx.logs[0].args[0]
-            const fulfilTx = await this.mockOracle.fulfillOracleRequest(
-                requestId,
-                10
-            )
-
-            const fulfilTxEventEmitted = fulfilTx.logs[0].event === 'CallbackCalled'
-            assert.isTrue(fulfilTxEventEmitted)
 
             const interactions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
 
             assert.equal(interactions.toString(), '10');
+        })
+
+        it('transferInteractionNFTs should not transfer the NFTs if the sender or arguemtns are wrong', async function () {
+            const initialInteractions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
+
+            await truffleAssert.reverts(
+                this.partnersAgreement.transferInteractionNFTs(
+                    accounts[0],
+                    10,
+                    { from: accounts[2] }
+                ),
+                'Only interactions query server!',
+            );
+
+            await truffleAssert.reverts(
+                this.partnersAgreement.transferInteractionNFTs(
+                    ZERO_ADDRESS,
+                    10,
+                    { from: accounts[3] }
+                ),
+                'Invalid user address',
+            );
+
+            await truffleAssert.reverts(
+                this.partnersAgreement.transferInteractionNFTs(
+                    accounts[10],
+                    10,
+                    { from: accounts[3] }
+                ),
+                'Invalid user address',
+            );
+
+            await truffleAssert.reverts(
+                this.partnersAgreement.transferInteractionNFTs(
+                    accounts[10],
+                    0,
+                    { from: accounts[3] }
+                ),
+                'Invalid amount of interactions',
+            );
+            const interactions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
+
+            assert.equal(interactions.toString(), initialInteractions.toString());
         })
     });
 });

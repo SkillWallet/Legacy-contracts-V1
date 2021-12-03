@@ -41,5 +41,6 @@ library Types {
         uint256 interactionsCount;
         uint256 coreTeamMembersCount;
         address[] whitelistedTeamMembers;
+        address interactionsQueryServer;
     }
 }
