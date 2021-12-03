@@ -4,7 +4,6 @@ pragma experimental ABIEncoderV2;
 
 import "./PartnersAgreement.sol";
 import "../interfaces/IPartnersAgreementFactory.sol";
-import "../../../imported/CommonTypes.sol";
 
 contract PartnersAgreementFactory is IPartnersAgreementFactory {
     //TODO: Change to constant before prod

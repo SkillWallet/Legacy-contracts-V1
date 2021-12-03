@@ -2,14 +2,15 @@
 pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./IOwnable.sol";
 
-import "../interfaces/IPartnersAgreement.sol";
 import "./InteractionNFT.sol";
 import "../../../imported/ICommunity.sol";
 import "../../ISkillWallet.sol";
 import "../interfaces/IMembershipFactory.sol";
 import "../../../imported/CommonTypes.sol";
+import "./IActivities.sol";
+import "./IActivitiesFactory.sol";
 
 contract PartnersAgreement is IPartnersAgreement {
     uint256 public version;
@@ -37,6 +38,9 @@ contract PartnersAgreement is IPartnersAgreement {
 
     address public override membershipAddress;
     address interactionsQueryServer;
+    IActivities public activities;
+
+
     /**
      * @dev Throws PA not yet activated.
      */
@@ -63,7 +67,6 @@ contract PartnersAgreement is IPartnersAgreement {
             "Only interactions query server!"
         );
         _;
-
     }
 
     constructor(
@@ -114,7 +117,7 @@ contract PartnersAgreement is IPartnersAgreement {
         }
     }
 
-    function activatePA() public override {
+    function activatePA() override public {
         require(!isActive, "PA already activated");
         bool isMember = ICommunity(communityAddress).isMember(owner);
         require(isMember, "Owner not yet a member of the community.");
@@ -123,12 +126,35 @@ contract PartnersAgreement is IPartnersAgreement {
         coreTeamMemberWhitelist.push(msg.sender);
     }
 
-    function addURL(string memory _url)
+    function deployActivities(address _factory, address _bot) public {
+        require(msg.sender == owner, "not owner");
+        require(address(activities) == address(0), "already deployed");
+
+        activities = IActivities(
+            IActivitiesFactory(_factory).deployActivities(_bot)
+        );
+    }
+
+    function createActivity(uint256 _type, string memory _uri)
         public
-        override
-        onlyActive
         onlyCoreTeamMember
     {
+        if (_type == 1) {
+            activities.createTask(_uri, msg.sender);
+        } else {
+            activities.createActivity(_type, _uri);
+        }
+    }
+
+    function takeTask(uint256 _activityId) public onlyCoreTeamMember {
+        activities.takeTask(_activityId, msg.sender);
+    }
+
+    function finilizeTask(uint256 _activityId) public onlyCoreTeamMember {
+        activities.finilizeTask(_activityId, msg.sender);
+    }
+
+    function addURL(string memory _url) public override onlyActive onlyCoreTeamMember {
         require(msg.sender == owner, "not owner");
 
         bytes32 urlHash = keccak256(bytes(_url));
@@ -172,12 +198,7 @@ contract PartnersAgreement is IPartnersAgreement {
         return urls;
     }
 
-    function isURLListed(string memory _url)
-        public
-        view
-        override
-        returns (bool)
-    {
+    function isURLListed(string memory _url) public view override returns (bool) {
         if (urls.length == 0) return false;
 
         bytes32 urlHash = keccak256(bytes(_url));
@@ -198,13 +219,7 @@ contract PartnersAgreement is IPartnersAgreement {
         return address(partnersInteractionNFTContract);
     }
 
-    function getAllMembers()
-        public
-        view
-        override
-        onlyActive
-        returns (address[] memory)
-    {
+    function getAllMembers() public view onlyActive override returns (address[] memory) {
         ICommunity community = ICommunity(communityAddress);
         return community.getMemberAddresses();
     }
@@ -244,7 +259,7 @@ contract PartnersAgreement is IPartnersAgreement {
         onlyActive
         onlyCoreTeamMember
     {
-        Ownable con = Ownable(contractAddress);
+        IOwnable con = IOwnable(contractAddress);
         require(
             con.owner() == msg.sender,
             "Only the owner of the contract can import it!"
@@ -289,8 +304,8 @@ contract PartnersAgreement is IPartnersAgreement {
     // add core tema members array
     function getAgreementData()
         public
-        view
         override
+        view
         returns (Types.PartnersAgreementData memory)
     {
         return
