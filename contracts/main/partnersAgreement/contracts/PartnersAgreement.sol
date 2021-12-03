@@ -3,44 +3,47 @@ pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./IOwnable.sol";
 
-import "../interfaces/IPartnersAgreement.sol";
 import "./InteractionNFT.sol";
 import "../../../imported/ICommunity.sol";
 import "../../ISkillWallet.sol";
 import "../interfaces/IMembershipFactory.sol";
 import "../../../imported/CommonTypes.sol";
+import "./IActivities.sol";
+import "./IActivitiesFactory.sol";
 
-contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
+contract PartnersAgreement is ChainlinkClient {
     uint256 public version;
     address public owner;
 
-    address public override communityAddress;
+    address public communityAddress;
     address[] public partnersContracts;
     string[] public urls;
 
     mapping(bytes32 => uint256) urlIds;
 
-    uint256 public override rolesCount;
-    bool public override isActive;
+    uint256 public rolesCount;
+    bool public isActive;
 
     mapping(address => uint256) lastBlockPerUserAddress;
     mapping(bytes32 => address) userRequests;
 
-    mapping(address => bool) public override isCoreTeamMember;
+    mapping(address => bool) public isCoreTeamMember;
     address[] coreTeamMemberWhitelist;
 
-    uint256 public override coreTeamMembersCount;
+    uint256 public coreTeamMembersCount;
 
     InteractionNFT partnersInteractionNFTContract;
     ISkillWallet skillWallet;
+
+    IActivities public activities;
 
     // Chainlink params
     address private oracle;
     bytes32 private jobId;
     uint256 private fee;
-    address public override membershipAddress;
+    address public membershipAddress;
 
     /**
      * @dev Throws PA not yet activated.
@@ -116,7 +119,7 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         fee = 0.1 * 10**18; // 0.1 LINK
     }
 
-    function activatePA() public override {
+    function activatePA() public {
         require(!isActive, "PA already activated");
         bool isMember = ICommunity(communityAddress).isMember(owner);
         require(isMember, "Owner not yet a member of the community.");
@@ -125,9 +128,31 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         coreTeamMemberWhitelist.push(msg.sender);
     }
 
+    function deployActivities(address _factory, address _bot) public {
+        require(msg.sender == owner, "not owner");
+        require(address(activities) == address(0), "already deployed");
+
+        activities = IActivities(IActivitiesFactory(_factory).deployActivities(_bot));
+    }
+
+    function createActivity(uint256 _type, string memory _uri) public onlyCoreTeamMember() {
+        if(_type == 1) {
+            activities.createTask(_uri, msg.sender);
+        } else {
+            activities.createActivity(_type, _uri);
+        }
+    }
+
+    function takeTask(uint256 _activityId) public onlyCoreTeamMember() {
+        activities.takeTask(_activityId, msg.sender);
+    }
+
+    function finilizeTask(uint256 _activityId) public onlyCoreTeamMember() {
+        activities.finilizeTask(_activityId, msg.sender);
+    }
+
     function addURL(string memory _url)
         public
-        override
         onlyActive
         onlyCoreTeamMember
     {
@@ -148,7 +173,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
 
     function removeURL(string memory _url)
         public
-        override
         onlyActive
         onlyCoreTeamMember
     {
@@ -170,14 +194,13 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
         delete urlIds[urlHash];
     }
 
-    function getURLs() public view override returns (string[] memory) {
+    function getURLs() public view returns (string[] memory) {
         return urls;
     }
 
     function isURLListed(string memory _url)
         public
         view
-        override
         returns (bool)
     {
         if (urls.length == 0) return false;
@@ -193,7 +216,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
     function getInteractionNFTContractAddress()
         public
         view
-        override
         onlyActive
         returns (address)
     {
@@ -203,7 +225,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
     function getAllMembers()
         public
         view
-        override
         onlyActive
         returns (address[] memory)
     {
@@ -213,7 +234,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
 
     function queryForNewInteractions(address userAddress)
         public
-        override
         onlyActive
     {
         require(userAddress != address(0), "No user address passed!");
@@ -242,7 +262,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
 
     function transferInteractionNFTs(bytes32 _requestId, uint256 _result)
         public
-        override
         onlyActive
         recordChainlinkFulfillment(_requestId)
     {
@@ -265,7 +284,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
     function getInteractionNFT(address user)
         public
         view
-        override
         onlyActive
         returns (uint256)
     {
@@ -274,11 +292,10 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
 
     function addNewContractAddressToAgreement(address contractAddress)
         public
-        override
         onlyActive
         onlyCoreTeamMember
     {
-        Ownable con = Ownable(contractAddress);
+        IOwnable con = IOwnable(contractAddress);
         require(
             con.owner() == msg.sender,
             "Only the owner of the contract can import it!"
@@ -288,7 +305,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
 
     function addNewCoreTeamMembers(address member)
         public
-        override
         onlyActive
         onlyCoreTeamMember
     {
@@ -303,7 +319,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
     function getCoreTeamMembers()
         public
         view
-        override
         onlyActive
         returns (address[] memory)
     {
@@ -313,7 +328,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
     function getImportedAddresses()
         public
         view
-        override
         onlyActive
         returns (address[] memory)
     {
@@ -324,7 +338,6 @@ contract PartnersAgreement is IPartnersAgreement, ChainlinkClient {
     function getAgreementData()
         public
         view
-        override
         returns (Types.PartnersAgreementData memory)
     {
         return
