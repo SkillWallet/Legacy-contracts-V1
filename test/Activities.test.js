@@ -8,34 +8,98 @@ const { ethers } = require("hardhat");
 
 let factory;
 let activities;
+let agreement;
 
 const URI = "https://hub.textile.io/ipfs/bafkreiaks3kjggtxqaj3ixk6ce2difaxj5r6lbemx5kcqdkdtub5vwv5mi";
 const URI_FIN = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
-
+const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
 
 contract("Activities", (accounts) => {
     before(async () => {
+        //deploy prerequisites
+        const LinkToken = await ethers.getContractFactory("LinkToken");
+        const linkTokenMock = await LinkToken.deploy();
+
+        const MockOracle = await ethers.getContractFactory("MockOracle");
+        const mockOracle = await MockOracle.deploy(linkTokenMock.address);
+
+        const DistributedTownMock = await ethers.getContractFactory("DistributedTownMock");
+        const distributedTownMock = await DistributedTownMock.deploy();
+
+        const SkillWallet = await ethers.getContractFactory("SkillWallet");
+        const skillWallet = await upgrades.deployProxy(
+            SkillWallet,
+            [linkTokenMock.address, mockOracle.address]
+        );
+        await skillWallet.deployed();
+
+        const MinimumCommunity = await ethers.getContractFactory("MinimumCommunity");
+        const minimumCommunity = await MinimumCommunity.deploy(skillWallet.address);
+        await minimumCommunity.joinNewMember('', 1, 2000);
+        await distributedTownMock.addCommunity(accounts[0], minimumCommunity.address);
+
+        //deploy pr
+        const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry");
+        const PartnersAgreementFactory = await ethers.getContractFactory("PartnersAgreementFactory");
+        const MembershipFactory = await ethers.getContractFactory("MembershipFactory");
+
+        const membershipFactory = await MembershipFactory.deploy(1);
+        const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1);
+
+        const partnersRegistry = await upgrades.deployProxy(
+            PartnersRegistry,
+            [distributedTownMock.address,
+            partnersAgreementFactory.address,
+            membershipFactory.address,
+            mockOracle.address,
+            linkTokenMock.address]
+        );
+        await partnersRegistry.deployed();
+
+        //deploy pa
+        await partnersRegistry.create(
+            metadataUrl,
+            1,
+            2,
+            100,
+            ZERO_ADDRESS,
+            10,
+            3
+        );
+
+        const agreementAddress = await partnersRegistry.agreements(0);
+        console.log(agreementAddress);
+        agreement = await ethers.getContractAt("PartnersAgreement", agreementAddress);
+        await agreement.activatePA();
+
+        //add core team members
+        await agreement.addNewCoreTeamMembers(accounts[2]);
+        await agreement.addNewCoreTeamMembers(accounts[3]);
+        await agreement.addNewCoreTeamMembers(accounts[4]);
+        await agreement.addNewCoreTeamMembers(accounts[5]);
+
+        //deploy activites factory
         const Factory = await ethers.getContractFactory("ActivitiesFactory");
         factory = await Factory.deploy();
         await factory.deployed();
     });
     describe("Deployment", async () => {
         it("Should deploy activities contract", async () => {
-            await factory.deployActivities(accounts[1]);
+            await agreement.deployActivities(accounts[1]);
 
-            const activitiesAddress = await factory.lastDeployedAddress();
+            const activitiesAddress = await agreement.activitiesAddress();
             expect(activitiesAddress).not.to.equal(ZERO_ADDRESS);
 
             activities = await ethers.getContractAt("Activities", activitiesAddress);
-            expect(await activities.partnersAgreement()).to.equal(accounts[0]);
+            expect(await activities.partnersAgreement()).to.equal(agreement.address);
             expect(await activities.botAddress()).to.equal(accounts[1]);
         });
     });
     describe("Activites", async () => {
         it("Should create some activities", async () => {
-            await activities.createActivity(2, URI);
-            await activities.createActivity(3, URI);
-            await activities.createActivity(2, URI);
+            await agreement.createActivity(2, URI);
+            await agreement.createActivity(3, URI);
+            await agreement.createActivity(2, URI);
 
             const polls = await activities.getActivitiesByType(2);
             const calls = await activities.getActivitiesByType(3);
@@ -50,9 +114,8 @@ contract("Activities", (accounts) => {
             expect(calls[0]).to.equal(1);
         });
         it("Should not allow to create activity with wong type", async () => {
-            await expect(activities.createActivity(0, URI)).to.be.reverted;
-            await expect(activities.createActivity(1, URI)).to.be.reverted;
-            await expect(activities.createActivity(4, URI)).to.be.reverted;
+            await expect(agreement.createActivity(0, URI)).to.be.reverted;
+            await expect(agreement.createActivity(4, URI)).to.be.reverted;
         });
         it("Should finalize some activities and set new URI", async () => {
             const bot = await ethers.getSigner(accounts[1]);
@@ -78,8 +141,13 @@ contract("Activities", (accounts) => {
     });
     describe("Tasks", async () => {
         it("Should create some tasks", async () => {
-            await activities.createTask(URI, accounts[2]);
-            await activities.createTask(URI, accounts[3]);
+            const teamMember1 = await ethers.getSigner(accounts[2]);
+            const teamMember2 = await ethers.getSigner(accounts[3]);
+            const agreementTM1 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember1);
+            const agreementTM2 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember2);
+
+            await agreementTM1.createActivity(1 ,URI);
+            await agreementTM2.createActivity(1, URI);
 
             const polls = await activities.getActivitiesByType(2);
             const calls = await activities.getActivitiesByType(3);
@@ -116,7 +184,10 @@ contract("Activities", (accounts) => {
             expect(await activities.tokenURI(4)).to.equal(URI);
         });
         it("Should take the task", async () => {
-            await activities.takeTask(3, accounts[4]);
+            const teamMember = await ethers.getSigner(accounts[4]);
+            const agreementTM = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember);
+
+            await agreementTM.takeTask(3);
 
             const task1 = await activities.getTaskByActivityId(3);
             const task2 = await activities.getTaskByActivityId(4);
@@ -132,10 +203,16 @@ contract("Activities", (accounts) => {
             expect(task2.taker).to.equal(ZERO_ADDRESS);
         });
         it("Should not allow to take task that is already taken", async () => {
-            await expect(activities.takeTask(3, accounts[5])).to.be.revertedWith("wrong status");
+            const teamMember = await ethers.getSigner(accounts[5]);
+            const agreementTM = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember);
+
+            await expect(agreementTM.takeTask(3, accounts[5])).to.be.revertedWith("wrong status");
         });
         it("Should allow to finalize taken task", async () => {
-            await activities.finilizeTask(3, accounts[4]);
+            const teamMember = await ethers.getSigner(accounts[4]);
+            const agreementTM = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember);
+
+            await agreementTM.finilizeTask(3);
 
             const task1 = await activities.getTaskByActivityId(3);
 
@@ -147,17 +224,30 @@ contract("Activities", (accounts) => {
             expect(await activities.isFinalized(3)).to.equal(true);
         });
         it("Should not allow to finalze task that is not taken", async () => {
-            await expect(activities.finilizeTask(4, accounts[3])).to.be.revertedWith("wrong status");
-            await expect(activities.finilizeTask(3, accounts[4])).to.be.revertedWith("wrong status");
+            const teamMember1 = await ethers.getSigner(accounts[3]);
+            const teamMember2 = await ethers.getSigner(accounts[4]);
+            const agreementTM1 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember1);
+            const agreementTM2 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember2);
+
+            await expect(agreementTM1.finilizeTask(4)).to.be.revertedWith("wrong status");
+            await expect(agreementTM2.finilizeTask(3)).to.be.revertedWith("wrong status");
         });
         it("Should not allow to finalze task with not taker", async () => {
-            await activities.takeTask(4, accounts[5]);
+            const teamMember1 = await ethers.getSigner(accounts[5]);
+            const teamMember2 = await ethers.getSigner(accounts[3]);
+            const agreementTM1 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember1);
+            const agreementTM2 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember2);
 
-            await expect(activities.finilizeTask(4, accounts[3])).to.be.revertedWith("wrong taker");
+            await agreementTM1.takeTask(4);
+
+            await expect(agreementTM2.finilizeTask(4)).to.be.revertedWith("wrong taker");
         });
         it("Should not allow to take or finalize task that is not task (by type)", async () => {
-            await expect(activities.takeTask(0, accounts[0])).to.be.revertedWith("Not core team task");
-            await expect(activities.finilizeTask(0, accounts[0])).to.be.revertedWith("Not core team task");
+            const teamMember = await ethers.getSigner(accounts[0]);
+            const agreementTM = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember);
+
+            await expect(agreementTM.takeTask(0)).to.be.revertedWith("Not core team task");
+            await expect(agreementTM.finilizeTask(0)).to.be.revertedWith("Not core team task");
         });
         it("Should not allow to finalize activity that is task (by type)", async () => {
             const bot = await ethers.getSigner(accounts[1]);

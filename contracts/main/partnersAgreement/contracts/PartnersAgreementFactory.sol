@@ -3,10 +3,8 @@ pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
 import "./PartnersAgreement.sol";
-import "../interfaces/IPartnersAgreementFactory.sol";
-import "../../../imported/CommonTypes.sol";
 
-contract PartnersAgreementFactory is IPartnersAgreementFactory {
+contract PartnersAgreementFactory {
     //TODO: Change to constant before prod
     uint256 public version;
 
@@ -19,7 +17,7 @@ contract PartnersAgreementFactory is IPartnersAgreementFactory {
         address _oracle,
         address _membershipFactory,
         Types.PartnersAgreementData memory pa
-    ) public override returns (address) {
+    ) public returns (address) {
         address paAddr = address(
             new PartnersAgreement(
                 _chainlinkToken,

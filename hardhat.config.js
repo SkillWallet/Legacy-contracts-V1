@@ -8,6 +8,8 @@ require("@nomiclabs/hardhat-web3");
 require("@nomiclabs/hardhat-truffle5");
 require("@nomiclabs/hardhat-waffle");
 require('@openzeppelin/hardhat-upgrades');
+require('hardhat-contract-sizer');
+
 
 
 const { isAddress, getAddress, formatUnits, parseUnits } = utils;
@@ -110,6 +112,12 @@ module.exports = {
     ],
 
   },
+  contractSizer: {
+    alphaSort: true,
+    runOnCompile: true,
+    disambiguatePaths: false,
+  },
+
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
