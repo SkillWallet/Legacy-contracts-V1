@@ -46,7 +46,7 @@ contract("Activities", (accounts) => {
         const membershipFactory = await MembershipFactory.deploy(1);
         const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1);
 
-        partnersRegistry = await upgrades.deployProxy(
+        const partnersRegistry = await upgrades.deployProxy(
             PartnersRegistry,
             [
                 distributedTownMock.address,
@@ -69,15 +69,27 @@ contract("Activities", (accounts) => {
         );
 
         const agreementAddress = await partnersRegistry.agreements(0);
-        console.log(agreementAddress);
         agreement = await ethers.getContractAt("PartnersAgreement", agreementAddress);
         await agreement.activatePA();
 
-        //add core team members
-        await agreement.addNewCoreTeamMembers(accounts[2]);
-        await agreement.addNewCoreTeamMembers(accounts[3]);
-        await agreement.addNewCoreTeamMembers(accounts[4]);
-        await agreement.addNewCoreTeamMembers(accounts[5]);
+
+        
+
+        //create skillwallets and add core team members
+        for (let i = 2; i <= 5; i++) {
+            await skillWallet.create(
+                accounts[i],
+                metadataUrl,
+                1,
+                true
+            );
+
+            const coreTM = await ethers.getSigner(accounts[i]);
+            await skillWallet.connect(coreTM).claim();
+
+            await agreement.addNewCoreTeamMembers(accounts[i]);
+
+        }
 
         //deploy activites factory
         const Factory = await ethers.getContractFactory("ActivitiesFactory");
@@ -86,9 +98,9 @@ contract("Activities", (accounts) => {
     });
     describe("Deployment", async () => {
         it("Should deploy activities contract", async () => {
-            await agreement.deployActivities(accounts[1]);
+            await agreement.deployActivities(factory.address, accounts[1]);
 
-            const activitiesAddress = await agreement.activitiesAddress();
+            const activitiesAddress = await agreement.activities();
             expect(activitiesAddress).not.to.equal(ZERO_ADDRESS);
 
             activities = await ethers.getContractAt("Activities", activitiesAddress);
@@ -207,7 +219,7 @@ contract("Activities", (accounts) => {
             const teamMember = await ethers.getSigner(accounts[5]);
             const agreementTM = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember);
 
-            await expect(agreementTM.takeTask(3, accounts[5])).to.be.revertedWith("wrong status");
+            await expect(agreementTM.takeTask(3)).to.be.revertedWith("wrong status");
         });
         it("Should allow to finalize taken task", async () => {
             const teamMember = await ethers.getSigner(accounts[4]);
