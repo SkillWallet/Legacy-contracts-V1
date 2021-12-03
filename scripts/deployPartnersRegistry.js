@@ -20,16 +20,13 @@ const main = async () => {
     const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1);
     await partnersAgreementFactory.deployed();
 
-    const oracleMumbai = '0xc8D925525CA8759812d0c299B90247917d4d4b7C';
-    const linkTokenMumbai = '0x326C977E6efc84E512bB9C30f76E30c160eD06FB';
-    const distributedTownAddress = "0x71aa16bF81407265956EFf5540F3D4B8D72F3982";
+    const distributedTownAddress = "0xe60a5C15Cf3C4F820f9771Ea68dA8CE41376B577";
 
     const partnersRegistry = await upgrades.deployProxy(PartnersRegistry, [
         distributedTownAddress,
         partnersAgreementFactory.address,
         membershipFactory.address,
-        oracleMumbai,
-        linkTokenMumbai
+        '0x655c5f51266c741BefD8fc4Bb7B5450E21C02006'
     ], {
         initializer: 'initialize',
         unsafeAllowLinkedLibraries: true

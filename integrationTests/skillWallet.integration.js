@@ -1,6 +1,6 @@
 // const skillWalletAddress = '0x1e79bE396CE37F7eB43aF0Ef0ffb3124F3fD23eF'
-const skillWalletAddress = '0x57c872f66Efc452E5968578a83195EE3aB14FF59' // upgradable
-const dito = '0x71aa16bF81407265956EFf5540F3D4B8D72F3982'
+const skillWalletAddress = '0xd43696bAc9B4331f18b71c0F80DD56aEc130B808' // upgradable
+const dito = '0xe60a5C15Cf3C4F820f9771Ea68dA8CE41376B577'
 // const communityAddress = '0xec1380558d5A9e25bf258f2e341C6bF562ca7480'
 const communityAddress = '0xCBD8DA830262a287d73fF3eF07b0A0b350453C00' //upgradable SW
 const { assert } = require('chai')
@@ -133,6 +133,11 @@ async function getOSMAddr() {
   const osmAddr = await skillWalletContract.getOSMAddress();
   console.log(osmAddr);
 }
+
+
+async function getCommunityAddress() {
+  const a = await part
+}
 async function validateSW(tokenId, action, nonce) {
   const osmAddr = await skillWalletContract.getOSMAddress();
 
@@ -155,7 +160,6 @@ async function validateSW(tokenId, action, nonce) {
     [],
   )
 
-  console.log(validationTx)
   // Wait for transaction to finish
   const validationTxResult = await validationTx.wait()
   const { events } = validationTxResult
@@ -194,23 +198,28 @@ async function getLogins(nonce) {
   console.log(logins);
 }
 
+async function getCommunity(tokenID) {
+  const com = await skillWalletContract.getActiveCommunity(tokenID);
+  console.log('[active community]', com);
+}
+
 async function test() {
   // await getOSMAddr();
-  const tokenId = 10;
-  // const tokenId = await joinCommunity()
-  // await claim();
+  const tokenId = 14;
+  
+  // await getCommunity(tokenId);
+  // // // const tokenId = await joinCommunity()
+  // // // await claim();
 
-  await addPubKeyToSkillWallet(tokenId)
-  const activateRes = await validateSW(tokenId, 0);
-  console.log(activateRes.requestId);
-  await isSkillWalletActivated(tokenId)
-  console.log(
-    '[sleep]',
-    'waiting 10 seconds for the chainlink validation to pass',
-  )
-  await sleep(10000)
-  // await hasValidationPassed(activateRes.requestId)
-  await isSkillWalletActivated(tokenId)
+  // await addPubKeyToSkillWallet(tokenId)
+  // const activateRes = await validateSW(tokenId, 0);
+  // await isSkillWalletActivated(tokenId)
+  // console.log(
+  //   '[sleep]',
+  //   'waiting 10 seconds for the chainlink validation to pass',
+  // )
+  // await sleep(10000)
+  // await isSkillWalletActivated(tokenId)
 
   // await getmetadata(tokenId)
   // await addDiscordID();
