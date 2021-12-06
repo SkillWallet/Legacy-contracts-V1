@@ -15,7 +15,7 @@ contract PartnersAgreementFactory is IPartnersAgreementFactory {
 
     function createPartnersAgreement(
         address _membershipFactory,
-        Types.PartnersAgreementData memory pa
+        Types.PartnersAgreementData calldata pa
     ) public override returns (address) {
         address paAddr = address(new PartnersAgreement(_membershipFactory, pa));
 

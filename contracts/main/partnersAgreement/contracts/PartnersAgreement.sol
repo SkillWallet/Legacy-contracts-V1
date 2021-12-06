@@ -12,7 +12,9 @@ import "../../../imported/CommonTypes.sol";
 import "./IActivities.sol";
 import "./IActivitiesFactory.sol";
 
-contract PartnersAgreement is IPartnersAgreement {
+import "@openzeppelin/contracts/token/ERC721/ERC721Holder.sol";
+
+contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
     uint256 public version;
     address public owner;
 
