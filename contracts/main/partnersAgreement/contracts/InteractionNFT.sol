@@ -14,7 +14,7 @@ contract InteractionNFT is ERC1155Supply {
     mapping(address => uint256) inactiveInteractions;
     address partnersAgreementAddress;
 
-    constructor(uint256 rolesCount, uint256 totalSupply) public ERC1155("") {
+    constructor(address pa, uint256 rolesCount, uint256 totalSupply) public ERC1155("") {
         require(rolesCount == 2 || rolesCount == 3, "Invalid roles count!");
 
         uint256[3] memory roleCoefs = RoleUtils.getRolesCoefs(rolesCount);
@@ -22,12 +22,12 @@ contract InteractionNFT is ERC1155Supply {
 
         for (uint256 i = 1; i <= rolesCount; i++) {
             uint256 roleTokens = totalSupply.mul(roleCoefs[i - 1]).div(100);
-            _mint(msg.sender, i, roleTokens, "");
+            _mint(pa, i, roleTokens, "");
             supplied = supplied.add(roleTokens);
         }
 
         if (supplied < totalSupply) {
-            _mint(msg.sender, rolesCount, totalSupply - supplied, "");
+            _mint(pa, rolesCount, totalSupply - supplied, "");
         }
     }
 

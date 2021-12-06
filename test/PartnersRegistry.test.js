@@ -42,9 +42,11 @@ contract("PartnersRegistry", (accounts) => {
             const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry");
             const PartnersAgreementFactory = await ethers.getContractFactory("PartnersAgreementFactory");
             const MembershipFactory = await ethers.getContractFactory("MembershipFactory");
+            const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
 
             const membershipFactory = await MembershipFactory.deploy(1);
-            const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1);
+            const interactionFactory = await InteractionFactory.deploy();
+            const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1, interactionFactory.address);
 
             partnersRegistry = await upgrades.deployProxy(
                 PartnersRegistry,
