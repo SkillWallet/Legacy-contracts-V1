@@ -17,7 +17,11 @@ const main = async () => {
     const PartnersAgreementFactory = await ethers.getContractFactory('PartnersAgreementFactory');
     const membershipFactory = await MembershipFactory.deploy(1);
     await membershipFactory.deployed();
-    const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1);
+    const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
+    const interactionFactory = await InteractionFactory.deploy();
+    await interactionFactory.deployed();
+
+    const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1, interactionFactory.address);
     await partnersAgreementFactory.deployed();
 
     const distributedTownAddress = "0xe60a5C15Cf3C4F820f9771Ea68dA8CE41376B577";
