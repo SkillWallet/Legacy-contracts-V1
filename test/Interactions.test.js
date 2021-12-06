@@ -13,6 +13,7 @@ const InteractionNFT = artifacts.require('InteractionNFT');
 const Membership = artifacts.require('Membership');
 const MembershipFactory = artifacts.require('MembershipFactory');
 const SkillWallet = artifacts.require('skill-wallet/contracts/main/SkillWallet');
+const InteractionFactory = artifacts.require('InteractionNFTFactory');
 const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
 var BN = web3.utils.BN;
 
@@ -29,10 +30,12 @@ contract('Interactions', function (accounts) {
         //this.roleUtils = await RoleUtils.new();
 
         //PartnersAgreement.link(this.roleUtils);
+        this.interactionFactory = await InteractionFactory.new();
         this.membershipFactory = await MembershipFactory.new(1);
 
         this.partnersAgreement = await PartnersAgreement.new(
             this.membershipFactory.address,
+            this.interactionFactory.address,
             {
                 version: 1,
                 owner: accounts[0],
@@ -65,6 +68,7 @@ contract('Interactions', function (accounts) {
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 3", async function () {
             const partnersAgreement = await PartnersAgreement.new(
                 this.membershipFactory.address,
+                this.interactionFactory.address,
                 {
                     version: 1,
                     owner: accounts[0],
@@ -107,6 +111,7 @@ contract('Interactions', function (accounts) {
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 2", async function () {
             const partnersAgreement = await PartnersAgreement.new(
                 this.membershipFactory.address,
+                this.interactionFactory.address,
                 {
                     version: 1,
                     owner: accounts[0],

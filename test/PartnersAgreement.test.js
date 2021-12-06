@@ -8,6 +8,7 @@ let partnersAgreement;
 let membershipFactory;
 let minimumCommunity;
 let mockOracle;
+let interactionFactory;
 
 contract('PartnersAgreement', function (accounts) {
 
@@ -23,6 +24,7 @@ contract('PartnersAgreement', function (accounts) {
     const Membership = await ethers.getContractFactory('Membership');
     const MinimumCommunity = await ethers.getContractFactory('MinimumCommunity');
     const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
+    const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
 
     linkTokenMock = await LinkToken.deploy();
     await linkTokenMock.deployed();
@@ -46,10 +48,13 @@ contract('PartnersAgreement', function (accounts) {
     await linkTokenMock.transfer(
       osmAddress,
       '2000000000000000000',
-    )
+    );
+
+    interactionFactory = await InteractionFactory.deploy();
 
     partnersAgreement = await PartnersAgreement.deploy(
       membershipFactory.address,
+      interactionFactory.address,
       {
           version: 1,
           owner: accounts[0],
@@ -85,6 +90,7 @@ contract('PartnersAgreement', function (accounts) {
 
       const pa = await PartnersAgreement.deploy(
         membershipFactory.address,
+        interactionFactory.address,
         {
             version: 1,
             owner: accounts[0],
@@ -113,6 +119,7 @@ contract('PartnersAgreement', function (accounts) {
 
       const pa = await PartnersAgreement.deploy(
         membershipFactory.address,
+        interactionFactory.address,
         {
             version: 1,
             owner: accounts[0],

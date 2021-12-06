@@ -11,6 +11,7 @@ import "../interfaces/IMembershipFactory.sol";
 import "../../../imported/CommonTypes.sol";
 import "./IActivities.sol";
 import "./IActivitiesFactory.sol";
+import "./IInteractionNFTFactory.sol";
 
 import "@openzeppelin/contracts/token/ERC721/ERC721Holder.sol";
 
@@ -73,6 +74,7 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
 
     constructor(
         address _membershipFactory,
+        address _interactionNFTFactory,
         Types.PartnersAgreementData memory pa
     ) public {
         require(
@@ -99,10 +101,11 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
                     address(this)
                 );
 
-            partnersInteractionNFTContract = new InteractionNFT(
+            partnersInteractionNFTContract = InteractionNFT(
+                IInteractionNFTFactory(_interactionNFTFactory).deployInteractionNFT(
                 pa.rolesCount,
                 pa.interactionsCount
-            );
+            ));
 
             isActive = false;
         } else {

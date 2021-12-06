@@ -29,7 +29,7 @@ library RoleUtils {
 
     function getRoleCoef(uint256 _role, uint256 _roleNum) internal pure returns (uint256) {
         if (_role == 0) return role1;
-        if (_role == 21) {
+        if (_role == 2) {
             if(_roleNum == 2) return role2 + role3;
             if(_roleNum == 3) return role2;
         }
