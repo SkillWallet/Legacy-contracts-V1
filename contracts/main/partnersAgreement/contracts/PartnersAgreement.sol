@@ -16,6 +16,10 @@ import "./IInteractionNFTFactory.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721Holder.sol";
 
 contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
+    event CoreTeamMemberAdded (address _member);
+
+    event PartnersContractAdded (address _contract);
+
     uint256 public version;
     address public owner;
 
@@ -279,6 +283,8 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
             "Only the owner of the contract can import it!"
         );
         partnersContracts.push(contractAddress);
+
+        emit PartnersContractAdded(contractAddress);
     }
 
     function addNewCoreTeamMembers(address member)
@@ -293,6 +299,8 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         );
         coreTeamMemberWhitelist.push(member);
         isCoreTeamMember[member] = true;
+
+        emit CoreTeamMemberAdded(member);
     }
 
     function getCoreTeamMembers()
