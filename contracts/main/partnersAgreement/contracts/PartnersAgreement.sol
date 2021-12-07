@@ -88,8 +88,16 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         coreTeamMembersCount = pa.coreTeamMembersCount;
         interactionsQueryServer = pa.interactionsQueryServer;
 
-        for (uint256 i = 0; i < pa.partnersContracts.length; i++)
-            partnersContracts.push(pa.partnersContracts[i]);
+        for (uint256 i = 0; i < pa.partnersContracts.length; i++) {
+            if(partnersContracts[i] != address(0)) {
+                IOwnable con = IOwnable(partnersContracts[i]);
+                require(
+                        con.owner() == pa.owner,
+                        "Only the owner of the contract can import it!"
+                );
+                partnersContracts.push(pa.partnersContracts[i]);
+            }
+        }
 
         skillWallet = ISkillWallet(
             ICommunity(communityAddress).getSkillWalletAddress()
