@@ -19,6 +19,8 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
     event CoreTeamMemberAdded (address _member);
 
     event PartnersContractAdded (address _contract);
+    
+    event UrlAdded (string _url);
 
     uint256 public version;
     address public owner;
@@ -186,6 +188,8 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
 
         urlIds[urlHash] = urls.length;
         urls.push(_url);
+
+        emit UrlAdded(_url);
     }
 
     function removeURL(string memory _url)
