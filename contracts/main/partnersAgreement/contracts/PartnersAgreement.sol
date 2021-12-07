@@ -301,6 +301,8 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
             coreTeamMembersCount > coreTeamMemberWhitelist.length,
             "Core team member spots are filled."
         );
+        require(!isCoreTeamMember[member], "Member already added");
+
         coreTeamMemberWhitelist.push(member);
         isCoreTeamMember[member] = true;
 
