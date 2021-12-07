@@ -89,12 +89,13 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         interactionsQueryServer = pa.interactionsQueryServer;
 
         for (uint256 i = 0; i < pa.partnersContracts.length; i++) {
-            if(partnersContracts[i] != address(0)) {
-                IOwnable con = IOwnable(partnersContracts[i]);
-                require(
-                        con.owner() == pa.owner,
-                        "Only the owner of the contract can import it!"
-                );
+            if(pa.partnersContracts[i] != address(0)) {
+                if(pa.partnersContracts[i] != pa.communityAddress) {
+                    require(
+                            IOwnable(pa.partnersContracts[i]).owner() == pa.owner,
+                            "Only the owner of the contract can import it!"
+                    );
+                }
                 partnersContracts.push(pa.partnersContracts[i]);
             }
         }
