@@ -90,9 +90,9 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         if (partnersContractAddress == address(0))
             partnersContractAddress = communityAddress;
 
-        address[] storage partnersContracts;
-        partnersContracts.push(partnersContractAddress);
-        address[] storage whitelistMembers;
+        address[] memory partnersContracts = new address[](1);
+        partnersContracts[0] = partnersContractAddress;
+        address[] memory whitelistMembers = new address[](0);
         address paAddr = IPartnersAgreementFactory(partnersAgreementFactory)
             .createPartnersAgreement(
                 membershipFactory,

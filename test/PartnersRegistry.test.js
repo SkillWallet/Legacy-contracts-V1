@@ -12,6 +12,9 @@ let minimumCommunity;
 let distributedTownMock;
 let agreementAddress;
 
+let contract1;
+let contract2;
+
 const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
 
 contract("PartnersRegistry", (accounts) => {
@@ -78,18 +81,25 @@ contract("PartnersRegistry", (accounts) => {
             console.log(agreementAddress);
             const agreement = await ethers.getContractAt("PartnersAgreement", agreementAddress);
             await agreement.activatePA();
+            const partnersContracts = await agreement.getImportedAddresses();
 
             expect(agreementAddress).not.to.equal(ZERO_ADDRESS);
             expect(String(await partnersRegistry.agreementIds(agreementAddress))).to.equal("0");
             expect(String(await agreement.version())).to.equal("1");
+            expect(partnersContracts.length).to.equal(1);
+            expect(partnersContracts[0]).to.equal(minimumCommunity.address);               
         });
         it("Should create 2 more agreements", async () => {
+            const MockPartnersContract = await ethers.getContractFactory("MockPartnersContract");
+            contract1 = await MockPartnersContract.deploy();
+            contract2 = await MockPartnersContract.deploy();
+
             await partnersRegistry.create(
                 metadataUrl,
                 1,
                 2,
                 100,
-                ZERO_ADDRESS,
+                contract1.address,
                 10,
                 3
             );
@@ -101,7 +111,7 @@ contract("PartnersRegistry", (accounts) => {
                 1,
                 2,
                 100,
-                ZERO_ADDRESS,
+                contract2.address,
                 10,
                 3
             );
@@ -112,6 +122,28 @@ contract("PartnersRegistry", (accounts) => {
             expect(String(await partnersRegistry.agreementIds(agreementAddress1))).to.equal("1");
             expect(agreementAddress2).not.to.equal(ZERO_ADDRESS);
             expect(String(await partnersRegistry.agreementIds(agreementAddress2))).to.equal("2");
+        });
+        it("Should have created PAs with unique partners contracts", async () => {
+            const agreementAddress0 = await partnersRegistry.agreements(0);
+            const agreementAddress1 = await partnersRegistry.agreements(1);
+            const agreementAddress2 = await partnersRegistry.agreements(2);
+
+            const agreement0 = await ethers.getContractAt("PartnersAgreement", agreementAddress0);
+            const partnersContracts0 = await agreement0.getImportedAddresses();
+            const agreement1 = await ethers.getContractAt("PartnersAgreement", agreementAddress1);
+            await agreement1.activatePA();
+            const partnersContracts1 = await agreement1.getImportedAddresses();
+            const agreement2 = await ethers.getContractAt("PartnersAgreement", agreementAddress2);
+            await agreement2.activatePA();
+            const partnersContracts2 = await agreement2.getImportedAddresses();
+
+            expect(partnersContracts0.length).to.equal(1);
+            expect(partnersContracts1.length).to.equal(1);
+            expect(partnersContracts2.length).to.equal(1);
+
+            expect(partnersContracts0[0]).to.equal(minimumCommunity.address);            
+            expect(partnersContracts1[0]).to.equal(contract1.address);
+            expect(partnersContracts2[0]).to.equal(contract2.address);
         });
     });
     describe("Partners Agreement Migrations", async () => {
