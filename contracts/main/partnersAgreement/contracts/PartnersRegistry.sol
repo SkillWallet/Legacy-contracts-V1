@@ -61,7 +61,9 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         uint256 numberOfActions,
         address partnersContractAddress,
         uint256 membersAllowed,
-        uint256 coreTeamMembers
+        uint256 coreTeamMembers,
+        bytes32[] memory additionalFields,
+        string[] memory additionalStrings
     ) public override {
         require(
             template >= 0 && template <= 2,
@@ -108,7 +110,9 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
                     coreTeamMembers,
                     whitelistMembers,
                     interactionsQueryServer
-                )
+                ),
+                additionalFields,
+                additionalStrings
             );
 
         agreementIds[paAddr] = agreements.length;
@@ -128,6 +132,9 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         Types.PartnersAgreementData memory pa = IPartnersAgreement(_agreement)
             .getAgreementData();
 
+        (bytes32[] memory addFields, string[] memory addStrings) = IPartnersAgreement(_agreement).getAdditionalFields();
+
+
         require(pa.version < version, "already latest version");
         require(pa.owner == msg.sender, "not agreement owner");
 
@@ -136,7 +143,9 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         address agreement = IPartnersAgreementFactory(partnersAgreementFactory)
             .createPartnersAgreement(
                 membershipFactory,
-                pa
+                pa,
+                addFields,
+                addStrings
             );
 
         agreements[agreementId] = agreement;

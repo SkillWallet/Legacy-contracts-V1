@@ -48,7 +48,9 @@ contract('Interactions', function (accounts) {
                 coreTeamMembersCount: 3,
                 whitelistedTeamMembers: [ZERO_ADDRESS],
                 interactionsQueryServer: accounts[3]
-            }
+            },
+            [],
+            []
         );
 
         this.membership = await Membership.at(await this.partnersAgreement.membershipAddress());
@@ -81,7 +83,9 @@ contract('Interactions', function (accounts) {
                     coreTeamMembersCount: 3,
                     whitelistedTeamMembers: [],
                     interactionsQueryServer: accounts[3]
-                }
+                },
+                [],
+                []
             );
 
             const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
@@ -125,6 +129,8 @@ contract('Interactions', function (accounts) {
                     whitelistedTeamMembers: [],
                     interactionsQueryServer: accounts[3]
                 },
+                [],
+                [],
                 { from: accounts[0] }
             );
 

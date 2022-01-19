@@ -1,5 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
+pragma experimental ABIEncoderV2;
 
 interface IPartnersRegistry {
     event PartnersAgreementCreated(
@@ -23,7 +24,9 @@ interface IPartnersRegistry {
         uint256 numberOfActions,
         address partnersContractAddress,
         uint256 membersAllowed,
-        uint256 coreTeamMembers
+        uint256 coreTeamMembers,
+        bytes32[] memory additionalFields,
+        string[] memory additionalStrings
     ) external;
 
     function migrate(address _agreement) external;
