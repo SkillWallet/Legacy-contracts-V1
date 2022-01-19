@@ -67,7 +67,9 @@ contract("Activities", (accounts) => {
             100,
             ZERO_ADDRESS,
             10,
-            5
+            5,
+            [],
+            []
         );
 
         const agreementAddress = await partnersRegistry.agreements(0);

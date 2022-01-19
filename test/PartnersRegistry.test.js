@@ -74,7 +74,9 @@ contract("PartnersRegistry", (accounts) => {
                 100,
                 ZERO_ADDRESS,
                 10,
-                3
+                3,
+                [],
+                []
             );
 
             agreementAddress = await partnersRegistry.agreements(0);
@@ -101,7 +103,9 @@ contract("PartnersRegistry", (accounts) => {
                 100,
                 contract1.address,
                 10,
-                3
+                3,
+                [],
+                []
             );
 
             const agreementAddress1 = await partnersRegistry.agreements(1);
@@ -113,7 +117,9 @@ contract("PartnersRegistry", (accounts) => {
                 100,
                 contract2.address,
                 10,
-                3
+                3,
+                [],
+                []
             );
 
             const agreementAddress2 = await partnersRegistry.agreements(2);

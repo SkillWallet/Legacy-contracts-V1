@@ -47,4 +47,6 @@ interface IPartnersAgreement {
         external
         view
         returns (Types.PartnersAgreementData memory data);
+
+    function getAdditionalFields() external view returns (bytes32[] memory, string[] memory);
 }

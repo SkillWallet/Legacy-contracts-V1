@@ -6,6 +6,8 @@ import "../../../imported/CommonTypes.sol";
 interface IPartnersAgreementFactory {
     function createPartnersAgreement(
         address _membershipFactory,
-        Types.PartnersAgreementData memory data
+        Types.PartnersAgreementData memory data,
+        bytes32[] memory additionalFields,
+        string[] memory additionalStrings
     ) external returns (address);
 }

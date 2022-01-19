@@ -2,20 +2,20 @@
 pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
-import "./IOwnable.sol";
+import "../IOwnable.sol";
 
-import "./InteractionNFT.sol";
-import "../../../imported/ICommunity.sol";
-import "../../ISkillWallet.sol";
-import "../interfaces/IMembershipFactory.sol";
-import "../../../imported/CommonTypes.sol";
-import "./IActivities.sol";
-import "./IActivitiesFactory.sol";
-import "./IInteractionNFTFactory.sol";
+import "../InteractionNFT.sol";
+import "../../../../imported/ICommunity.sol";
+import "../../../ISkillWallet.sol";
+import "../../interfaces/IMembershipFactory.sol";
+import "../../../../imported/CommonTypes.sol";
+import "../IActivities.sol";
+import "../IActivitiesFactory.sol";
+import "../IInteractionNFTFactory.sol";
 
 import "@openzeppelin/contracts/token/ERC721/ERC721Holder.sol";
 
-contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
+contract PartnersAgreementAddFields is IPartnersAgreement, ERC721Holder {
     event CoreTeamMemberAdded (address _member);
 
     event PartnersContractAdded (address _contract);
@@ -23,7 +23,12 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
     event UrlAdded (string _url);
 
     uint256 public version;
-    uint256 private additionalFieldsNum = 0;
+    uint256 public constant additionalFieldsNum = 2;
+    uint256 public constant additionalStringsNum = 1;
+
+    string public additionalFieldString;
+    uint256 public additionalFieldUint;
+    address public additionalFieldAddress;
 
     address public owner;
 
@@ -91,7 +96,8 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
             pa.rolesCount == 2 || pa.rolesCount == 3,
             "Only 2 or 3 roles accepted"
         );
-        require(additionalFields.length == additionalFieldsNum);
+        require(additionalFields.length == additionalFieldsNum, "wrong additional fields count");
+        require(additionalStrings.length == additionalStringsNum, "wrong additional strings count");
 
         version = pa.version;
         rolesCount = pa.rolesCount;
@@ -101,10 +107,11 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         interactionsQueryServer = pa.interactionsQueryServer;
         
         // assign additional fields once they are added
-        /*
-        additionalFieldString = String(additionalFields[i]);
-        additionalFieldUint = 
-        */
+        
+        additionalFieldString = additionalStrings[0];
+        additionalFieldUint = uint256(additionalFields[0]);
+        additionalFieldAddress = address(uint160(uint256(additionalFields[1])));
+    
 
         for (uint256 i = 0; i < pa.partnersContracts.length; i++) {
             if(pa.partnersContracts[i] != address(0)) {
@@ -366,11 +373,13 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
     }
 
     function getAdditionalFields() public override view returns (bytes32[] memory, string[] memory) {
-        return (new bytes32[](0), new string[](0));
+        bytes32[] memory fields = new bytes32[](additionalFieldsNum);
+        string[] memory stringFields = new string[](additionalStringsNum);
 
-        // once fields are added
-        /* 
-        return [bytes32()] 
-        */
+        stringFields[0] = additionalFieldString;
+        fields[0] = bytes32(additionalFieldUint);
+        fields[1] = bytes32(uint256(additionalFieldAddress));
+
+        return (fields, stringFields);
     }
 }

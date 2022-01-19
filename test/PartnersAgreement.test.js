@@ -67,7 +67,9 @@ contract('PartnersAgreement', function (accounts) {
           coreTeamMembersCount: 3,
           whitelistedTeamMembers: [ZERO_ADDRESS],
           interactionsQueryServer: accounts[3]
-      }
+      },
+      [],
+      []
     );
 
     membership = await Membership.attach(await partnersAgreement.membershipAddress());
@@ -103,7 +105,9 @@ contract('PartnersAgreement', function (accounts) {
             coreTeamMembersCount: 3,
             whitelistedTeamMembers: [ZERO_ADDRESS],
             interactionsQueryServer: accounts[3]
-        }
+        },
+        [],
+        []
       );
 
       await pa.deployed();
@@ -132,7 +136,9 @@ contract('PartnersAgreement', function (accounts) {
             coreTeamMembersCount: 3,
             whitelistedTeamMembers: [ZERO_ADDRESS],
             interactionsQueryServer: accounts[3]
-        }
+        },
+        [],
+        []
       );
 
       await pa.deployed();
@@ -270,26 +276,26 @@ contract('PartnersAgreement', function (accounts) {
     });
 
     it("Should fail if the core team member hasn't created SW yet", async () => {
-      expect(
+      await expect(
         partnersAgreement.connect(coreTeamMember1).addNewCoreTeamMembers(coreTeamMember2.address)
       ).to.be.revertedWith("SkillWallet not created by the whitelisted member");
     });
 
     it("Should fail if the core team member hasn't created SW yet", async () => {
-      expect(
+      await expect(
         partnersAgreement.connect(coreTeamMember1).addNewCoreTeamMembers(coreTeamMember2.address)
       ).to.be.revertedWith("SkillWallet not created by the whitelisted member");
     });
 
     it("Should fail if unlisted core team member attepts to add other core team members", async () => {
-      expect(
+      await expect(
         partnersAgreement.connect(coreTeamMember2).addNewCoreTeamMembers(coreTeamMember2.address)
-      ).to.be.revertedWith("SkillWallet not created by the whitelisted member");
+      ).to.be.revertedWith("The signer is not whitelisted as core team member");
     });
     it("Should fail if core team member spots are filled", async () => {
       await partnersAgreement.addNewCoreTeamMembers(coreTeamMember2.address);
       const coreTeamMembers = await partnersAgreement.getCoreTeamMembers();
-      expect(
+      await expect(
         partnersAgreement.addNewCoreTeamMembers(notACoreTeamMember.address)
       ).to.be.revertedWith("Core team member spots are filled.");
       expect(coreTeamMembers.length).to.eq(3);
