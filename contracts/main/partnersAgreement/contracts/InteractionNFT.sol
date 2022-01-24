@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "../../utils/RoleUtils.sol";
 import "../../utils/ERC1155Supply.sol";
 import "../../ISkillWallet.sol";
-import "../../partnersAgreement/interfaces/IPartnersAgreement.sol";
-import "../../../imported/ICommunity.sol";
+import "./PartnersAgreement.sol";
+import "../../ICommunity.sol";
 
 contract InteractionNFT is ERC1155Supply {
     event MarkedAsInactive();
@@ -14,7 +14,11 @@ contract InteractionNFT is ERC1155Supply {
     mapping(address => uint256) inactiveInteractions;
     address partnersAgreementAddress;
 
-    constructor(address pa, uint256 rolesCount, uint256 totalSupply) public ERC1155("") {
+    constructor(
+        address pa,
+        uint256 rolesCount,
+        uint256 totalSupply
+    ) public ERC1155("") {
         require(rolesCount == 2 || rolesCount == 3, "Invalid roles count!");
 
         uint256[3] memory roleCoefs = RoleUtils.getRolesCoefs(rolesCount);
@@ -29,6 +33,22 @@ contract InteractionNFT is ERC1155Supply {
         if (supplied < totalSupply) {
             _mint(pa, rolesCount, totalSupply - supplied, "");
         }
+
+        partnersAgreementAddress = pa;
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 id,
+        uint256 amount,
+        bytes calldata data
+    ) public override {
+        require(
+            msg.sender == from && from == partnersAgreementAddress,
+            "Only PartnersAgreement can transfer Interactio NFTs"
+        );
+        super.safeTransferFrom(from, to, id, amount, data);
     }
 
     //TODO: call from token distribution, once there are funds distributed for a certain amount of interactions
@@ -40,10 +60,8 @@ contract InteractionNFT is ERC1155Supply {
                     owner,
                     uint256(
                         ISkillWallet(
-                            ICommunity(
-                                IPartnersAgreement(msg.sender)
-                                    .communityAddress()
-                            ).getSkillWalletAddress()
+                            IPartnersAgreement(msg.sender)
+                                .getSkillWalletAddress()
                         ).getRole(owner)
                     )
                 )
@@ -56,10 +74,8 @@ contract InteractionNFT is ERC1155Supply {
 
     function getActiveInteractions(address user) public view returns (uint256) {
         uint256 role = uint256(
-            ISkillWallet(
-                ICommunity(IPartnersAgreement(msg.sender).communityAddress())
-                    .getSkillWalletAddress()
-            ).getRole(user)
+            ISkillWallet(IPartnersAgreement(msg.sender).getSkillWalletAddress())
+                .getRole(user)
         );
         require(role != uint256(RoleUtils.Roles.NONE), "user has no role");
 

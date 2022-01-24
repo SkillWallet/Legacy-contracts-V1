@@ -24,7 +24,7 @@
     "skill",
     "wallet"
   ],
-  "author": "DiTo Labs <team@distributed.town>",
+  "author": "SkillWallet Inc <team@skillwallet.id>",
   "homepage": "https://skillwallet.id/",
   "devDependencies": {
     "@chainlink/token": "^1.1.0",

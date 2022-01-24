@@ -83,11 +83,6 @@ interface ISkillWallet is IERC721Upgradeable, IERC721ReceiverUpgradeable {
         view
         returns (string memory);
 
-    function getContractAddressPerAction(Types.Action action, address caller)
-        external
-        view
-        returns (address);
-
     function isSkillWalletActivated(uint256 skillWalletId)
         external
         view

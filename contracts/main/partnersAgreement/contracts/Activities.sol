@@ -5,6 +5,8 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "../interfaces/IPartnersAgreement.sol";
+import "./InteractionNFT.sol";
 
 contract Activities is ERC721 {
     using Counters for Counters.Counter;
@@ -37,11 +39,11 @@ contract Activities is ERC721 {
 
     address public partnersAgreement;
     address public botAddress;
-    mapping (uint256 => Type) public idTypes;
+    mapping(uint256 => Type) public idTypes;
     Counters.Counter private idCounter;
-    mapping (uint256 => uint256) public activityToTask;
+    mapping(uint256 => uint256) public activityToTask;
     Task[] public tasks;
-    mapping (uint256 => bool) public isFinalized;
+    mapping(uint256 => bool) public isFinalized;
 
     constructor(address _pa, address _bot) public ERC721("Activities", "ACT") {
         require(_pa != address(0), "no PA address");
@@ -62,10 +64,13 @@ contract Activities is ERC721 {
 
     function finalizeActivity(uint256 _id, string memory _uri) public {
         require(msg.sender == botAddress, "noy bot");
-        require(idTypes[_id] != Type.None && idTypes[_id] != Type.CoreTeamTask, "activity doesnt exist");
+        require(
+            idTypes[_id] != Type.None && idTypes[_id] != Type.CoreTeamTask,
+            "activity doesnt exist"
+        );
         require(!isFinalized[_id], "already finalized");
 
-        if(bytes(_uri).length > 0) {
+        if (bytes(_uri).length > 0) {
             _setTokenURI(_id, _uri);
         }
 
@@ -74,7 +79,10 @@ contract Activities is ERC721 {
         emit ActivityFinalized(_id, idTypes[_id], _uri);
     }
 
-    function _addActivity(Type _type, string memory _uri) internal returns (uint256) {
+    function _addActivity(Type _type, string memory _uri)
+        internal
+        returns (uint256)
+    {
         uint256 tokenId = idCounter.current();
 
         _safeMint(partnersAgreement, tokenId);
@@ -96,13 +104,24 @@ contract Activities is ERC721 {
         uint256 activityId = _addActivity(Type.CoreTeamTask, _uri);
         uint256 taskId = tasks.length;
 
-        tasks.push(Task(activityId, block.timestamp, TaskStatus.Created, _creator, address(0)));
-        activityToTask[activityId] = taskId;     
+        tasks.push(
+            Task(
+                activityId,
+                block.timestamp,
+                TaskStatus.Created,
+                _creator,
+                address(0)
+            )
+        );
+        activityToTask[activityId] = taskId;
     }
 
     function takeTask(uint256 _activityId, address _taker) public {
         require(msg.sender == partnersAgreement, "Not PA");
-        require(idTypes[_activityId] == Type.CoreTeamTask, "Not core team task");
+        require(
+            idTypes[_activityId] == Type.CoreTeamTask,
+            "Not core team task"
+        );
 
         uint256 taskId = activityToTask[_activityId];
         require(tasks[taskId].status == TaskStatus.Created, "wrong status");
@@ -115,7 +134,10 @@ contract Activities is ERC721 {
 
     function finilizeTask(uint256 _activityId, address _taker) public {
         require(msg.sender == partnersAgreement, "Not PA");
-        require(idTypes[_activityId] == Type.CoreTeamTask, "Not core team task");
+        require(
+            idTypes[_activityId] == Type.CoreTeamTask,
+            "Not core team task"
+        );
 
         uint256 taskId = activityToTask[_activityId];
         require(tasks[taskId].status == TaskStatus.Taken, "wrong status");
@@ -124,12 +146,18 @@ contract Activities is ERC721 {
         tasks[taskId].status = TaskStatus.Finished;
         isFinalized[_activityId] = true;
 
+        _transferInteractionNFT(tasks[taskId].taker);
+
         emit TaskFinalized(_activityId, taskId, _taker);
     }
 
     //getters
 
-    function getActivitiesByType(uint256 _type) public view returns (uint256[] memory) {
+    function getActivitiesByType(uint256 _type)
+        public
+        view
+        returns (uint256[] memory)
+    {
         require(_type <= 3, "Wrong type");
 
         uint256[] memory ids = new uint256[](idCounter.current());
@@ -151,9 +179,23 @@ contract Activities is ERC721 {
         return idsTrimmed;
     }
 
-    function getTaskByActivityId(uint256 _activityId) public view returns (Task memory) {
-        require(idTypes[_activityId] == Type.CoreTeamTask, "Not core team task");
+    function getTaskByActivityId(uint256 _activityId)
+        public
+        view
+        returns (Task memory)
+    {
+        require(
+            idTypes[_activityId] == Type.CoreTeamTask,
+            "Not core team task"
+        );
 
         return tasks[activityToTask[_activityId]];
+    }
+
+    function _transferInteractionNFT(address receiver) private {
+        IPartnersAgreement(partnersAgreement).transferInteractionNFTs(
+            receiver,
+            1
+        );
     }
 }

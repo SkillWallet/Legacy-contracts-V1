@@ -1,5 +1,5 @@
 // const skillWalletAddress = '0x1e79bE396CE37F7eB43aF0Ef0ffb3124F3fD23eF'
-const skillWalletAddress = '0xd43696bAc9B4331f18b71c0F80DD56aEc130B808' // upgradable
+const skillWalletAddress = '0x809c916C6F5B1a9C11A6A4D330a198713c8cb1C0' // upgradable
 const dito = '0xe60a5C15Cf3C4F820f9771Ea68dA8CE41376B577'
 // const communityAddress = '0xec1380558d5A9e25bf258f2e341C6bF562ca7480'
 const communityAddress = '0xCBD8DA830262a287d73fF3eF07b0A0b350453C00' //upgradable SW
@@ -60,8 +60,7 @@ async function joinCommunity() {
   const wei = ethers.utils.parseEther('2220').toString()
   const joinedTx = await communityContract.joinNewMember(
     url,
-    1,
-    wei,
+    1
   )
   const joinCommunityTxResult = await joinedTx.wait()
   const { events } = joinCommunityTxResult
@@ -204,8 +203,8 @@ async function getCommunity(tokenID) {
 }
 
 async function test() {
-  // await getOSMAddr();
-  const tokenId = 14;
+  await getOSMAddr();
+  // const tokenId = 14;
   
   // await getCommunity(tokenId);
   // // // const tokenId = await joinCommunity()

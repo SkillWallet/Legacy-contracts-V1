@@ -9,6 +9,7 @@ const { ethers } = require("hardhat");
 let factory;
 let activities;
 let agreement;
+let community;
 
 const URI = "https://hub.textile.io/ipfs/bafkreiaks3kjggtxqaj3ixk6ce2difaxj5r6lbemx5kcqdkdtub5vwv5mi";
 const URI_FIN = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
@@ -23,20 +24,12 @@ contract("Activities", (accounts) => {
         const MockOracle = await ethers.getContractFactory("MockOracle");
         const mockOracle = await MockOracle.deploy(linkTokenMock.address);
 
-        const DistributedTownMock = await ethers.getContractFactory("DistributedTownMock");
-        const distributedTownMock = await DistributedTownMock.deploy();
-
         const SkillWallet = await ethers.getContractFactory("SkillWallet");
         const skillWallet = await upgrades.deployProxy(
             SkillWallet,
             [linkTokenMock.address, mockOracle.address]
         );
         await skillWallet.deployed();
-
-        const MinimumCommunity = await ethers.getContractFactory("MinimumCommunity");
-        const minimumCommunity = await MinimumCommunity.deploy(skillWallet.address);
-        await minimumCommunity.joinNewMember('', 1, 2000);
-        await distributedTownMock.addCommunity(accounts[0], minimumCommunity.address);
 
         //deploy pr
         const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
@@ -51,7 +44,7 @@ contract("Activities", (accounts) => {
         const partnersRegistry = await upgrades.deployProxy(
             PartnersRegistry,
             [
-                distributedTownMock.address,
+                skillWallet.address,
                 partnersAgreementFactory.address,
                 membershipFactory.address,
                 accounts[3]
@@ -67,27 +60,27 @@ contract("Activities", (accounts) => {
             100,
             ZERO_ADDRESS,
             10,
-            5
+            5,
+            false
         );
 
+        //TODO: Milena!
         const agreementAddress = await partnersRegistry.agreements(0);
         agreement = await ethers.getContractAt("PartnersAgreement", agreementAddress);
+        const communityAddress = await agreement.communityAddress();
+        community = await ethers.getContractAt('Community', communityAddress);
+        await community.joinNewMember('url', 1);
         await agreement.activatePA();
 
 
-        
-
         //create skillwallets and add core team members
         for (let i = 2; i <= 5; i++) {
-            await skillWallet.create(
-                accounts[i],
+            const coreTM = await ethers.getSigner(accounts[i]);
+
+            await community.connect(coreTM).joinNewMember(
                 metadataUrl,
                 1,
-                true
             );
-
-            const coreTM = await ethers.getSigner(accounts[i]);
-            await skillWallet.connect(coreTM).claim();
 
             await agreement.addNewCoreTeamMembers(accounts[i]);
 
@@ -161,7 +154,7 @@ contract("Activities", (accounts) => {
             const agreementTM1 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember1);
             const agreementTM2 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember2);
 
-            await agreementTM1.createActivity(1 ,URI);
+            await agreementTM1.createActivity(1, URI);
             await agreementTM2.createActivity(1, URI);
 
             const polls = await activities.getActivitiesByType(2);
@@ -226,6 +219,8 @@ contract("Activities", (accounts) => {
         it("Should allow to finalize taken task", async () => {
             const teamMember = await ethers.getSigner(accounts[4]);
             const agreementTM = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember);
+            const intNFT = await agreementTM.getInteractionNFTContractAddress();
+            const interactionNFT = await ethers.getContractAt("InteractionNFT", intNFT, teamMember);
 
             await agreementTM.finilizeTask(3);
 
@@ -237,6 +232,8 @@ contract("Activities", (accounts) => {
             expect(task1.taker).to.equal(accounts[4]);
 
             expect(await activities.isFinalized(3)).to.equal(true);
+            const intNFTBalanceTaker = await interactionNFT.balanceOf(task1.taker, 1);
+            expect(intNFTBalanceTaker.toString()).to.equal('1');
         });
         it("Should not allow to finalze task that is not taken", async () => {
             const teamMember1 = await ethers.getSigner(accounts[3]);

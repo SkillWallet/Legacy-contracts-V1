@@ -5,22 +5,23 @@ pragma experimental ABIEncoderV2;
 import "./IOwnable.sol";
 
 import "./InteractionNFT.sol";
-import "../../../imported/ICommunity.sol";
 import "../../ISkillWallet.sol";
 import "../interfaces/IMembershipFactory.sol";
+import "../interfaces/IPartnersAgreement.sol";
 import "../../../imported/CommonTypes.sol";
 import "./IActivities.sol";
 import "./IActivitiesFactory.sol";
 import "./IInteractionNFTFactory.sol";
+import "../../ICommunity.sol";
 
 import "@openzeppelin/contracts/token/ERC721/ERC721Holder.sol";
 
 contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
-    event CoreTeamMemberAdded (address _member);
+    event CoreTeamMemberAdded(address _member);
 
-    event PartnersContractAdded (address _contract);
-    
-    event UrlAdded (string _url);
+    event PartnersContractAdded(address _contract);
+
+    event UrlAdded(string _url);
 
     uint256 public version;
     address public owner;
@@ -70,15 +71,9 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         _;
     }
 
-    modifier onlyInteractionsQueryServer() {
-        require(
-            msg.sender == interactionsQueryServer,
-            "Only interactions query server!"
-        );
-        _;
-    }
 
     constructor(
+        address skillWalletAddr,
         address _membershipFactory,
         address _interactionNFTFactory,
         Types.PartnersAgreementData memory pa
@@ -95,32 +90,26 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         interactionsQueryServer = pa.interactionsQueryServer;
 
         for (uint256 i = 0; i < pa.partnersContracts.length; i++) {
-            if(pa.partnersContracts[i] != address(0)) {
-                if(pa.partnersContracts[i] != pa.communityAddress) {
+            if (pa.partnersContracts[i] != address(0)) {
+                if (pa.partnersContracts[i] != pa.communityAddress) {
                     require(
-                            IOwnable(pa.partnersContracts[i]).owner() == pa.owner,
-                            "Only the owner of the contract can import it!"
+                        IOwnable(pa.partnersContracts[i]).owner() == pa.owner,
+                        "Only the owner of the contract can import it!"
                     );
                 }
                 partnersContracts.push(pa.partnersContracts[i]);
             }
         }
 
-        skillWallet = ISkillWallet(
-            ICommunity(communityAddress).getSkillWalletAddress()
-        );
+        skillWallet = ISkillWallet(skillWalletAddr);
         if (pa.interactionContract == address(0)) {
             membershipAddress = IMembershipFactory(_membershipFactory)
-                .createMembership(
-                    ICommunity(communityAddress).getSkillWalletAddress(),
-                    address(this)
-                );
+                .createMembership(skillWalletAddr, address(this));
 
             partnersInteractionNFTContract = InteractionNFT(
-                IInteractionNFTFactory(_interactionNFTFactory).deployInteractionNFT(
-                pa.rolesCount,
-                pa.interactionsCount
-            ));
+                IInteractionNFTFactory(_interactionNFTFactory)
+                    .deployInteractionNFT(pa.rolesCount, pa.interactionsCount)
+            );
 
             isActive = false;
         } else {
@@ -137,10 +126,12 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         }
     }
 
-    function activatePA() override public {
+    function activatePA() public override {
         require(!isActive, "PA already activated");
-        bool isMember = ICommunity(communityAddress).isMember(owner);
-        require(isMember, "Owner not yet a member of the community.");
+        require(
+            ICommunity(communityAddress).isMember(owner),
+            "Owner not yet a member of the community."
+        );
         isActive = true;
         isCoreTeamMember[msg.sender] = true;
         coreTeamMemberWhitelist.push(msg.sender);
@@ -174,7 +165,12 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         activities.finilizeTask(_activityId, msg.sender);
     }
 
-    function addURL(string memory _url) public override onlyActive onlyCoreTeamMember {
+    function addURL(string memory _url)
+        public
+        override
+        onlyActive
+        onlyCoreTeamMember
+    {
         require(msg.sender == owner, "not owner");
 
         bytes32 urlHash = keccak256(bytes(_url));
@@ -220,7 +216,12 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         return urls;
     }
 
-    function isURLListed(string memory _url) public view override returns (bool) {
+    function isURLListed(string memory _url)
+        public
+        view
+        override
+        returns (bool)
+    {
         if (urls.length == 0) return false;
 
         bytes32 urlHash = keccak256(bytes(_url));
@@ -241,21 +242,25 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         return address(partnersInteractionNFTContract);
     }
 
-    function getAllMembers() public view onlyActive override returns (address[] memory) {
-        ICommunity community = ICommunity(communityAddress);
-        return community.getMemberAddresses();
-    }
-
+    function getAllMembers()
+        public
+        view
+        override
+        // onlyActive
+        returns (address[] memory)
+    {
+        return ICommunity(communityAddress).getMemberAddresses();
+    } 
+    
     function transferInteractionNFTs(address user, uint256 amountOfInteractions)
         public
         override
         onlyActive
-        onlyInteractionsQueryServer
     {
+        require(msg.sender == address(activities), "Only activities!");
         require(user != address(0), "Invalid user address");
         require(amountOfInteractions > 0, "Invalid amount of interactions");
-        ICommunity community = ICommunity(communityAddress);
-        require(community.isMember(user), "Invalid user address");
+        require(ICommunity(communityAddress).isMember(user), "Invalid user address");
         partnersInteractionNFTContract.safeTransferFrom(
             address(this),
             user,
@@ -327,6 +332,18 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         returns (address[] memory)
     {
         return partnersContracts;
+    }
+    function getActivitiesAddress()
+        public
+        view
+        override
+        onlyActive
+        returns (address)
+    {
+        return address(activities);
+    }
+    function getSkillWalletAddress() public view override returns (address) {
+        return address(skillWallet);
     }
 
     // add core tema members array

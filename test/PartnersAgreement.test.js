@@ -9,12 +9,14 @@ let membershipFactory;
 let minimumCommunity;
 let mockOracle;
 let interactionFactory;
+let paOwner2Signee;
 
 contract('PartnersAgreement', function (accounts) {
 
   before(async function () {
-    [signer, paOwner, coreTeamMember1, coreTeamMember2, coreTeamMember2, notACoreTeamMember, ...addrs] = await ethers.getSigners();
+    [signer, paOwner, paOwner2, coreTeamMember1, coreTeamMember2, coreTeamMember2, notACoreTeamMember, ...addrs] = await ethers.getSigners();
     erc1820 = await singletons.ERC1820Registry(signer.address);
+    paOwner2Signee = paOwner2;
 
     const LinkToken = await ethers.getContractFactory("LinkToken");
     const MockOracle = await ethers.getContractFactory("MockOracle");
@@ -22,7 +24,7 @@ contract('PartnersAgreement', function (accounts) {
     const OffchainSignatureMechanism = await ethers.getContractFactory('OffchainSignatureMechanism');
     const MembershipFactory = await ethers.getContractFactory('MembershipFactory');
     const Membership = await ethers.getContractFactory('Membership');
-    const MinimumCommunity = await ethers.getContractFactory('MinimumCommunity');
+    const MinimumCommunity = await ethers.getContractFactory('Community');
     const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
     const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
 
@@ -41,7 +43,15 @@ contract('PartnersAgreement', function (accounts) {
     osmAddress = await skillWallet.getOSMAddress();
     osm = await OffchainSignatureMechanism.attach(osmAddress);
 
-    minimumCommunity = await MinimumCommunity.deploy(skillWallet.address);
+    minimumCommunity = await MinimumCommunity.deploy(
+      "url",
+      1,
+      100,
+      signer.address,
+      ZERO_ADDRESS,
+      1,
+      skillWallet.address,
+      false);
 
     membershipFactory = await MembershipFactory.deploy(1);
 
@@ -53,9 +63,50 @@ contract('PartnersAgreement', function (accounts) {
     interactionFactory = await InteractionFactory.deploy();
 
     partnersAgreement = await PartnersAgreement.deploy(
+      skillWallet.address,
       membershipFactory.address,
       interactionFactory.address,
       {
+        version: 1,
+        owner: accounts[0],
+        communityAddress: minimumCommunity.address,
+        partnersContracts: [ZERO_ADDRESS],
+        rolesCount: 3,
+        interactionContract: ZERO_ADDRESS,
+        membershipContract: ZERO_ADDRESS,
+        interactionsCount: 100,
+        coreTeamMembersCount: 3,
+        whitelistedTeamMembers: [ZERO_ADDRESS],
+        interactionsQueryServer: accounts[3]
+      }
+    );
+
+    membership = await Membership.attach(await partnersAgreement.membershipAddress());
+    const community = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
+    await community.joinNewMember('', 1);
+    await partnersAgreement.activatePA();
+
+    assert.equal((await partnersAgreement.getAllMembers()).length, 1);
+
+    const isActive = await partnersAgreement.isActive();
+    assert.isTrue(isActive);
+
+    await linkTokenMock.transfer(
+      partnersAgreement.address,
+      '2000000000000000000',
+    )
+  })
+
+  describe('Create partners agreement', async function () {
+
+    it("should deploy inactive partners agreement contract", async function () {
+      const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
+
+      const pa = await PartnersAgreement.deploy(
+        skillWallet.address,
+        membershipFactory.address,
+        interactionFactory.address,
+        {
           version: 1,
           owner: accounts[0],
           communityAddress: minimumCommunity.address,
@@ -67,42 +118,6 @@ contract('PartnersAgreement', function (accounts) {
           coreTeamMembersCount: 3,
           whitelistedTeamMembers: [ZERO_ADDRESS],
           interactionsQueryServer: accounts[3]
-      }
-    );
-
-    membership = await Membership.attach(await partnersAgreement.membershipAddress());
-    const community = await MinimumCommunity.attach(partnersAgreement.communityAddress());
-    await community.joinNewMember('', 1, 2000);
-    await partnersAgreement.activatePA();
-
-    const isActive = await partnersAgreement.isActive();
-    assert.isTrue(isActive);
-
-    await linkTokenMock.transfer(
-      partnersAgreement.address,
-      '2000000000000000000',
-    )
-  })
-  describe('Create partners agreement', async function () {
-
-    it("should deploy inactive partners agreement contract", async function () {
-      const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
-
-      const pa = await PartnersAgreement.deploy(
-        membershipFactory.address,
-        interactionFactory.address,
-        {
-            version: 1,
-            owner: accounts[0],
-            communityAddress: minimumCommunity.address,
-            partnersContracts: [ZERO_ADDRESS],
-            rolesCount: 3,
-            interactionContract: ZERO_ADDRESS,
-            membershipContract: ZERO_ADDRESS,
-            interactionsCount: 100,
-            coreTeamMembersCount: 3,
-            whitelistedTeamMembers: [ZERO_ADDRESS],
-            interactionsQueryServer: accounts[3]
         }
       );
 
@@ -113,35 +128,41 @@ contract('PartnersAgreement', function (accounts) {
       expect(isActive).to.be.false;
     });
 
-    it("should deploy and activate partners agreement contract", async function () {
+    it.skip("should deploy and activate partners agreement contract", async function () {
 
       const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
 
-      const pa = await PartnersAgreement.deploy(
+      const pa = await PartnersAgreement.connect(paOwner2Signee).deploy(
+        skillWallet.address,
         membershipFactory.address,
         interactionFactory.address,
         {
-            version: 1,
-            owner: accounts[0],
-            communityAddress: minimumCommunity.address,
-            partnersContracts: [ZERO_ADDRESS],
-            rolesCount: 3,
-            interactionContract: ZERO_ADDRESS,
-            membershipContract: ZERO_ADDRESS,
-            interactionsCount: 100,
-            coreTeamMembersCount: 3,
-            whitelistedTeamMembers: [ZERO_ADDRESS],
-            interactionsQueryServer: accounts[3]
+          version: 1,
+          owner: accounts[0],
+          communityAddress: minimumCommunity.address,
+          partnersContracts: [ZERO_ADDRESS],
+          rolesCount: 3,
+          interactionContract: ZERO_ADDRESS,
+          membershipContract: ZERO_ADDRESS,
+          interactionsCount: 100,
+          coreTeamMembersCount: 3,
+          whitelistedTeamMembers: [ZERO_ADDRESS],
+          interactionsQueryServer: accounts[3]
         }
       );
 
       await pa.deployed();
       let isActive = await pa.isActive();
 
+      const mems = await pa.getAllMembers();
+      expect(mems.length).to.eq(0);
       expect(pa.address).not.to.eq(ZERO_ADDRESS);
       expect(isActive).to.be.false;
 
-      await pa.activatePA();
+      const MinimumCommunity = await ethers.getContractFactory('Community');
+      const c = await MinimumCommunity.attach(await pa.communityAddress());
+      await (await c.connect(paOwner2Signee).joinNewMember('', 1)).wait();
+      await pa.connect(paOwner2Signee).activatePA();
 
       isActive = await pa.isActive();
       expect(isActive).to.be.true;
@@ -150,13 +171,11 @@ contract('PartnersAgreement', function (accounts) {
       const interactionNFTAddress = await pa.getInteractionNFTContractAddress();
 
       expect(interactionNFTAddress).not.to.eq(ZERO_ADDRESS);
-      expect(allUsers.length).to.eq(0);
+      expect(allUsers.length).to.eq(1);
 
     });
     it('should add new contract address if owner is the signer', async function () {
 
-      console.log('isActive', await partnersAgreement.isActive());
-      console.log('isCoreTeamMember', await partnersAgreement.isCoreTeamMember(signer.address));
       // const ownable = await OwnableTestContract.new({ from: accounts[1] });
 
       // await truffleAssert.reverts(

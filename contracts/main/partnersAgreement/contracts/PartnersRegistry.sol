@@ -2,19 +2,16 @@
 pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/IPartnersRegistry.sol";
-import "../../../imported/IDistributedTown.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "../interfaces/IPartnersRegistry.sol";
 import "../interfaces/IPartnersAgreementFactory.sol";
 import "../interfaces/IPartnersAgreement.sol";
 import "../../../imported/CommonTypes.sol";
+import "../../Community.sol";
 
 contract PartnersRegistry is IPartnersRegistry, Initializable {
     //versioning
     uint256 public version;
-
-    // distributedTown contract
-    IDistributedTown distributedTown;
 
     // agreements
     address[] public agreements;
@@ -24,14 +21,15 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
     address partnersAgreementFactory;
     address membershipFactory;
     address interactionsQueryServer;
+    address skillWalletAddress;
 
     function initialize(
-        address _distributedTownAddress,
+        address _skillWalletAddress,
         address _partnersAgreementFactoryAddress,
         address _membershipFactory,
         address _interactionsQueryServer
     ) public initializer {
-        distributedTown = IDistributedTown(_distributedTownAddress);
+        skillWalletAddress = _skillWalletAddress;
         partnersAgreementFactory = _partnersAgreementFactoryAddress;
         membershipFactory = _membershipFactory;
         interactionsQueryServer = _interactionsQueryServer;
@@ -61,7 +59,8 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         uint256 numberOfActions,
         address partnersContractAddress,
         uint256 membersAllowed,
-        uint256 coreTeamMembers
+        uint256 coreTeamMembers,
+        bool isPermissioned
     ) public override {
         require(
             template >= 0 && template <= 2,
@@ -71,21 +70,16 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
             numberOfActions > 0 && numberOfActions <= 100,
             "Number of actions should be between 1 and 100"
         );
-
-        distributedTown.createCommunity(
+        address communityAddress = address(new Community(
             metadata,
             template,
             membersAllowed,
-            msg.sender
-        );
-        address communityAddress = distributedTown.getCommunityByOwner(
-            msg.sender
-        );
-
-        require(
-            communityAddress != address(0),
-            "Community failed to be created!"
-        );
+            msg.sender,
+            address(0),
+            version, 
+            skillWalletAddress,
+            isPermissioned
+        ));
 
         if (partnersContractAddress == address(0))
             partnersContractAddress = communityAddress;
@@ -95,6 +89,7 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         address[] memory whitelistMembers = new address[](0);
         address paAddr = IPartnersAgreementFactory(partnersAgreementFactory)
             .createPartnersAgreement(
+                skillWalletAddress,
                 membershipFactory,
                 Types.PartnersAgreementData(
                     version,
@@ -135,6 +130,7 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         // todo: fix hard coded core team members
         address agreement = IPartnersAgreementFactory(partnersAgreementFactory)
             .createPartnersAgreement(
+                skillWalletAddress,
                 membershipFactory,
                 pa
             );
