@@ -82,7 +82,7 @@ contract("Activities", (accounts) => {
                 1,
             );
 
-            await agreement.addNewCoreTeamMembers(accounts[i]);
+            await community.addNewCoreTeamMembers(accounts[i]);
 
         }
 

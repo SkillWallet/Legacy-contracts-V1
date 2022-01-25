@@ -40,7 +40,7 @@ contract("PartnersRegistry", (accounts) => {
         );
         await skillWallet.deployed();
     });
-    describe("Deployment", async () => {
+    describe.only("Deployment", async () => {
         it("Should deploy Partners Registry contract", async () => {
             const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry");
             const PartnersAgreementFactory = await ethers.getContractFactory("PartnersAgreementFactory");
@@ -65,7 +65,7 @@ contract("PartnersRegistry", (accounts) => {
             expect(partnersRegistry.address).not.to.equal(ZERO_ADDRESS);
         });
     });
-    describe("New Partners Agreement", async () => {
+    describe.only("New Partners Agreement", async () => {
         it("Should create new Partners Agreement", async () => {
             await partnersRegistry.connect(com1Owner).create(
                 metadataUrl,
@@ -81,7 +81,7 @@ contract("PartnersRegistry", (accounts) => {
             agreementAddress = await partnersRegistry.agreements(0);
             const agreement = await ethers.getContractAt("PartnersAgreement", agreementAddress);
             const community = await ethers.getContractAt("Community", await agreement.communityAddress());
-            await community.connect(com1Owner).joinNewMember('', 1);
+            await (await community.connect(com1Owner).joinNewMember('', 1)).wait();
             await agreement.connect(com1Owner).activatePA();
             const partnersContracts = await agreement.connect(com1Owner).getImportedAddresses();
 
@@ -135,12 +135,12 @@ contract("PartnersRegistry", (accounts) => {
             const partnersContracts0 = await agreement0.getImportedAddresses();
             const agreement1 = await ethers.getContractAt("PartnersAgreement", agreementAddress1);
             const community1 = await ethers.getContractAt("Community", await agreement1.communityAddress());
-            await community1.connect(com2Owner).joinNewMember('', 1);
+            await (await community1.connect(com2Owner).joinNewMember('', 1)).wait();
             await agreement1.connect(com2Owner).activatePA();
             const partnersContracts1 = await agreement1.connect(com2Owner).getImportedAddresses();
             const agreement2 = await ethers.getContractAt("PartnersAgreement", agreementAddress2);
             const community2 = await ethers.getContractAt("Community", await agreement2.communityAddress());
-            await community2.connect(com3Owner).joinNewMember('', 1);
+            await (await community2.connect(com3Owner).joinNewMember('', 1)).wait();
             await agreement2.connect(com3Owner).activatePA();
             const partnersContracts2 = await agreement2.connect(com3Owner).getImportedAddresses();
 
@@ -152,7 +152,7 @@ contract("PartnersRegistry", (accounts) => {
             expect(partnersContracts2[0]).to.equal(contract2.address);
         });
     });
-    describe("Partners Agreement Migrations", async () => {
+    describe.only("Partners Agreement Migrations", async () => {
         it("Should migrate new Partners Agreement", async () => {
             await (await partnersRegistry.setVersion(2)).wait();
 
@@ -173,8 +173,6 @@ contract("PartnersRegistry", (accounts) => {
             expect(oldData.interactionsCount).to.equal(newData.interactionsCount);
             expect(oldData.membershipContract).to.equal(newData.membershipContract);
             expect(oldData.interactionContract).to.equal(newData.interactionContract);
-            expect(oldData.coreTeamMembersCount).to.equal(newData.coreTeamMembersCount);
-            expect(oldData.whitelistedTeamMembers.length).to.equal(newData.whitelistedTeamMembers.length);
             expect(oldData.interactionsQueryServer).to.equal(newData.interactionsQueryServer);
             expect(String(await partnersRegistry.agreementIds(newAgreementAddress))).to.equal("0");
             expect(String(await agreement.version())).to.equal("2");

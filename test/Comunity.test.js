@@ -32,7 +32,8 @@ contract('Community', function (accounts) {
             ZERO_ADDRESS,
             1,
             skillWallet.address,
-            false);
+            false,
+            5);
 
         community2 = await Community.deploy(
             "url",
@@ -42,7 +43,9 @@ contract('Community', function (accounts) {
             ZERO_ADDRESS,
             1,
             skillWallet.address,
-            false);
+            false,
+            5
+        );
 
         await (await community
             .connect(memberAddress)

@@ -78,7 +78,8 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
             address(0),
             version, 
             skillWalletAddress,
-            isPermissioned
+            isPermissioned,
+            coreTeamMembers
         ));
 
         if (partnersContractAddress == address(0))
@@ -86,7 +87,6 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
 
         address[] memory partnersContracts = new address[](1);
         partnersContracts[0] = partnersContractAddress;
-        address[] memory whitelistMembers = new address[](0);
         address paAddr = IPartnersAgreementFactory(partnersAgreementFactory)
             .createPartnersAgreement(
                 skillWalletAddress,
@@ -100,8 +100,6 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
                     address(0),
                     address(0),
                     numberOfActions,
-                    coreTeamMembers,
-                    whitelistMembers,
                     interactionsQueryServer
                 )
             );

@@ -34,7 +34,8 @@ contract('Interactions', function (accounts) {
             ZERO_ADDRESS,
             1,
             this.skillWallet.address,
-            false);
+            false,
+            5);
         //this.roleUtils = await RoleUtils.new();
 
         //PartnersAgreement.link(this.roleUtils);
@@ -54,8 +55,6 @@ contract('Interactions', function (accounts) {
                 interactionContract: ZERO_ADDRESS,
                 membershipContract: ZERO_ADDRESS,
                 interactionsCount: 100,
-                coreTeamMembersCount: 3,
-                whitelistedTeamMembers: [ZERO_ADDRESS],
                 interactionsQueryServer: accounts[3]
             }
         );

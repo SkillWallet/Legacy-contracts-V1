@@ -39,10 +39,26 @@ contract Community is ICommunity {
     uint16 public activeMembersCount;
     uint256 public totalMembersAllowed;
 
+    mapping(address => bool) public override isCoreTeamMember;
+    address[] coreTeamMemberWhitelist;
+
+    uint256 public override coreTeamMembersCount;
     bool public isPermissioned;
     IERC721 permissionBadges;
 
     ISkillWallet public skillWallet;
+
+    modifier onlyCoreTeam() {
+        require(
+            isCoreTeamMember[msg.sender],
+            "The signer is not whitelisted as core team member!"
+        );
+        require(
+            skillWallet.balanceOf(msg.sender) > 0,
+            "SkillWallet not created by the whitelisted member"
+        );
+        _;
+    }
 
     constructor(
         string memory _url,
@@ -52,7 +68,8 @@ contract Community is ICommunity {
         address _migrateFrom,
         uint256 _version,
         address _skillWalletAddress,
-        bool _isPermissioned
+        bool _isPermissioned,
+        uint256 _coreTeamMembersCount
     ) public {
         if (_migrateFrom == address(0)) {
             metadataUri = _url;
@@ -62,6 +79,11 @@ contract Community is ICommunity {
             owner = _owner;
             registry = msg.sender;
             isPermissioned = _isPermissioned;
+            coreTeamMembersCount = _coreTeamMembersCount;
+
+            isCoreTeamMember[owner] = true;
+            coreTeamMemberWhitelist.push(owner);
+
             status = STATUS.ACTIVE;
         } else {
             Community currentCommunity = Community(_migrateFrom);
@@ -90,6 +112,10 @@ contract Community is ICommunity {
             for (uint256 i = 0; i < currentSkillWalletIDs.length; i++) {
                 skillWalletIds.push(currentSkillWalletIDs[i]);
             }
+
+            coreTeamMemberWhitelist = currentCommunity.getCoreTeamMembers();
+            for (uint256 i = 0; i < coreTeamMemberWhitelist.length; i++)
+                isCoreTeamMember[coreTeamMemberWhitelist[i]] = true;
 
             status = STATUS.IN_PROGRESS;
             migratedFrom = _migrateFrom;
@@ -126,13 +152,12 @@ contract Community is ICommunity {
     }
 
     function joinNewMember(string memory uri, uint256 role) public override {
-
-        // TODO: core team members can join if whitelisted
         require(
-            !isPermissioned ||
-                (isPermissioned &&
-                    address(permissionBadges) != address(0) &&
-                    permissionBadges.balanceOf(msg.sender) > 0),
+            isCoreTeamMember[msg.sender] ||
+                (!isPermissioned ||
+                    (isPermissioned &&
+                        address(permissionBadges) != address(0) &&
+                        permissionBadges.balanceOf(msg.sender) > 0)),
             "The user has no permission badge."
         );
         require(
@@ -159,9 +184,18 @@ contract Community is ICommunity {
         metadataUri = uri;
     }
 
-    function setPermissionBadgeAddress(address _permissionBadgeAddr) public override {
-        require(isPermissioned, "Non permissioned PAs can't have permissions badge address");
-        require(msg.sender == owner, "Only the owner can set permissions badge address!"); 
+    function setPermissionBadgeAddress(address _permissionBadgeAddr)
+        public
+        override
+    {
+        require(
+            isPermissioned,
+            "Non permissioned PAs can't have permissions badge address"
+        );
+        require(
+            msg.sender == owner,
+            "Only the owner can set permissions badge address!"
+        );
         permissionBadges = IERC721(_permissionBadgeAddr);
     }
 
@@ -184,5 +218,31 @@ contract Community is ICommunity {
         returns (address[] memory)
     {
         return memberAddresses;
+    }
+
+    function addNewCoreTeamMembers(address member)
+        public
+        override
+        onlyCoreTeam
+    {
+        require(
+            coreTeamMembersCount > coreTeamMemberWhitelist.length,
+            "Core team member spots are filled."
+        );
+        require(!isCoreTeamMember[member], "Member already added");
+
+        coreTeamMemberWhitelist.push(member);
+        isCoreTeamMember[member] = true;
+
+        emit CoreTeamMemberAdded(member);
+    }
+
+    function getCoreTeamMembers()
+        public
+        view
+        override
+        returns (address[] memory)
+    {
+        return coreTeamMemberWhitelist;
     }
 }

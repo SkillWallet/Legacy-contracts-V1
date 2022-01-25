@@ -37,13 +37,6 @@ interface IPartnersAgreement {
 
     function isActive() external view returns (bool);
 
-    function isCoreTeamMember(address member) external view returns (bool);
-
-    function coreTeamMembersCount() external view returns (uint256);
-
-    function addNewCoreTeamMembers(address member) external;
-
-    function getCoreTeamMembers() external view returns (address[] memory);
 
     function getAgreementData()
         external

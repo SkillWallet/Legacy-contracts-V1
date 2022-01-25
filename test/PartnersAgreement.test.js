@@ -51,7 +51,8 @@ contract('PartnersAgreement', function (accounts) {
       ZERO_ADDRESS,
       1,
       skillWallet.address,
-      false);
+      false,
+      5);
 
     membershipFactory = await MembershipFactory.deploy(1);
 
@@ -145,8 +146,6 @@ contract('PartnersAgreement', function (accounts) {
           interactionContract: ZERO_ADDRESS,
           membershipContract: ZERO_ADDRESS,
           interactionsCount: 100,
-          coreTeamMembersCount: 3,
-          whitelistedTeamMembers: [ZERO_ADDRESS],
           interactionsQueryServer: accounts[3]
         }
       );
@@ -179,18 +178,18 @@ contract('PartnersAgreement', function (accounts) {
       // const ownable = await OwnableTestContract.new({ from: accounts[1] });
 
       // await truffleAssert.reverts(
-      //   this.partnersAgreement.addNewContractAddressToAgreement(this.skillWallet.address, { from: accounts[0] }),
+      //   partnersAgreement.addNewContractAddressToAgreement(skillWallet.address, { from: accounts[0] }),
       //   'Only the owner of the contract can import it!'
       // );
 
       // await truffleAssert.reverts(
-      //   this.partnersAgreement.addNewContractAddressToAgreement(this.minimumCommunity.address),
+      //   partnersAgreement.addNewContractAddressToAgreement(minimumCommunity.address),
       //   "Transaction reverted: function selector was not recognized and there's no fallback function"
       // );
 
-      // await this.partnersAgreement.addNewContractAddressToAgreement(ownable.address, { from: accounts[0] });
-      // console.log('isActive', await this.partnersAgreement.isActive());
-      // const importedContracts = await this.partnersAgreement.getImportedAddresses();
+      // await partnersAgreement.addNewContractAddressToAgreement(ownable.address, { from: accounts[0] });
+      // console.log('isActive', await partnersAgreement.isActive());
+      // const importedContracts = await partnersAgreement.getImportedAddresses();
       // assert.equal(importedContracts[0], ZERO_ADDRESS)
       // assert.equal(importedContracts[1], ownable.address)
     })
@@ -275,41 +274,55 @@ contract('PartnersAgreement', function (accounts) {
   describe("Core team members", async () => {
 
     it("Should add owner as core team member after activation", async () => {
-      const isActive = await partnersAgreement.isActive();
-      const isCoreTeamMember = await partnersAgreement.isCoreTeamMember(signer.address);
-      expect(isActive).to.be.true;
+    const MinimumCommunity = await ethers.getContractFactory('Community');
+    const paCommunity = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
+      const isCoreTeamMember = await paCommunity.isCoreTeamMember(signer.address);
       expect(isCoreTeamMember).to.be.true;
     });
     it("Should succeed when the owner adds new core team members to the whitelist", async () => {
-      await partnersAgreement.addNewCoreTeamMembers(coreTeamMember1.address);
-      const teamMembers = await partnersAgreement.getCoreTeamMembers();
+    const MinimumCommunity = await ethers.getContractFactory('Community');
+    const paCommunity = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
+      // await paCommunity.joinNewMember('', 1);
+      await paCommunity.addNewCoreTeamMembers(coreTeamMember1.address);
+      const teamMembers = await paCommunity.getCoreTeamMembers();
       expect(teamMembers.length).to.eq(2);
       expect(teamMembers[0]).to.eq(signer.address)
       expect(teamMembers[1]).to.eq(coreTeamMember1.address)
     });
 
     it("Should fail if the core team member hasn't created SW yet", async () => {
+    const MinimumCommunity = await ethers.getContractFactory('Community');
+    const paCommunity = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
+
       expect(
-        partnersAgreement.connect(coreTeamMember1).addNewCoreTeamMembers(coreTeamMember2.address)
+        paCommunity.connect(coreTeamMember1).addNewCoreTeamMembers(coreTeamMember2.address)
       ).to.be.revertedWith("SkillWallet not created by the whitelisted member");
     });
 
     it("Should fail if the core team member hasn't created SW yet", async () => {
+    const MinimumCommunity = await ethers.getContractFactory('Community');
+    const paCommunity = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
+
       expect(
-        partnersAgreement.connect(coreTeamMember1).addNewCoreTeamMembers(coreTeamMember2.address)
+        paCommunity.connect(coreTeamMember1).addNewCoreTeamMembers(coreTeamMember2.address)
       ).to.be.revertedWith("SkillWallet not created by the whitelisted member");
     });
 
     it("Should fail if unlisted core team member attepts to add other core team members", async () => {
+    const MinimumCommunity = await ethers.getContractFactory('Community');
+    const paCommunity = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
+      
       expect(
-        partnersAgreement.connect(coreTeamMember2).addNewCoreTeamMembers(coreTeamMember2.address)
+        paCommunity.connect(coreTeamMember2).addNewCoreTeamMembers(coreTeamMember2.address)
       ).to.be.revertedWith("SkillWallet not created by the whitelisted member");
     });
-    it("Should fail if core team member spots are filled", async () => {
-      await partnersAgreement.addNewCoreTeamMembers(coreTeamMember2.address);
-      const coreTeamMembers = await partnersAgreement.getCoreTeamMembers();
+    it.skip("Should fail if core team member spots are filled", async () => {
+    const MinimumCommunity = await ethers.getContractFactory('Community');
+      const paCommunity = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
+      await paCommunity.addNewCoreTeamMembers(coreTeamMember2.address);
+      const coreTeamMembers = await paCommunity.getCoreTeamMembers();
       expect(
-        partnersAgreement.addNewCoreTeamMembers(notACoreTeamMember.address)
+        paCommunity.addNewCoreTeamMembers(notACoreTeamMember.address)
       ).to.be.revertedWith("Core team member spots are filled.");
       expect(coreTeamMembers.length).to.eq(3);
       expect(coreTeamMembers[0]).to.eq(signer.address);

@@ -15,6 +15,8 @@ interface ICommunity {
         uint256 _skillWalletTokenId
     );
 
+    event CoreTeamMemberAdded(address _member);
+
     enum STATUS {
         ACTIVE,
         IN_PROGRESS,
@@ -40,4 +42,13 @@ interface ICommunity {
     function isMember(address member) external view returns(bool);
 
     function setPermissionBadgeAddress(address _permissionBadgeAddr) external;
+
+        function isCoreTeamMember(address member) external view returns (bool);
+
+    function coreTeamMembersCount() external view returns (uint256);
+
+    function addNewCoreTeamMembers(address member) external;
+
+    function getCoreTeamMembers() external view returns (address[] memory);
+
 }
