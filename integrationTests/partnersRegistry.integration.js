@@ -1,5 +1,4 @@
 const partnersRegistryAddress = '0x90836827F77E2402c78630f2295E3A828894885c'
-const distributedTownAddress = '0xe60a5C15Cf3C4F820f9771Ea68dA8CE41376B577'
 const partnersAgreement = '0x13bfe76779F414222E72fb53Fc8D3c5A2573c573';
 const { assert } = require('chai')
 const fs = require("fs");
@@ -11,8 +10,6 @@ var partnersRegistryAbi = require('../artifacts/contracts/main/partnersAgreement
 var partnersAgreementAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/PartnersAgreement.sol/PartnersAgreement.json')
     .abi
 var membershipAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/Membership.sol/Membership.json')
-    .abi
-var distributedTownAbi = require('../artifacts/contracts/imported/IDistributedTown.sol/IDistributedTown.json')
     .abi
 
 
@@ -42,20 +39,6 @@ const partnersRegistryContract = new ethers.Contract(
     partnersRegistryAbi,
     signer,
 )
-
-const ditoContract = new ethers.Contract(
-    distributedTownAddress,
-    distributedTownAbi,
-    signer,
-)
-
-async function setPartnersRegistryAddress() {
-    const createTx = await ditoContract.setPartnersRegistryAddress(
-        partnersRegistryAddress
-    )
-    const res = await createTx.wait()
-}
-
 
 async function getPAs() {
     const createTx = await partnersRegistryContract.getPartnerAgreementAddresses(
