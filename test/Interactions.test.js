@@ -61,7 +61,7 @@ contract('Interactions', function (accounts) {
         this.membership = await Membership.at(await this.partnersAgreement.membershipAddress());
 
         const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
-        await community.join('', 1, { from: accounts[0] });
+        await community.joinNewMember('', 1, { from: accounts[0] });
         await this.partnersAgreement.activatePA({ from: accounts[0] });
 
         await this.linkTokenMock.transfer(
@@ -134,7 +134,7 @@ contract('Interactions', function (accounts) {
             );
 
             const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
-            await community.join('', 1, { from: accounts[1] });
+            await community.joinNewMember('', 1, { from: accounts[1] });
             await partnersAgreement.activatePA({ from: accounts[1] });
 
             const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();

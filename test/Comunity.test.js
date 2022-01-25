@@ -68,7 +68,7 @@ contract('Community', function (accounts) {
 
         await (await community
             .connect(memberAddress)
-            .join(
+            .joinNewMember(
                 'http://someuri.co',
                 1)
         ).wait();
@@ -77,13 +77,13 @@ contract('Community', function (accounts) {
     describe('Join new member (permissionless community)', async function () {
 
         it("should fail if the user is a member a member of a community", async function () {
-            let tx = community2.connect(memberAddress).join('http://someuri.co', 1);
+            let tx = community2.connect(memberAddress).joinNewMember('http://someuri.co', 1);
             await truffleAssert.reverts(
                 tx,
                 "SkillWallet: There is SkillWallet already registered for this address."
             );
 
-            tx = community.connect(memberAddress).join('http://someuri.co', 1);
+            tx = community.connect(memberAddress).joinNewMember('http://someuri.co', 1);
 
             await truffleAssert.reverts(
                 tx,
@@ -98,7 +98,7 @@ contract('Community', function (accounts) {
 
             const tx = await (await community
                 .connect(userAccount)
-                .join(
+                .joinNewMember(
                     'http://someuri.co',
                     1)
             ).wait();
@@ -130,16 +130,16 @@ contract('Community', function (accounts) {
     });
     describe('Join new member (permissioned community)', async function () {
         it("should fail if the user has no Badges NFT address assigned", async function () {
-            let tx = permissionedCommunity.connect(permissionedMember).join('http://someuri.co', 1);
+            let tx = permissionedCommunity.connect(permissionedMember).joinNewMember('http://someuri.co', 1);
             await truffleAssert.reverts(
                 tx,
                 "The user has no permission badge."
             );
                 
-            await permissionedCommunity.join("", 1);
+            await permissionedCommunity.joinNewMember("", 1);
             await permissionedCommunity.setPermissionBadgeAddress(badges.address);
 
-            let tx2 = permissionedCommunity.connect(permissionedMember).join('http://someuri.co', 1);
+            let tx2 = permissionedCommunity.connect(permissionedMember).joinNewMember('http://someuri.co', 1);
             await truffleAssert.reverts(
                 tx2,
                 "The user has no permission badge."
@@ -153,7 +153,7 @@ contract('Community', function (accounts) {
 
             const tx = await (await permissionedCommunity
                 .connect(permissionedMember)
-                .join(
+                .joinNewMember(
                     'http://someuri.co',
                     1)
             ).wait();
@@ -183,7 +183,6 @@ contract('Community', function (accounts) {
             expect(skillWalletIds[+(membersCount.toString()) - 1].toString()).to.eq(tokenId.toString());
         });
     });
-
     describe("Core team members", async () => {
         it("Should add owner as core team member after deployment", async () => {
             const isCoreTeamMember = await community.isCoreTeamMember(signer.address);

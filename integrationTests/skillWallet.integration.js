@@ -58,7 +58,7 @@ async function joinCommunity() {
   const url =
     'https://hub.textile.io/ipfs/bafkreicezefuc6einewxdqhlpefelzjponwdqt4vmp2byosq5uwpn7hgoq'
   const wei = ethers.utils.parseEther('2220').toString()
-  const joinedTx = await communityContract.join(
+  const joinedTx = await communityContract.joinNewMember(
     url,
     1
   )

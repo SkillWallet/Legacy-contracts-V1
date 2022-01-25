@@ -14,8 +14,6 @@ interface ICommunity {
     event CoreTeamMemberAdded(address _member);
 
 
-    event CoreTeamMemberAdded(address _member);
-
     enum STATUS {
         ACTIVE,
         IN_PROGRESS,
@@ -23,7 +21,7 @@ interface ICommunity {
     }
 
     // check if it's called only from deployer.
-    function join(string memory uri, uint256 role) external;
+    function joinNewMember(string memory uri, uint256 role) external;
 
     function getMembers() external view returns (uint256[] memory);
 

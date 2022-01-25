@@ -40,7 +40,7 @@ contract("PartnersRegistry", (accounts) => {
         );
         await skillWallet.deployed();
     });
-    describe.only("Deployment", async () => {
+    describe("Deployment", async () => {
         it("Should deploy Partners Registry contract", async () => {
             const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry");
             const PartnersAgreementFactory = await ethers.getContractFactory("PartnersAgreementFactory");
@@ -65,7 +65,7 @@ contract("PartnersRegistry", (accounts) => {
             expect(partnersRegistry.address).not.to.equal(ZERO_ADDRESS);
         });
     });
-    describe.only("New Partners Agreement", async () => {
+    describe("New Partners Agreement", async () => {
         it("Should create new Partners Agreement", async () => {
             await partnersRegistry.connect(com1Owner).create(
                 metadataUrl,
@@ -152,7 +152,7 @@ contract("PartnersRegistry", (accounts) => {
             expect(partnersContracts2[0]).to.equal(contract2.address);
         });
     });
-    describe.only("Partners Agreement Migrations", async () => {
+    describe("Partners Agreement Migrations", async () => {
         it("Should migrate new Partners Agreement", async () => {
             await (await partnersRegistry.setVersion(2)).wait();
 

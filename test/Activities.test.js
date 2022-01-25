@@ -69,7 +69,7 @@ contract("Activities", (accounts) => {
         agreement = await ethers.getContractAt("PartnersAgreement", agreementAddress);
         const communityAddress = await agreement.communityAddress();
         community = await ethers.getContractAt('Community', communityAddress);
-        await community.join('url', 1);
+        await community.joinNewMember('url', 1);
         await agreement.activatePA();
 
 
@@ -77,7 +77,7 @@ contract("Activities", (accounts) => {
         for (let i = 2; i <= 5; i++) {
             const coreTM = await ethers.getSigner(accounts[i]);
 
-            await community.connect(coreTM).join(
+            await community.connect(coreTM).joinNewMember(
                 metadataUrl,
                 1,
             );

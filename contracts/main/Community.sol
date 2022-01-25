@@ -180,7 +180,7 @@ coreTeamMembersCount = currentCommunity.coreTeamMembersCount();
         emit MemberAdded(msg.sender, token);
     }
 
-    function setMetadataUri(string calldata uri) public onlyCoreTeamMember override {
+    function setMetadataUri(string calldata uri) public onlyCoreTeam override {
         metadataUri = uri;
     }
 

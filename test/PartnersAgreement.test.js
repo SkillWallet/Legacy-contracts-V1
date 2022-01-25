@@ -81,7 +81,7 @@ contract('PartnersAgreement', function (accounts) {
 
     membership = await Membership.attach(await partnersAgreement.membershipAddress());
     const community = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
-    await community.join('', 1);
+    await community.joinNewMember('', 1);
     await partnersAgreement.activatePA();
 
     assert.equal((await partnersAgreement.getAllMembers()).length, 1);
@@ -155,7 +155,7 @@ contract('PartnersAgreement', function (accounts) {
 
       const MinimumCommunity = await ethers.getContractFactory('Community');
       const c = await MinimumCommunity.attach(await pa.communityAddress());
-      await (await c.connect(paOwner2Signee).join('', 1)).wait();
+      await (await c.connect(paOwner2Signee).joinNewMember('', 1)).wait();
       await pa.connect(paOwner2Signee).activatePA();
 
       isActive = await pa.isActive();
