@@ -47,7 +47,6 @@ contract("Activities", (accounts) => {
                 skillWallet.address,
                 partnersAgreementFactory.address,
                 membershipFactory.address,
-                accounts[3]
             ]
         );
         await partnersRegistry.deployed();

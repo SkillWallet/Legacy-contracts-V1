@@ -33,14 +33,10 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
     uint256 public override rolesCount;
     bool public override isActive;
 
-    mapping(address => uint256) lastBlockPerUserAddress;
-    mapping(bytes32 => address) userRequests;
-
     InteractionNFT partnersInteractionNFTContract;
     ISkillWallet skillWallet;
 
     address public override membershipAddress;
-    address interactionsQueryServer;
     IActivities public activities;
 
     /**
@@ -73,7 +69,6 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         rolesCount = pa.rolesCount;
         owner = pa.owner;
         communityAddress = pa.communityAddress;
-        interactionsQueryServer = pa.interactionsQueryServer;
 
         for (uint256 i = 0; i < pa.partnersContracts.length; i++) {
             if (pa.partnersContracts[i] != address(0)) {
@@ -321,8 +316,7 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
                 rolesCount,
                 address(partnersInteractionNFTContract),
                 membershipAddress,
-                partnersInteractionNFTContract.getTotalSupplyAll(),
-                interactionsQueryServer
+                partnersInteractionNFTContract.getTotalSupplyAll()
             );
     }
 }

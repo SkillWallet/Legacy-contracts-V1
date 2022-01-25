@@ -20,19 +20,16 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
     // factories
     address partnersAgreementFactory;
     address membershipFactory;
-    address interactionsQueryServer;
     address skillWalletAddress;
 
     function initialize(
         address _skillWalletAddress,
         address _partnersAgreementFactoryAddress,
-        address _membershipFactory,
-        address _interactionsQueryServer
+        address _membershipFactory
     ) public initializer {
         skillWalletAddress = _skillWalletAddress;
         partnersAgreementFactory = _partnersAgreementFactoryAddress;
         membershipFactory = _membershipFactory;
-        interactionsQueryServer = _interactionsQueryServer;
 
         version = 1;
     }
@@ -99,8 +96,7 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
                     rolesCount,
                     address(0),
                     address(0),
-                    numberOfActions,
-                    interactionsQueryServer
+                    numberOfActions
                 )
             );
 

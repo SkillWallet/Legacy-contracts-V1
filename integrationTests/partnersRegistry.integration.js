@@ -22,6 +22,14 @@ function mnemonic() {
     return "";
 }
 
+function createWallet() {
+    const wallet =  ethers.Wallet.createRandom();
+    console.log(wallet.address);
+    console.log(wallet);
+    console.log(wallet.privateKey);
+    console.log(wallet.mnemonic);
+
+}
 const provider = new ethers.providers.JsonRpcProvider(
     'https://rpc-mumbai.maticvigil.com/v1/9ca44fbe543c19857d4e47669aae2a9774e11c66'
 )
@@ -172,7 +180,8 @@ async function test() {
     // await isActive(partnersAgreement);
     // await getMemContract(partnersAgreement);
     // await getPAs();
-    await isCoreTeamMember('0x2f152fF9Edc8b99c3a5c018C95D5a4011627c409','0xCa05bcE175e9c39Fe015A5fC1E98d2B735fF51d9')
+    // await isCoreTeamMember('0x2f152fF9Edc8b99c3a5c018C95D5a4011627c409','0xCa05bcE175e9c39Fe015A5fC1E98d2B735fF51d9')
+    createWallet()
 }
 
 test()

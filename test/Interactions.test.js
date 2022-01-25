@@ -17,13 +17,11 @@ const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndo
 
 contract('Interactions', function (accounts) {
     before(async function () {
-        this.erc1820 = await singletons.ERC1820Registry(accounts[1]);
+        // this.erc1820 = await singletons.ERC1820Registry(accounts[1]);
 
         this.linkTokenMock = await LinkToken.new()
         this.mockOracle = await MockOracle.new(this.linkTokenMock.address)
-
         this.skillWallet = await SkillWallet.new(this.linkTokenMock.address, this.mockOracle.address);
-
 
         this.minimumCommunity = await MinimumCommunity.new(
             metadataUrl,
@@ -35,9 +33,7 @@ contract('Interactions', function (accounts) {
             this.skillWallet.address,
             false,
             5);
-        //this.roleUtils = await RoleUtils.new();
 
-        //PartnersAgreement.link(this.roleUtils);
         this.interactionFactory = await InteractionFactory.new();
         this.membershipFactory = await MembershipFactory.new(1);
 
@@ -54,7 +50,6 @@ contract('Interactions', function (accounts) {
                 interactionContract: ZERO_ADDRESS,
                 membershipContract: ZERO_ADDRESS,
                 interactionsCount: 100,
-                interactionsQueryServer: accounts[3]
             }
         );
 
@@ -64,13 +59,9 @@ contract('Interactions', function (accounts) {
         await community.joinNewMember('', 1, { from: accounts[0] });
         await this.partnersAgreement.activatePA({ from: accounts[0] });
 
-        await this.linkTokenMock.transfer(
-            this.partnersAgreement.address,
-            '2000000000000000000',
-        )
 
     });
-    describe('Interaction tests', async function () {
+    describe.only('Interaction tests', async function () {
 
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 3", async function () {
             const partnersAgreement = await PartnersAgreement.new(
@@ -86,7 +77,6 @@ contract('Interactions', function (accounts) {
                     interactionContract: ZERO_ADDRESS,
                     membershipContract: ZERO_ADDRESS,
                     interactionsCount: 100,
-                    interactionsQueryServer: accounts[3]
                 }
             );
 
@@ -128,7 +118,6 @@ contract('Interactions', function (accounts) {
                     interactionContract: ZERO_ADDRESS,
                     membershipContract: ZERO_ADDRESS,
                     interactionsCount: 100,
-                    interactionsQueryServer: accounts[3]
                 },
                 { from: accounts[0] }
             );
@@ -168,7 +157,6 @@ contract('Interactions', function (accounts) {
 
             assert.equal(interactions.toString(), '10');
         })
-
         it.skip('transferInteractionNFTs should not transfer the NFTs if the sender or arguemtns are wrong', async function () {
             const initialInteractions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
 

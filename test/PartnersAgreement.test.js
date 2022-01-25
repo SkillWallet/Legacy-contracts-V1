@@ -14,7 +14,7 @@ contract('PartnersAgreement', function (accounts) {
 
   before(async function () {
     [signer, paOwner, paOwner2, ...addrs] = await ethers.getSigners();
-    erc1820 = await singletons.ERC1820Registry(signer.address);
+    // erc1820 = await singletons.ERC1820Registry(signer.address);
     paOwner2Signee = paOwner2;
 
     const LinkToken = await ethers.getContractFactory("LinkToken");
@@ -51,7 +51,8 @@ contract('PartnersAgreement', function (accounts) {
       1,
       skillWallet.address,
       false,
-      5);
+      5,
+      );
 
     membershipFactory = await MembershipFactory.deploy(1);
 
@@ -74,9 +75,8 @@ contract('PartnersAgreement', function (accounts) {
         rolesCount: 3,
         interactionContract: ZERO_ADDRESS,
         membershipContract: ZERO_ADDRESS,
-        interactionsCount: 100,
-        interactionsQueryServer: accounts[3]
-      }
+        interactionsCount: 100
+      },
     );
 
     membership = await Membership.attach(await partnersAgreement.membershipAddress());
@@ -113,7 +113,6 @@ contract('PartnersAgreement', function (accounts) {
           interactionContract: ZERO_ADDRESS,
           membershipContract: ZERO_ADDRESS,
           interactionsCount: 100,
-          interactionsQueryServer: accounts[3]
         }
       );
 
@@ -141,7 +140,6 @@ contract('PartnersAgreement', function (accounts) {
           interactionContract: ZERO_ADDRESS,
           membershipContract: ZERO_ADDRESS,
           interactionsCount: 100,
-          interactionsQueryServer: accounts[3]
         }
       );
 

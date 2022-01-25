@@ -118,38 +118,22 @@ coreTeamMembersCount = currentCommunity.coreTeamMembersCount();
             for (uint256 i = 0; i < coreTeamMemberWhitelist.length; i++)
                 isCoreTeamMember[coreTeamMemberWhitelist[i]] = true;
 
+            // coreTeamMembersCount = currentCommunity.coreTeamMembersCount();
+            // address[] memory whitelist = currentCommunity.getCoreTeamMembers();
+            // for (uint256 i = 0; i < whitelist.length; i++) {
+            //     isCoreTeamMember[whitelist[i]] = true;
+            //     coreTeamMemberWhitelist.push(whitelist[i]);
+            // }
+
+            // skillWallet = ISkillWallet(
+            //     currentCommunity.getSkillWalletAddress()
+            // );
+            // isPermissioned = currentCommunity.isPermissioned();
+            // registry = currentCommunity.registry();
             status = STATUS.IN_PROGRESS;
             migratedFrom = _migrateFrom;
         }
-
         version = _version;
-    }
-
-    function migrateData() public {
-        require(status == STATUS.IN_PROGRESS, "Migration is not in progress");
-
-        Community currentCommunity = Community(migratedFrom);
-        require(
-            currentCommunity.status() == STATUS.MIGRATED,
-            "Community not migrated"
-        );
-
-        memberAddresses = currentCommunity.getMemberAddresses();
-        activeMembersCount = currentCommunity.activeMembersCount();
-        status = STATUS.ACTIVE;
-    }
-
-    //for original community (that is being migrated) to finalize migration
-    function markAsMigrated(address _migratedTo) public {
-        require(msg.sender == registry, "Caller not dito");
-        require(status == STATUS.ACTIVE, "Community not active");
-        require(
-            Community(_migratedTo).status() == STATUS.IN_PROGRESS,
-            "Migration si not in progress"
-        );
-
-        migratedTo = _migratedTo;
-        status = STATUS.MIGRATED;
     }
 
     function joinNewMember(string memory uri, uint256 role) public override {
@@ -180,7 +164,7 @@ coreTeamMembersCount = currentCommunity.coreTeamMembersCount();
         emit MemberAdded(msg.sender, token);
     }
 
-    function setMetadataUri(string calldata uri) public onlyCoreTeam override {
+    function setMetadataUri(string calldata uri) public override onlyCoreTeam {
         metadataUri = uri;
     }
 

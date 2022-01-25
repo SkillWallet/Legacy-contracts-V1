@@ -8,7 +8,7 @@ const main = async () => {
     console.log('Deploying SkillWallet...');
         
     const linkTokenMumbai = '0x326C977E6efc84E512bB9C30f76E30c160eD06FB';
-    const oracleMumbai = '0xc8D925525CA8759812d0c299B90247917d4d4b7C'
+    const oracleMumbai = '0x0bDDCD124709aCBf9BB3F824EbC61C87019888bb'
 
     const skillWallet = await upgrades.deployProxy(SkillWallet, [linkTokenMumbai, oracleMumbai], { initializer: 'initialize' });
     await skillWallet.deployed();

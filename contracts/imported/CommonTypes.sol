@@ -39,6 +39,5 @@ library Types {
         address interactionContract;
         address membershipContract;
         uint256 interactionsCount;
-        address interactionsQueryServer;
     }
 }

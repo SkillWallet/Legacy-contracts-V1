@@ -1,4 +1,5 @@
-const skillWalletAddress = '0x809c916C6F5B1a9C11A6A4D330a198713c8cb1C0'
+const skillWalletAddress = '0x17Ba22F618e77EbdB2dd9Ce4D98644FE9e998ab5'
+
 const communityAddress = '0xCBD8DA830262a287d73fF3eF07b0A0b350453C00'
 const { assert } = require('chai')
 var ethers = require('ethers')
@@ -8,7 +9,8 @@ var abi = require('../artifacts/contracts/main/SkillWallet.sol/SkillWallet.json'
 var osmAbi = require('../artifacts/contracts/main/OSM.sol/OffchainSignatureMechanism.json')
   .abi
 
-var communityAbi = require('./communityAbi')
+var communityAbi = require('../artifacts/contracts/main/Community.sol/Community.json')
+.abi
 const helpers = require('../test/helpers')
 const fs = require("fs");
 
