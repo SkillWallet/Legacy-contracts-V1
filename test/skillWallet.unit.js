@@ -318,7 +318,7 @@ contract('SkillWallet', function () {
       })
     })
 
-    describe('Adding a pubKey to a SkillWallet', async function () {
+    describe.skip('Adding a pubKey to a SkillWallet', async function () {
       it('should fail when the SW is not created yet', async function () {
         const failingTx = skillWallet.connect(creator).addPubKeyToSkillWallet(1000000, '')
         await truffleAssert.reverts(
@@ -487,7 +487,7 @@ contract('SkillWallet', function () {
       })
     })
 
-    describe('Activate skillWallet', async function () {
+    describe.skip('Activate skillWallet', async function () {
 
       let tokenId;
       beforeEach(async function () {

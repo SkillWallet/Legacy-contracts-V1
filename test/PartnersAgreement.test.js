@@ -1,6 +1,5 @@
 const { singletons, constants } = require('@openzeppelin/test-helpers');
-const { assert } = require('chai');
-const { expect } = require('chai');
+const { assert, expect } = require('chai');
 const { ethers } = require('hardhat');
 const { ZERO_ADDRESS } = constants;
 
@@ -14,7 +13,7 @@ let paOwner2Signee;
 contract('PartnersAgreement', function (accounts) {
 
   before(async function () {
-    [signer, paOwner, paOwner2, coreTeamMember1, coreTeamMember2, coreTeamMember2, notACoreTeamMember, ...addrs] = await ethers.getSigners();
+    [signer, paOwner, paOwner2, ...addrs] = await ethers.getSigners();
     erc1820 = await singletons.ERC1820Registry(signer.address);
     paOwner2Signee = paOwner2;
 
@@ -76,15 +75,13 @@ contract('PartnersAgreement', function (accounts) {
         interactionContract: ZERO_ADDRESS,
         membershipContract: ZERO_ADDRESS,
         interactionsCount: 100,
-        coreTeamMembersCount: 3,
-        whitelistedTeamMembers: [ZERO_ADDRESS],
         interactionsQueryServer: accounts[3]
       }
     );
 
     membership = await Membership.attach(await partnersAgreement.membershipAddress());
     const community = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
-    await community.joinNewMember('', 1);
+    await community.join('', 1);
     await partnersAgreement.activatePA();
 
     assert.equal((await partnersAgreement.getAllMembers()).length, 1);
@@ -116,8 +113,6 @@ contract('PartnersAgreement', function (accounts) {
           interactionContract: ZERO_ADDRESS,
           membershipContract: ZERO_ADDRESS,
           interactionsCount: 100,
-          coreTeamMembersCount: 3,
-          whitelistedTeamMembers: [ZERO_ADDRESS],
           interactionsQueryServer: accounts[3]
         }
       );
@@ -160,7 +155,7 @@ contract('PartnersAgreement', function (accounts) {
 
       const MinimumCommunity = await ethers.getContractFactory('Community');
       const c = await MinimumCommunity.attach(await pa.communityAddress());
-      await (await c.connect(paOwner2Signee).joinNewMember('', 1)).wait();
+      await (await c.connect(paOwner2Signee).join('', 1)).wait();
       await pa.connect(paOwner2Signee).activatePA();
 
       isActive = await pa.isActive();
@@ -269,65 +264,6 @@ contract('PartnersAgreement', function (accounts) {
       expect(urls.length).to.equal(2);
       expect(urls[0]).to.equal("https://test1.test");
       expect(urls[1]).to.equal("https://test2.test");
-    });
-  });
-  describe("Core team members", async () => {
-
-    it("Should add owner as core team member after activation", async () => {
-    const MinimumCommunity = await ethers.getContractFactory('Community');
-    const paCommunity = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
-      const isCoreTeamMember = await paCommunity.isCoreTeamMember(signer.address);
-      expect(isCoreTeamMember).to.be.true;
-    });
-    it("Should succeed when the owner adds new core team members to the whitelist", async () => {
-    const MinimumCommunity = await ethers.getContractFactory('Community');
-    const paCommunity = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
-      // await paCommunity.joinNewMember('', 1);
-      await paCommunity.addNewCoreTeamMembers(coreTeamMember1.address);
-      const teamMembers = await paCommunity.getCoreTeamMembers();
-      expect(teamMembers.length).to.eq(2);
-      expect(teamMembers[0]).to.eq(signer.address)
-      expect(teamMembers[1]).to.eq(coreTeamMember1.address)
-    });
-
-    it("Should fail if the core team member hasn't created SW yet", async () => {
-    const MinimumCommunity = await ethers.getContractFactory('Community');
-    const paCommunity = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
-
-      expect(
-        paCommunity.connect(coreTeamMember1).addNewCoreTeamMembers(coreTeamMember2.address)
-      ).to.be.revertedWith("SkillWallet not created by the whitelisted member");
-    });
-
-    it("Should fail if the core team member hasn't created SW yet", async () => {
-    const MinimumCommunity = await ethers.getContractFactory('Community');
-    const paCommunity = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
-
-      expect(
-        paCommunity.connect(coreTeamMember1).addNewCoreTeamMembers(coreTeamMember2.address)
-      ).to.be.revertedWith("SkillWallet not created by the whitelisted member");
-    });
-
-    it("Should fail if unlisted core team member attepts to add other core team members", async () => {
-    const MinimumCommunity = await ethers.getContractFactory('Community');
-    const paCommunity = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
-      
-      expect(
-        paCommunity.connect(coreTeamMember2).addNewCoreTeamMembers(coreTeamMember2.address)
-      ).to.be.revertedWith("SkillWallet not created by the whitelisted member");
-    });
-    it.skip("Should fail if core team member spots are filled", async () => {
-    const MinimumCommunity = await ethers.getContractFactory('Community');
-      const paCommunity = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
-      await paCommunity.addNewCoreTeamMembers(coreTeamMember2.address);
-      const coreTeamMembers = await paCommunity.getCoreTeamMembers();
-      expect(
-        paCommunity.addNewCoreTeamMembers(notACoreTeamMember.address)
-      ).to.be.revertedWith("Core team member spots are filled.");
-      expect(coreTeamMembers.length).to.eq(3);
-      expect(coreTeamMembers[0]).to.eq(signer.address);
-      expect(coreTeamMembers[1]).to.eq(coreTeamMember1.address);
-      expect(coreTeamMembers[2]).to.eq(coreTeamMember2.address);
     });
   });
 });

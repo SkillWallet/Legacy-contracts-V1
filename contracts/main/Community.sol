@@ -113,6 +113,7 @@ contract Community is ICommunity {
                 skillWalletIds.push(currentSkillWalletIDs[i]);
             }
 
+coreTeamMembersCount = currentCommunity.coreTeamMembersCount();
             coreTeamMemberWhitelist = currentCommunity.getCoreTeamMembers();
             for (uint256 i = 0; i < coreTeamMemberWhitelist.length; i++)
                 isCoreTeamMember[coreTeamMemberWhitelist[i]] = true;
@@ -179,8 +180,7 @@ contract Community is ICommunity {
         emit MemberAdded(msg.sender, token);
     }
 
-    function setMetadataUri(string calldata uri) public override {
-        require(msg.sender == owner, "Only owner can call this.");
+    function setMetadataUri(string calldata uri) public onlyCoreTeamMember override {
         metadataUri = uri;
     }
 

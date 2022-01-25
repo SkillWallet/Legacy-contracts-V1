@@ -37,7 +37,6 @@ interface IPartnersAgreement {
 
     function isActive() external view returns (bool);
 
-
     function getAgreementData()
         external
         view

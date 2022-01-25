@@ -10,10 +10,9 @@ pragma experimental ABIEncoderV2;
  */
 
 interface ICommunity {
-    event MemberAdded(
-        address indexed _member,
-        uint256 _skillWalletTokenId
-    );
+    event MemberAdded(address indexed _member, uint256 _skillWalletTokenId);
+    event CoreTeamMemberAdded(address _member);
+
 
     event CoreTeamMemberAdded(address _member);
 
@@ -24,26 +23,23 @@ interface ICommunity {
     }
 
     // check if it's called only from deployer.
-    function joinNewMember(
-        string memory uri,
-        uint256 role
-    ) external;
+    function join(string memory uri, uint256 role) external;
 
     function getMembers() external view returns (uint256[] memory);
-    
+
     function getMemberAddresses() external view returns (address[] memory);
 
     function getTemplate() external view returns (uint256);
 
-    function getSkillWalletAddress() external view returns(address);
+    function getSkillWalletAddress() external view returns (address);
 
     function setMetadataUri(string calldata uri) external;
-    
-    function isMember(address member) external view returns(bool);
+
+    function isMember(address member) external view returns (bool);
 
     function setPermissionBadgeAddress(address _permissionBadgeAddr) external;
 
-        function isCoreTeamMember(address member) external view returns (bool);
+    function isCoreTeamMember(address member) external view returns (bool);
 
     function coreTeamMembersCount() external view returns (uint256);
 

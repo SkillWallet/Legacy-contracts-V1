@@ -14,7 +14,6 @@ const MembershipFactory = artifacts.require('MembershipFactory');
 const SkillWallet = artifacts.require('skill-wallet/contracts/main/SkillWallet');
 const InteractionFactory = artifacts.require('InteractionNFTFactory');
 const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
-var BN = web3.utils.BN;
 
 contract('Interactions', function (accounts) {
     before(async function () {
@@ -62,7 +61,7 @@ contract('Interactions', function (accounts) {
         this.membership = await Membership.at(await this.partnersAgreement.membershipAddress());
 
         const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
-        await community.joinNewMember('', 1, { from: accounts[0] });
+        await community.join('', 1, { from: accounts[0] });
         await this.partnersAgreement.activatePA({ from: accounts[0] });
 
         await this.linkTokenMock.transfer(
@@ -87,8 +86,6 @@ contract('Interactions', function (accounts) {
                     interactionContract: ZERO_ADDRESS,
                     membershipContract: ZERO_ADDRESS,
                     interactionsCount: 100,
-                    coreTeamMembersCount: 3,
-                    whitelistedTeamMembers: [],
                     interactionsQueryServer: accounts[3]
                 }
             );
@@ -131,15 +128,13 @@ contract('Interactions', function (accounts) {
                     interactionContract: ZERO_ADDRESS,
                     membershipContract: ZERO_ADDRESS,
                     interactionsCount: 100,
-                    coreTeamMembersCount: 3,
-                    whitelistedTeamMembers: [],
                     interactionsQueryServer: accounts[3]
                 },
                 { from: accounts[0] }
             );
 
             const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
-            await community.joinNewMember('', 1, { from: accounts[1] });
+            await community.join('', 1, { from: accounts[1] });
             await partnersAgreement.activatePA({ from: accounts[1] });
 
             const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
