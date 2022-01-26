@@ -18,7 +18,7 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
     mapping(address => uint256) public agreementIds;
 
     // factories
-    address partnersAgreementFactory;
+    address public partnersAgreementFactory;
     address skillWalletAddress;
 
     function initialize(
@@ -35,6 +35,10 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
     //Also possible to create PA factory and move version there
     function setVersion(uint256 _version) public override {
         version = _version;
+    }
+
+    function setPAFactory(address factory) public {
+        partnersAgreementFactory = factory;
     }
 
     function getPartnerAgreementAddresses()
@@ -64,17 +68,19 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
             commitmentLevel > 0 && commitmentLevel <= 10,
             "CommitmentLevel should be between 1 and 10"
         );
-        address communityAddress = address(new Community(
-            metadata,
-            template,
-            membersAllowed,
-            msg.sender,
-            address(0),
-            version, 
-            skillWalletAddress,
-            isPermissioned,
-            coreTeamMembers
-        ));
+        address communityAddress = address(
+            new Community(
+                metadata,
+                template,
+                membersAllowed,
+                msg.sender,
+                address(0),
+                version,
+                skillWalletAddress,
+                isPermissioned,
+                coreTeamMembers
+            )
+        );
 
         if (partnersContractAddress == address(0))
             partnersContractAddress = communityAddress;
@@ -101,7 +107,10 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         emit PartnersAgreementCreated(paAddr, communityAddress);
     }
 
-    function migrate(address _agreement) public override {
+    function migrate(address _agreement, bool _migrateCommunity)
+        public
+        override
+    {
         uint256 agreementId = agreementIds[_agreement];
 
         require(
@@ -115,13 +124,31 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         require(pa.version < version, "already latest version");
         require(pa.owner == msg.sender, "not agreement owner");
 
+        if (_migrateCommunity) {
+            address commAddr = IPartnersAgreement(_agreement)
+                .communityAddress();
+
+            address newComm = address(
+                new Community(
+                    "",
+                    0,
+                    0,
+                    address(0),
+                    commAddr,
+                    version,
+                    address(0),
+                    false,
+                    0
+                )
+            );
+
+            pa.communityAddress = newComm;
+        }
         pa.version = version;
+
         // todo: fix hard coded core team members
         address agreement = IPartnersAgreementFactory(partnersAgreementFactory)
-            .createPartnersAgreement(
-                skillWalletAddress,
-                pa
-            );
+            .createPartnersAgreement(skillWalletAddress, pa);
 
         agreements[agreementId] = agreement;
         delete agreementIds[_agreement];

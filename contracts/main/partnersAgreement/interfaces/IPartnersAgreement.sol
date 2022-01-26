@@ -41,4 +41,6 @@ interface IPartnersAgreement {
         returns (Types.PartnersAgreementData memory data);
 
     function getSkillWalletAddress() external view returns (address);
+    
+    function setValueInTestMapping(uint256 a, uint256 b) external ;
 }

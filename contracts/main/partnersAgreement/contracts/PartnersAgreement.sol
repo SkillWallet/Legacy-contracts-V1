@@ -37,6 +37,8 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
 
     IActivities public activities;
 
+    mapping(uint256 => uint256) public testMapping;
+
     /**
      * @dev Throws PA not yet activated.
      */
@@ -85,14 +87,10 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
                 IInteractionNFTFactory(_interactionNFTFactory)
                     .deployInteractionNFT(pa.rolesCount, pa.interactionsCount)
             );
-
-            isActive = false;
         } else {
             partnersInteractionNFTContract = InteractionNFT(
                 pa.interactionContract
             );
-
-            isActive = true;
         }
     }
 
@@ -103,6 +101,10 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
             "Owner not yet a member of the community."
         );
         isActive = true;
+    }
+
+    function setValueInTestMapping(uint256 a, uint256 b) public override {
+        testMapping[a] = b;
     }
 
     function deployActivities(address _factory, address _bot) public {

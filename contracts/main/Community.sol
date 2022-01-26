@@ -23,7 +23,6 @@ contract Community is ICommunity {
     uint256 public version;
     address public migratedFrom;
     address public migratedTo;
-    STATUS public status;
 
     address public registry;
 
@@ -47,6 +46,7 @@ contract Community is ICommunity {
     IERC721 permissionBadges;
 
     ISkillWallet public skillWallet;
+    mapping(uint256 => uint256) public testMapping;
 
     modifier onlyCoreTeam() {
         require(
@@ -84,16 +84,11 @@ contract Community is ICommunity {
             isCoreTeamMember[owner] = true;
             coreTeamMemberWhitelist.push(owner);
 
-            status = STATUS.ACTIVE;
         } else {
             Community currentCommunity = Community(_migrateFrom);
 
             //TODO see if you need this
             require(currentCommunity.registry() == msg.sender);
-            require(
-                currentCommunity.status() == STATUS.ACTIVE,
-                "Community not active"
-            );
 
             metadataUri = currentCommunity.metadataUri();
             totalMembersAllowed = currentCommunity.totalMembersAllowed();
@@ -113,29 +108,27 @@ contract Community is ICommunity {
                 skillWalletIds.push(currentSkillWalletIDs[i]);
             }
 
-coreTeamMembersCount = currentCommunity.coreTeamMembersCount();
-            coreTeamMemberWhitelist = currentCommunity.getCoreTeamMembers();
-            for (uint256 i = 0; i < coreTeamMemberWhitelist.length; i++)
-                isCoreTeamMember[coreTeamMemberWhitelist[i]] = true;
+            coreTeamMembersCount = currentCommunity.coreTeamMembersCount();
+            address[] memory whitelist = currentCommunity.getCoreTeamMembers();
+            for (uint256 i = 0; i < whitelist.length; i++) {
+                isCoreTeamMember[whitelist[i]] = true;
+                coreTeamMemberWhitelist.push(whitelist[i]);
+            }
 
-            // coreTeamMembersCount = currentCommunity.coreTeamMembersCount();
-            // address[] memory whitelist = currentCommunity.getCoreTeamMembers();
-            // for (uint256 i = 0; i < whitelist.length; i++) {
-            //     isCoreTeamMember[whitelist[i]] = true;
-            //     coreTeamMemberWhitelist.push(whitelist[i]);
-            // }
+            skillWallet = ISkillWallet(
+                currentCommunity.getSkillWalletAddress()
+            );
+            isPermissioned = currentCommunity.isPermissioned();
+            registry = currentCommunity.registry();
 
-            // skillWallet = ISkillWallet(
-            //     currentCommunity.getSkillWalletAddress()
-            // );
-            // isPermissioned = currentCommunity.isPermissioned();
-            // registry = currentCommunity.registry();
-            status = STATUS.IN_PROGRESS;
             migratedFrom = _migrateFrom;
         }
         version = _version;
     }
 
+    function setValueInTestMapping(uint256 a, uint256 b) public override {
+        testMapping[a] = b;
+    }
     function joinNewMember(string memory uri, uint256 role) public override {
         require(
             isCoreTeamMember[msg.sender] ||

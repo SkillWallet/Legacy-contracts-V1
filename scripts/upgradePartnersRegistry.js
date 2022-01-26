@@ -2,21 +2,26 @@ const { ethers, upgrades } = require('hardhat');
 
 async function main () {
 
-  const partnersRegistryProxyAddress = '0x2d5F9858a1656163327908D623cfe1255fd589Fa';
-  const roleUtilsAddress = '0x2ee1E59FaA15a23882275b360E844dC885E03B6D';
+  const partnersRegistryProxyAddress = '0x1ba41241b3f25cc7106de8ca462ecF6912A4e978';
 
+  const PartnersRegistry = await ethers.getContractFactory('PartnersRegistry');
+  const skillWalletAddress = '0x433577c845478F6b9Cc6dc0B54a5E6B3c8C125E9'
+  const PartnersAgreementFactory = await ethers.getContractFactory('PartnersAgreementFactory');
+  const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
+  const interactionFactory = await InteractionFactory.deploy();
+  await interactionFactory.deployed();
+  const partnersAgreementFactory = await PartnersAgreementFactory.deploy(4, interactionFactory.address);
+  await partnersAgreementFactory.deployed();
 
-  const PartnersRegistry = await ethers.getContractFactory('PartnersRegistry', {
-    libraries: {
-        RoleUtils: roleUtilsAddress
-    }
-});
-
+  console.log(partnersAgreementFactory.address);
   console.log('Upgrading PartnersRegistry...');
-  await upgrades.upgradeProxy(partnersRegistryProxyAddress, PartnersRegistry, {
-    initializer: 'initialize',
-    unsafeAllowLinkedLibraries: true
-});
+//   await upgrades.upgradeProxy(partnersRegistryProxyAddress, PartnersRegistry, [
+//     skillWalletAddress,
+//     partnersAgreementFactory.address,
+// ], {
+//     initializer: 'initialize',
+//     unsafeAllowLinkedLibraries: true
+// });
   console.log('PartnersRegistry upgraded');
 }
 

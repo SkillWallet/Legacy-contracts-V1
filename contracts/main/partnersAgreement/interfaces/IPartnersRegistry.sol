@@ -27,5 +27,5 @@ interface IPartnersRegistry {
         bool isPermissioned
     ) external;
 
-    function migrate(address _agreement) external;
+    function migrate(address _agreement, bool _migrateCommunity) external;
 }

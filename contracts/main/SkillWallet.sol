@@ -14,6 +14,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721MetadataUpgradea
 
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "./partnersAgreement/interfaces/IPartnersRegistry.sol";
 
 /**
  * @title SkillWallet
@@ -137,6 +138,7 @@ contract SkillWallet is
         bool isClaimable
     ) external override {
         // TODO: Verify that the msg.sender is a valid community
+
         require(
             balanceOf(skillWalletOwner) == 0,
             "SkillWallet: There is SkillWallet already registered for this address."
