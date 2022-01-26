@@ -37,7 +37,6 @@ library Types {
         address[] partnersContracts;
         uint256 rolesCount;
         address interactionContract;
-        address membershipContract;
         uint256 interactionsCount;
     }
 }

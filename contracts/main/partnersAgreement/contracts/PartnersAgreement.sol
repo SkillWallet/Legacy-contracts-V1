@@ -6,7 +6,6 @@ import "./IOwnable.sol";
 
 import "./InteractionNFT.sol";
 import "../../ISkillWallet.sol";
-import "../interfaces/IMembershipFactory.sol";
 import "../interfaces/IPartnersAgreement.sol";
 import "../../../imported/CommonTypes.sol";
 import "./IActivities.sol";
@@ -36,7 +35,6 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
     InteractionNFT partnersInteractionNFTContract;
     ISkillWallet skillWallet;
 
-    address public override membershipAddress;
     IActivities public activities;
 
     /**
@@ -57,7 +55,6 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
 
     constructor(
         address skillWalletAddr,
-        address _membershipFactory,
         address _interactionNFTFactory,
         Types.PartnersAgreementData memory pa
     ) public {
@@ -84,9 +81,6 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
 
         skillWallet = ISkillWallet(skillWalletAddr);
         if (pa.interactionContract == address(0)) {
-            membershipAddress = IMembershipFactory(_membershipFactory)
-                .createMembership(skillWalletAddr, address(this));
-
             partnersInteractionNFTContract = InteractionNFT(
                 IInteractionNFTFactory(_interactionNFTFactory)
                     .deployInteractionNFT(pa.rolesCount, pa.interactionsCount)
@@ -98,7 +92,6 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
                 pa.interactionContract
             );
 
-            membershipAddress = pa.membershipContract;
             isActive = true;
         }
     }
@@ -315,7 +308,6 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
                 partnersContracts,
                 rolesCount,
                 address(partnersInteractionNFTContract),
-                membershipAddress,
                 partnersInteractionNFTContract.getTotalSupplyAll()
             );
     }

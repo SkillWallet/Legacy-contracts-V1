@@ -35,9 +35,7 @@ contract("Activities", (accounts) => {
         const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
         const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry");
         const PartnersAgreementFactory = await ethers.getContractFactory("PartnersAgreementFactory");
-        const MembershipFactory = await ethers.getContractFactory("MembershipFactory");
 
-        const membershipFactory = await MembershipFactory.deploy(1);
         const interactionFactory = await InteractionFactory.deploy();
         const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1, interactionFactory.address);
 
@@ -46,7 +44,6 @@ contract("Activities", (accounts) => {
             [
                 skillWallet.address,
                 partnersAgreementFactory.address,
-                membershipFactory.address,
             ]
         );
         await partnersRegistry.deployed();

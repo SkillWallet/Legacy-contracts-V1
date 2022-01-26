@@ -29,8 +29,6 @@ interface IPartnersAgreement {
 
     function getImportedAddresses() external view returns (address[] memory);
 
-    function membershipAddress() external view returns (address);
-
     function rolesCount() external view returns (uint256);
 
     function communityAddress() external view returns (address);

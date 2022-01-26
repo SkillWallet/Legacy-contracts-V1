@@ -13,10 +13,8 @@ const main = async () => {
     console.log('roleUtilsAddress', roleUtils.address)
 
     const PartnersRegistry = await ethers.getContractFactory('PartnersRegistry');
-    const MembershipFactory = await ethers.getContractFactory('MembershipFactory');
     const PartnersAgreementFactory = await ethers.getContractFactory('PartnersAgreementFactory');
-    const membershipFactory = await MembershipFactory.deploy(1);
-    await membershipFactory.deployed();
+    
     const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
     const interactionFactory = await InteractionFactory.deploy();
     await interactionFactory.deployed();
@@ -29,7 +27,6 @@ const main = async () => {
     const partnersRegistry = await upgrades.deployProxy(PartnersRegistry, [
         skillWalletAddress,
         partnersAgreementFactory.address,
-        membershipFactory.address,
     ], {
         initializer: 'initialize',
         unsafeAllowLinkedLibraries: true

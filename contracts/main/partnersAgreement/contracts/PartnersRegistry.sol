@@ -19,17 +19,14 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
 
     // factories
     address partnersAgreementFactory;
-    address membershipFactory;
     address skillWalletAddress;
 
     function initialize(
         address _skillWalletAddress,
-        address _partnersAgreementFactoryAddress,
-        address _membershipFactory
+        address _partnersAgreementFactoryAddress
     ) public initializer {
         skillWalletAddress = _skillWalletAddress;
         partnersAgreementFactory = _partnersAgreementFactoryAddress;
-        membershipFactory = _membershipFactory;
 
         version = 1;
     }
@@ -87,14 +84,12 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         address paAddr = IPartnersAgreementFactory(partnersAgreementFactory)
             .createPartnersAgreement(
                 skillWalletAddress,
-                membershipFactory,
                 Types.PartnersAgreementData(
                     version,
                     msg.sender,
                     communityAddress,
                     partnersContracts,
                     rolesCount,
-                    address(0),
                     address(0),
                     numberOfActions
                 )
@@ -125,7 +120,6 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         address agreement = IPartnersAgreementFactory(partnersAgreementFactory)
             .createPartnersAgreement(
                 skillWalletAddress,
-                membershipFactory,
                 pa
             );
 

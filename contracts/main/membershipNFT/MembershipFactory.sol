@@ -2,7 +2,7 @@
 pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/IMembershipFactory.sol";
+import "./IMembershipFactory.sol";
 import "./Membership.sol";
 
 /*

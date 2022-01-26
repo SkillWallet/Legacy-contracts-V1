@@ -40,14 +40,13 @@ contract("PartnersRegistry", (accounts) => {
         );
         await skillWallet.deployed();
     });
-    describe("Deployment", async () => {
+    describe.only("Deployment", async () => {
         it("Should deploy Partners Registry contract", async () => {
             const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry");
             const PartnersAgreementFactory = await ethers.getContractFactory("PartnersAgreementFactory");
             const MembershipFactory = await ethers.getContractFactory("MembershipFactory");
             const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
 
-            const membershipFactory = await MembershipFactory.deploy(1);
             const interactionFactory = await InteractionFactory.deploy();
             const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1, interactionFactory.address);
 
@@ -56,7 +55,6 @@ contract("PartnersRegistry", (accounts) => {
                 [
                     skillWallet.address,
                     partnersAgreementFactory.address,
-                    membershipFactory.address,
                 ]
             );
             await partnersRegistry.deployed();
@@ -64,7 +62,7 @@ contract("PartnersRegistry", (accounts) => {
             expect(partnersRegistry.address).not.to.equal(ZERO_ADDRESS);
         });
     });
-    describe("New Partners Agreement", async () => {
+    describe.only("New Partners Agreement", async () => {
         it("Should create new Partners Agreement", async () => {
             await partnersRegistry.connect(com1Owner).create(
                 metadataUrl,
@@ -151,7 +149,7 @@ contract("PartnersRegistry", (accounts) => {
             expect(partnersContracts2[0]).to.equal(contract2.address);
         });
     });
-    describe("Partners Agreement Migrations", async () => {
+    describe.only("Partners Agreement Migrations", async () => {
         it("Should migrate new Partners Agreement", async () => {
             await (await partnersRegistry.setVersion(2)).wait();
 
@@ -170,7 +168,6 @@ contract("PartnersRegistry", (accounts) => {
             expect(newAgreementAddress).not.to.equal(agreementAddress);
             expect(oldData.communityAddress).to.equal(newData.communityAddress);
             expect(oldData.interactionsCount).to.equal(newData.interactionsCount);
-            expect(oldData.membershipContract).to.equal(newData.membershipContract);
             expect(oldData.interactionContract).to.equal(newData.interactionContract);
             expect(oldData.interactionsQueryServer).to.equal(newData.interactionsQueryServer);
             expect(String(await partnersRegistry.agreementIds(newAgreementAddress))).to.equal("0");

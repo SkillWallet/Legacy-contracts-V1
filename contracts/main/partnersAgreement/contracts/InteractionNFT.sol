@@ -44,31 +44,10 @@ contract InteractionNFT is ERC1155Supply {
         uint256 amount,
         bytes calldata data
     ) public override {
-        require(
-            msg.sender == from && from == partnersAgreementAddress,
-            "Only PartnersAgreement can transfer Interactio NFTs"
-        );
+        if (from != partnersAgreementAddress)
+            inactiveInteractions[from] += amount;
+
         super.safeTransferFrom(from, to, id, amount, data);
-    }
-
-    //TODO: call from token distribution, once there are funds distributed for a certain amount of interactions
-    function markAsInactive(address owner, uint256 amount) public {
-        require(owner != address(0), "no owner passed");
-        require(
-            amount >=
-                balanceOf(
-                    owner,
-                    uint256(
-                        ISkillWallet(
-                            IPartnersAgreement(msg.sender)
-                                .getSkillWalletAddress()
-                        ).getRole(owner)
-                    )
-                )
-        );
-
-        inactiveInteractions[owner] += amount;
-
         emit MarkedAsInactive();
     }
 

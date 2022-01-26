@@ -4,7 +4,6 @@ const { ethers } = require('hardhat');
 const { ZERO_ADDRESS } = constants;
 
 let partnersAgreement;
-let membershipFactory;
 let minimumCommunity;
 let mockOracle;
 let interactionFactory;
@@ -54,7 +53,6 @@ contract('PartnersAgreement', function (accounts) {
       5,
       );
 
-    membershipFactory = await MembershipFactory.deploy(1);
 
     await linkTokenMock.transfer(
       osmAddress,
@@ -65,7 +63,6 @@ contract('PartnersAgreement', function (accounts) {
 
     partnersAgreement = await PartnersAgreement.deploy(
       skillWallet.address,
-      membershipFactory.address,
       interactionFactory.address,
       {
         version: 1,
@@ -74,12 +71,10 @@ contract('PartnersAgreement', function (accounts) {
         partnersContracts: [ZERO_ADDRESS],
         rolesCount: 3,
         interactionContract: ZERO_ADDRESS,
-        membershipContract: ZERO_ADDRESS,
         interactionsCount: 100
       },
     );
 
-    membership = await Membership.attach(await partnersAgreement.membershipAddress());
     const community = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
     await community.joinNewMember('', 1);
     await partnersAgreement.activatePA();
@@ -102,7 +97,6 @@ contract('PartnersAgreement', function (accounts) {
 
       const pa = await PartnersAgreement.deploy(
         skillWallet.address,
-        membershipFactory.address,
         interactionFactory.address,
         {
           version: 1,
@@ -111,7 +105,6 @@ contract('PartnersAgreement', function (accounts) {
           partnersContracts: [ZERO_ADDRESS],
           rolesCount: 3,
           interactionContract: ZERO_ADDRESS,
-          membershipContract: ZERO_ADDRESS,
           interactionsCount: 100,
         }
       );
@@ -129,7 +122,6 @@ contract('PartnersAgreement', function (accounts) {
 
       const pa = await PartnersAgreement.connect(paOwner2Signee).deploy(
         skillWallet.address,
-        membershipFactory.address,
         interactionFactory.address,
         {
           version: 1,
@@ -138,7 +130,6 @@ contract('PartnersAgreement', function (accounts) {
           partnersContracts: [ZERO_ADDRESS],
           rolesCount: 3,
           interactionContract: ZERO_ADDRESS,
-          membershipContract: ZERO_ADDRESS,
           interactionsCount: 100,
         }
       );

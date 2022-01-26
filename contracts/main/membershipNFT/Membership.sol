@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-import "../../ISkillWallet.sol";
-import "../interfaces/IMembership.sol";
-import "../interfaces/IPartnersAgreement.sol";
+import "../ISkillWallet.sol";
+import "./IMembership.sol";
+import "../partnersAgreement/interfaces/IPartnersAgreement.sol";
 
 /*
  * @title Membership contract for minting Membership NFTs

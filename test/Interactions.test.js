@@ -35,11 +35,9 @@ contract('Interactions', function (accounts) {
             5);
 
         this.interactionFactory = await InteractionFactory.new();
-        this.membershipFactory = await MembershipFactory.new(1);
 
         this.partnersAgreement = await PartnersAgreement.new(
             this.skillWallet.address,
-            this.membershipFactory.address,
             this.interactionFactory.address,
             {
                 version: 1,
@@ -48,25 +46,20 @@ contract('Interactions', function (accounts) {
                 partnersContracts: [ZERO_ADDRESS],
                 rolesCount: 3,
                 interactionContract: ZERO_ADDRESS,
-                membershipContract: ZERO_ADDRESS,
                 interactionsCount: 100,
             }
         );
 
-        this.membership = await Membership.at(await this.partnersAgreement.membershipAddress());
 
         const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
         await community.joinNewMember('', 1, { from: accounts[0] });
         await this.partnersAgreement.activatePA({ from: accounts[0] });
-
-
     });
-    describe.only('Interaction tests', async function () {
+    describe('Interaction tests', async function () {
 
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 3", async function () {
             const partnersAgreement = await PartnersAgreement.new(
                 this.skillWallet.address,
-                this.membershipFactory.address,
                 this.interactionFactory.address,
                 {
                     version: 1,
@@ -75,7 +68,6 @@ contract('Interactions', function (accounts) {
                     partnersContracts: [],
                     rolesCount: 3,
                     interactionContract: ZERO_ADDRESS,
-                    membershipContract: ZERO_ADDRESS,
                     interactionsCount: 100,
                 }
             );
@@ -107,7 +99,6 @@ contract('Interactions', function (accounts) {
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 2", async function () {
             const partnersAgreement = await PartnersAgreement.new(
                 this.skillWallet.address,
-                this.membershipFactory.address,
                 this.interactionFactory.address,
                 {
                     version: 1,
@@ -116,7 +107,6 @@ contract('Interactions', function (accounts) {
                     partnersContracts: [],
                     rolesCount: 2,
                     interactionContract: ZERO_ADDRESS,
-                    membershipContract: ZERO_ADDRESS,
                     interactionsCount: 100,
                 },
                 { from: accounts[0] }
