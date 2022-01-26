@@ -50,7 +50,7 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         string memory metadata,
         uint256 template,
         uint256 rolesCount,
-        uint256 numberOfActions,
+        uint256 commitmentLevel,
         address partnersContractAddress,
         uint256 membersAllowed,
         uint256 coreTeamMembers,
@@ -61,8 +61,8 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
             "Template should be between 0 and 2"
         );
         require(
-            numberOfActions > 0 && numberOfActions <= 100,
-            "Number of actions should be between 1 and 100"
+            commitmentLevel > 0 && commitmentLevel <= 10,
+            "CommitmentLevel should be between 1 and 10"
         );
         address communityAddress = address(new Community(
             metadata,
@@ -91,7 +91,7 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
                     partnersContracts,
                     rolesCount,
                     address(0),
-                    numberOfActions
+                    commitmentLevel
                 )
             );
 

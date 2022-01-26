@@ -9,9 +9,6 @@ var partnersRegistryAbi = require('../artifacts/contracts/main/partnersAgreement
     .abi
 var partnersAgreementAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/PartnersAgreement.sol/PartnersAgreement.json')
     .abi
-var membershipAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/Membership.sol/Membership.json')
-    .abi
-
 
 function mnemonic() {
     try {
@@ -119,19 +116,6 @@ async function isActive(partnersAgreementAddress) {
 }
 
 
-async function getMemContract(partnersAgreementAddress) {
-    const partnersAgreementContract = new ethers.Contract(
-        partnersAgreementAddress,
-        partnersAgreementAbi,
-        signer,
-    )
-
-    const membershipAddress = await partnersAgreementContract.getAgreementData();
-    console.log('membershipAddress', membershipAddress)
-}
-
-
-
 
 async function isCoreTeamMember(partnersAgreementAddress, user) {
     const partnersAgreementContract = new ethers.Contract(
@@ -143,30 +127,6 @@ async function isCoreTeamMember(partnersAgreementAddress, user) {
     const isCoreTeamMember = await partnersAgreementContract.isCoreTeamMember(user);
     console.log('isCoreTeamMember', isCoreTeamMember)
 }
-
-// create(string calldata url, uint256 role)
-async function createMembershipCard(partnersAgreementAddress, skillWalletId) {  
-    const partnersAgreementContract = new ethers.Contract(
-        partnersAgreementAddress,
-        partnersAgreementAbi,
-        signer,
-    )
-
-    const membershipAddress = await partnersAgreementContract.membershipAddress();
-    console.log('membershipAddress', membershipAddress)
-    const membershipContract = new ethers.Contract(
-        membershipAddress,
-        membershipAbi,
-        signer,
-    )
-    const createTx = await membershipContract.create(
-        'https://hub.textile.io/ipfs/bafkreicezefuc6einewxdqhlpefelzjponwdqt4vmp2byosq5uwpn7hgoq', 2)
-    await createTx.wait();
-
-    const membershipID = await membershipContract.skillWalletToMembershipID(skillWalletId);
-    console.log('membershipID:', membershipID);
-}
-
 
 async function test() {
     // await setPartnersRegistryAddress();
