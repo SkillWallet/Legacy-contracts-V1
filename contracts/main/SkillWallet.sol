@@ -53,9 +53,6 @@ contract SkillWallet is
 
     CountersUpgradeable.Counter private _skillWalletCounter;
 
-    address private oracle;
-    bytes32 private jobId;
-    uint256 private fee;
     address public osmAddress;
 
     mapping(bytes32 => Types.SWValidationRequest)
@@ -365,6 +362,10 @@ contract SkillWallet is
         return skillWalletToRole[_skillWalletsByOwner[skillWalletHolderAddress]];
     }
 
+    function setChainlinkDetails(address oracle, bytes32 jobID, uint256 fee) onlyOwner public {
+        OffchainSignatureMechanism(osmAddress).setChainlinkDetails(oracle, jobID, fee);
+    }
+    
     function onERC721Received(
         address operator,
         address from,
