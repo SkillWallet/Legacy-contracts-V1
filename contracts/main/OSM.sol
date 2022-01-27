@@ -45,6 +45,13 @@ contract OffchainSignatureMechanism is ChainlinkClient {
         skillWallet = ISkillWallet(msg.sender);
     }
 
+    function setChainlinkDetails(address _oracle, bytes32 _jobID, uint256 _fee) public { 
+        require(msg.sender == address(skillWallet), 'Only SkillWallet contract can set chainlink details');
+        oracle = _oracle;
+        jobId = _jobID; 
+        fee = _fee;
+    }
+
     function validate(
         string calldata signature,
         uint256 tokenId,
