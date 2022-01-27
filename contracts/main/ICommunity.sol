@@ -45,7 +45,4 @@ interface ICommunity {
 
     function getCoreTeamMembers() external view returns (address[] memory);
 
-    function setValueInTestMapping(uint256 a, uint256 b) external ;
-
-
 }

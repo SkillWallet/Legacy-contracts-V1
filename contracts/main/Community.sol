@@ -126,9 +126,6 @@ contract Community is ICommunity {
         version = _version;
     }
 
-    function setValueInTestMapping(uint256 a, uint256 b) public override {
-        testMapping[a] = b;
-    }
     function joinNewMember(string memory uri, uint256 role) public override {
         require(
             isCoreTeamMember[msg.sender] ||

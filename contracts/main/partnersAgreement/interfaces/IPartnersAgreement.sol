@@ -42,5 +42,4 @@ interface IPartnersAgreement {
 
     function getSkillWalletAddress() external view returns (address);
     
-    function setValueInTestMapping(uint256 a, uint256 b) external ;
 }

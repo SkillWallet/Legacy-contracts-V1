@@ -103,10 +103,6 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder {
         isActive = true;
     }
 
-    function setValueInTestMapping(uint256 a, uint256 b) public override {
-        testMapping[a] = b;
-    }
-
     function deployActivities(address _factory, address _bot) public {
         require(msg.sender == owner, "not owner");
         require(address(activities) == address(0), "already deployed");

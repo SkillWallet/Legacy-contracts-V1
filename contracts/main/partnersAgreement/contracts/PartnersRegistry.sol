@@ -12,6 +12,7 @@ import "../../Community.sol";
 contract PartnersRegistry is IPartnersRegistry, Initializable {
     //versioning
     uint256 public version;
+    address public deployer;
 
     // agreements
     address[] public agreements;
@@ -29,15 +30,16 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         partnersAgreementFactory = _partnersAgreementFactoryAddress;
 
         version = 1;
+        deployer = msg.sender;
     }
 
-    //TODO: for tests only should be removed one upgradability is implemented
-    //Also possible to create PA factory and move version there
     function setVersion(uint256 _version) public override {
+        require(msg.sender == deployer, "Only deployer can set verison");
         version = _version;
     }
 
     function setPAFactory(address factory) public {
+        require(msg.sender == deployer, "Only deployer can set PAFactory");
         partnersAgreementFactory = factory;
     }
 
