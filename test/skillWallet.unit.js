@@ -1,7 +1,9 @@
 const { assert } = require('chai')
 const truffleAssert = require('truffle-assertions')
-const { deployProxy } = require('@openzeppelin/truffle-upgrades');
+const { constants } = require('@openzeppelin/test-helpers');
 const { ethers, upgrades } = require('hardhat');
+const { ZERO_ADDRESS } = constants;
+
 let linkTokenMock;
 let mockOracle;
 let skillWallet;
@@ -20,7 +22,7 @@ contract('SkillWallet', function () {
     const LinkToken = await ethers.getContractFactory("LinkToken");
     const MockOracle = await ethers.getContractFactory("MockOracle");
     const SkillWallet = await ethers.getContractFactory("SkillWallet");
-    const Community = await ethers.getContractFactory("MinimumCommunity");
+    const Community = await ethers.getContractFactory("Community");
     const OffchainSignatureMechanism = await ethers.getContractFactory('OffchainSignatureMechanism');
 
     linkTokenMock = await LinkToken.deploy();
@@ -40,7 +42,18 @@ contract('SkillWallet', function () {
     osmAddress = await skillWallet.getOSMAddress();
     osm = await OffchainSignatureMechanism.attach(osmAddress);
 
-    community = await Community.deploy(skillWallet.address)
+    community = await Community.deploy(
+      "url",
+      1,
+      100,
+      creator.address,
+      ZERO_ADDRESS,
+      1,
+      skillWallet.address,
+      false,
+      5
+      );
+
     await community.deployed();
 
     await linkTokenMock.transfer(
@@ -517,9 +530,6 @@ contract('SkillWallet', function () {
           const requestId = validationRequestIdSentEventEmitted.args[0];
 
         assert.isNotNull(validationRequestIdSentEventEmitted);
-
-        console.log(mockOracle.fulfillOracleRequest);
-        console.log(mockOracle.address);
 
         const fulfilTx = await (await mockOracle["fulfillOracleRequest(bytes32,bool)"](
           requestId,

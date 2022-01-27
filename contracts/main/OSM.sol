@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
  * @title SkillWallet OSM implementation
  *
  * @dev Implementation of the Offchain Signature Mechanism contract using chainlink EA
- * @author DistributedTown
+ * @author SkillWallet
  */
 contract OffchainSignatureMechanism is ChainlinkClient {
     using Strings for uint256;
@@ -39,7 +39,7 @@ contract OffchainSignatureMechanism is ChainlinkClient {
     constructor(address _linkToken, address _oracle) public {
         setChainlinkToken(_linkToken);
         oracle = _oracle;
-        jobId = "31061086cb2749f7a3f99f2d5179caf7";
+        jobId = "96a7de0b3c4140b4b04bdc2d058e559c";
         fee = 0.1 * 10**18; // 0.1 LINK
         skillWallet = ISkillWallet(msg.sender);
     }
@@ -126,10 +126,7 @@ contract OffchainSignatureMechanism is ChainlinkClient {
                 );
 
                 ISWActionExecutor actionExecutor = ISWActionExecutor(
-                    skillWallet.getContractAddressPerAction(
-                        req.action,
-                        req.caller
-                    )
+                    address(skillWallet)
                 );
 
                 actionExecutor.execute(

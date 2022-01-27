@@ -13,10 +13,8 @@ const main = async () => {
     console.log('roleUtilsAddress', roleUtils.address)
 
     const PartnersRegistry = await ethers.getContractFactory('PartnersRegistry');
-    const MembershipFactory = await ethers.getContractFactory('MembershipFactory');
     const PartnersAgreementFactory = await ethers.getContractFactory('PartnersAgreementFactory');
-    const membershipFactory = await MembershipFactory.deploy(1);
-    await membershipFactory.deployed();
+    
     const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
     const interactionFactory = await InteractionFactory.deploy();
     await interactionFactory.deployed();
@@ -24,13 +22,11 @@ const main = async () => {
     const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1, interactionFactory.address);
     await partnersAgreementFactory.deployed();
 
-    const distributedTownAddress = "0xe60a5C15Cf3C4F820f9771Ea68dA8CE41376B577";
+    const skillWalletAddress = '0x433577c845478F6b9Cc6dc0B54a5E6B3c8C125E9'
 
     const partnersRegistry = await upgrades.deployProxy(PartnersRegistry, [
-        distributedTownAddress,
+        skillWalletAddress,
         partnersAgreementFactory.address,
-        membershipFactory.address,
-        '0x655c5f51266c741BefD8fc4Bb7B5450E21C02006'
     ], {
         initializer: 'initialize',
         unsafeAllowLinkedLibraries: true

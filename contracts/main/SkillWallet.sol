@@ -5,7 +5,6 @@ pragma experimental ABIEncoderV2;
 import "./ISkillWallet.sol";
 import "../imported/CommonTypes.sol";
 import "./ISWActionExecutor.sol";
-import "../imported/ICommunity.sol";
 import "./OSM.sol";
 import "./utils/RoleUtils.sol";
 
@@ -15,12 +14,13 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721MetadataUpgradea
 
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "./partnersAgreement/interfaces/IPartnersRegistry.sol";
 
 /**
- * @title DistributedTown SkillWallet
+ * @title SkillWallet
  *
  * @dev Implementation of the SkillWallet contract
- * @author DistributedTown
+ * @author SkillWallet
  */
 contract SkillWallet is
     ISkillWallet,
@@ -137,12 +137,12 @@ contract SkillWallet is
         RoleUtils.Roles role,
         bool isClaimable
     ) external override {
-        // TODO: Verify that the msg.sender is valid community
+        // TODO: Verify that the msg.sender is a valid community
+
         require(
             balanceOf(skillWalletOwner) == 0,
             "SkillWallet: There is SkillWallet already registered for this address."
         );
-
         require(
             skillWalletClaimers[skillWalletOwner] == 0,
             "SkillWallet: There is SkillWallet to be claimed by this address."
@@ -346,26 +346,6 @@ contract SkillWallet is
             "SkillWallet: The SkillWallet claimer is invalid."
         );
         return skillWalletClaimers[skillWalletOwner];
-    }
-
-    function getContractAddressPerAction(Types.Action action, address caller)
-        public
-        view
-        override
-        returns (address)
-    {
-        uint256 skillWalletId = _skillWalletsByOwner[caller];
-        if (
-            action == Types.Action.CreateGig ||
-            action == Types.Action.TakeGig ||
-            action == Types.Action.SubmitGig ||
-            action == Types.Action.CompleteGig
-        ) {
-            address community = _activeCommunities[skillWalletId];
-            address gigAddress = ICommunity(community).gigsAddr();
-            return gigAddress;
-        }
-        return address(0);
     }
 
     function getOSMAddress() public view override returns (address) {

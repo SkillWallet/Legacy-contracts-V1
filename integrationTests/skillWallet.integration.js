@@ -1,16 +1,16 @@
-// const skillWalletAddress = '0x1e79bE396CE37F7eB43aF0Ef0ffb3124F3fD23eF'
-const skillWalletAddress = '0xd43696bAc9B4331f18b71c0F80DD56aEc130B808' // upgradable
-const dito = '0xe60a5C15Cf3C4F820f9771Ea68dA8CE41376B577'
-// const communityAddress = '0xec1380558d5A9e25bf258f2e341C6bF562ca7480'
-const communityAddress = '0xCBD8DA830262a287d73fF3eF07b0A0b350453C00' //upgradable SW
+const skillWalletAddress = '0x17Ba22F618e77EbdB2dd9Ce4D98644FE9e998ab5'
+
+const communityAddress = '0xCBD8DA830262a287d73fF3eF07b0A0b350453C00'
 const { assert } = require('chai')
 var ethers = require('ethers')
+
 var abi = require('../artifacts/contracts/main/SkillWallet.sol/SkillWallet.json')
   .abi
-
 var osmAbi = require('../artifacts/contracts/main/OSM.sol/OffchainSignatureMechanism.json')
   .abi
-var communityAbi = require('./communityAbi')
+
+var communityAbi = require('../artifacts/contracts/main/Community.sol/Community.json')
+.abi
 const helpers = require('../test/helpers')
 const fs = require("fs");
 
@@ -60,8 +60,7 @@ async function joinCommunity() {
   const wei = ethers.utils.parseEther('2220').toString()
   const joinedTx = await communityContract.joinNewMember(
     url,
-    1,
-    wei,
+    1
   )
   const joinCommunityTxResult = await joinedTx.wait()
   const { events } = joinCommunityTxResult
@@ -94,24 +93,6 @@ async function addPubKeyToSkillWallet(tokenId) {
   assert.isOk(addPubKeyEventEmitted, 'PubKeyAddedToSW event emitted')
   console.log('[addPubKeyToSkillWallet]:', 'PubKeyAddedToSW event emitted')
 }
-
-async function claim() {
-  const claimTx = await skillWalletContract.claim();
-
-  const claimTxResult = await claimTx.wait()
-  const { events } = claimTxResult
-  const claimEventEmitted = events.find(
-    (e) => e.event === 'SkillWalletClaimed'
-  );
-
-  if (claimEventEmitted) {
-    console.log('[Claim]:', 'Finished Successfully');
-  } else {
-    console.log('[Claim]:', 'Failed');
-  }
-}
-
-
 
 async function addDiscordID() {
   const addDiscordIDTx = await skillWalletContract.addDiscordIDToSkillWallet('migrenaa#4690');
@@ -204,8 +185,8 @@ async function getCommunity(tokenID) {
 }
 
 async function test() {
-  // await getOSMAddr();
-  const tokenId = 14;
+  await getOSMAddr();
+  // const tokenId = 14;
   
   // await getCommunity(tokenId);
   // // // const tokenId = await joinCommunity()

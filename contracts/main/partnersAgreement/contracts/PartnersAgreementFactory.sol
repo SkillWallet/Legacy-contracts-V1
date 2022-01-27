@@ -17,10 +17,10 @@ contract PartnersAgreementFactory is IPartnersAgreementFactory {
     }
 
     function createPartnersAgreement(
-        address _membershipFactory,
+        address skillWalletAddr,
         Types.PartnersAgreementData calldata pa
     ) public override returns (address) {
-        address paAddr = address(new PartnersAgreement(_membershipFactory, interactionNFTFactory, pa));
+        address paAddr = address(new PartnersAgreement(skillWalletAddr, interactionNFTFactory, pa));
 
         return paAddr;
     }

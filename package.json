@@ -24,7 +24,7 @@
     "skill",
     "wallet"
   ],
-  "author": "DiTo Labs <team@distributed.town>",
+  "author": "SkillWallet Inc <team@skillwallet.id>",
   "homepage": "https://skillwallet.id/",
   "devDependencies": {
     "@chainlink/token": "^1.1.0",
@@ -65,6 +65,7 @@
     "chain": "hardhat node",
     "fork": "hardhat node --fork https://mainnet.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad",
     "test": "hardhat test --network hardhat",
+    "test-activities": "hardhat test ./test/Activities --network hardhat",
     "cl-integration-test": "node test/skillwallet.integration.js",
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.js",

@@ -20,11 +20,12 @@ interface IPartnersRegistry {
         string memory metadata,
         uint256 template,
         uint256 rolesCount,
-        uint256 numberOfActions,
+        uint256 commitmentLevel,
         address partnersContractAddress,
         uint256 membersAllowed,
-        uint256 coreTeamMembers
+        uint256 coreTeamMembers,
+        bool isPermissioned
     ) external;
 
-    function migrate(address _agreement) external;
+    function migrate(address _agreement, bool _migrateCommunity) external;
 }

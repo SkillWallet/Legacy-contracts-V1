@@ -16,6 +16,8 @@ interface IPartnersAgreement {
 
     function getInteractionNFTContractAddress() external view returns (address);
 
+    function getActivitiesAddress() external view returns (address);
+
     function getAllMembers() external view returns (address[] memory);
 
     function transferInteractionNFTs(address user, uint256 amountOfInteractions)
@@ -27,24 +29,17 @@ interface IPartnersAgreement {
 
     function getImportedAddresses() external view returns (address[] memory);
 
-    function membershipAddress() external view returns (address);
-
     function rolesCount() external view returns (uint256);
 
     function communityAddress() external view returns (address);
 
     function isActive() external view returns (bool);
 
-    function isCoreTeamMember(address member) external view returns (bool);
-
-    function coreTeamMembersCount() external view returns (uint256);
-
-    function addNewCoreTeamMembers(address member) external;
-
-    function getCoreTeamMembers() external view returns (address[] memory);
-
     function getAgreementData()
         external
         view
         returns (Types.PartnersAgreementData memory data);
+
+    function getSkillWalletAddress() external view returns (address);
+    
 }

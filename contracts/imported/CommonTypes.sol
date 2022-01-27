@@ -37,10 +37,6 @@ library Types {
         address[] partnersContracts;
         uint256 rolesCount;
         address interactionContract;
-        address membershipContract;
         uint256 interactionsCount;
-        uint256 coreTeamMembersCount;
-        address[] whitelistedTeamMembers;
-        address interactionsQueryServer;
     }
 }
