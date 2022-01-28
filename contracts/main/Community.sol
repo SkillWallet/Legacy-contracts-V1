@@ -12,11 +12,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
  * @dev Implementation of the Community concept in the scope of the SkillWallet project
  * @author SkillWallet
  */
-enum STATUS {
-    ACTIVE,
-    IN_PROGRESS,
-    MIGRATED
-}
 
 contract Community is ICommunity {
     // upgradability

@@ -22,7 +22,7 @@ const main = async () => {
     const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1, interactionFactory.address);
     await partnersAgreementFactory.deployed();
 
-    const skillWalletAddress = '0x433577c845478F6b9Cc6dc0B54a5E6B3c8C125E9'
+    const skillWalletAddress = '0x22075c63761CA563ee73DBaB49382381544e2904'
 
     const partnersRegistry = await upgrades.deployProxy(PartnersRegistry, [
         skillWalletAddress,

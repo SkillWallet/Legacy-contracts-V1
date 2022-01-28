@@ -1,4 +1,4 @@
-const partnersRegistryAddress = '0x1ba41241b3f25cc7106de8ca462ecF6912A4e978'
+const partnersRegistryAddress = '0x71165fc407ff1c139Ef7ABE9181766bc9090a685'
 
 const { assert } = require('chai')
 const fs = require("fs");
@@ -27,8 +27,8 @@ function createWallet() {
     console.log(wallet);
     console.log(wallet.privateKey);
     console.log(wallet.mnemonic);
-
 }
+
 const provider = new ethers.providers.JsonRpcProvider(
     'https://rpc-mumbai.maticvigil.com/v1/9ca44fbe543c19857d4e47669aae2a9774e11c66'
 )
@@ -82,11 +82,20 @@ async function createPartnersAgreement() {
 }
 
 
+async function setPartnersAgreementFactory(factory) {
+    const createTx = await partnersRegistryContract.setPAFactory(
+        factory
+    );
+}
+
+
+async function setVersion(version) {
+    await partnersRegistryContract.setVersion(version);
+}
 
 async function migreatePA(partnersAgreementAddress) {
-    await partnersRegistryContract.setVersion(5);
     const createTx = await partnersRegistryContract.migrate(
-        partnersAgreementAddress, 
+        partnersAgreementAddress,
         true
     );
     // const createTxResult = await createTx.wait()
@@ -223,6 +232,27 @@ async function getPAData(partnersAgreementAddr) {
 
 }
 
+
+async function getComData(communityAddr) {
+    const communityContract = new ethers.Contract(
+        communityAddr,
+        communityAbi,
+        signer,
+    );
+    const version = await communityContract.version();
+    console.log('version', version);
+    const owner = await communityContract.owner();
+    console.log('owner', owner);
+
+    const communityAddress = await communityContract.template();
+    console.log('template', communityAddress);
+    const rolesCount = await communityContract.metadataUri();
+    console.log('metadataUri', rolesCount);
+    const skillWallet = await communityContract.getMemberAddresses();
+    console.log('getMemberAddresses', skillWallet);
+
+}
+
 async function setValueInTestMapping(partnersAgreementAddr) {
 
     const partnersAgreementContract = new ethers.Contract(
@@ -230,8 +260,9 @@ async function setValueInTestMapping(partnersAgreementAddr) {
         partnersAgreementAbi,
         signer,
     );
-     const a = await partnersAgreementContract.testMapping(101);
-     console.log(a);
+    //  await partnersAgreementContract.testFunc(101, 202);
+    const a = await partnersAgreementContract.testMapping(101);
+    console.log(a.toString());
     //  await partnersAgreementContract.setValueInTestMapping(101, 202);
 }
 
@@ -243,22 +274,34 @@ async function setValueInTestMappingCommunity(communityAddr) {
         communityAbi,
         signer,
     );
-    //  await communityContract.setValueInTestMapping(101, 202);
+    await communityContract.testFunc(101, 202);
     //  const a = await communityContract.testMapping(101);
     //  console.log(a.toString());
 }
 
 
+
+async function setNewVar(communityAddr) {
+
+    const communityContract = new ethers.Contract(
+        communityAddr,
+        communityAbi,
+        signer,
+    );
+    await communityContract.setAnotherOne(101);
+    //  const a= await communityContract.newVar();
+    //  console.log(a.toString());
+}
+
 async function test() {
     // await createPartnersAgreement();
-    const partnersAgreementAddr = '0x27f0d9ddb8563bcF453974Bf29CE59Ba25a89DdD';
-    const communityAddr = '0x07a0908C58A28B26234F642306627Cf1f9a4f845';
+    const partnersAgreementAddr = '0x447743D045772193a8FE527812D05c32330C3160';
+    const communityAddr = '0x7ea8d287F2692197f7c637bD0601eE10191a6ed8';
 
-    const upgradedPA = '0x5976ec0e8ADD78775E9f5AF991CceF09E84492dd';
-    const upgradedCom = '0xC8910046Eaa8FDFbCC28028d416Be33A51511aFa';
+    const upgradedPA = '0x668A5b34469Fc9190Af7e7db7e3b66bE7A36b4b7';
+    const upgradedCom = '0x6f237b89137cBB983c5EC0e2eE1636Fb1c161e2a';
 
-
-    // const tokenId = await joinCommunity(communityAddr);
+    // await joinCommunity(communityAddr);
     // const tokenId = 1;
     // console.log('old data');
     // await getPAData(partnersAgreementAddr);
@@ -267,13 +310,22 @@ async function test() {
     // await getPAData(upgradedPA);
 
     // await setValueInTestMapping(upgradedPA);
-    await setValueInTestMappingCommunity(upgradedCom)
+    // await setValueInTestMappingCommunity(upgradedCom)
     // await getPAs();
+    // await getComData(communityAddr)
+    // await getComData(upgradedCom)
     // await activatePA(partnersAgreementAddr)
-    // await isActive(upgradedPA);
+    // await isActive(partnersAgreementAddr);
     // await addCoreTeamMember(communityAddr, '0xEB77987d6125F5c7b6380DB422DBdF22bc4D6C18');
     // await isCoreTeamMember(communityAddr, '0xEB77987d6125F5c7b6380DB422DBdF22bc4D6C18')
     // await migreatePA(partnersAgreementAddr);
+
+    // await setPartnersAgreementFactory('0x0c0A898E19966083571e5DFC9b49562f5cE2613c')
+    // await setVersion(2);
+    // await setNewVar(upgradedCom)
+
+
+    createWallet()
 }
 
 test()
