@@ -148,7 +148,6 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         }
         pa.version = version;
 
-        // todo: fix hard coded core team members
         address agreement = IPartnersAgreementFactory(partnersAgreementFactory)
             .createPartnersAgreement(skillWalletAddress, pa);
 
