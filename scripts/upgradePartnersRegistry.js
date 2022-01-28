@@ -2,10 +2,10 @@ const { ethers, upgrades } = require('hardhat');
 
 async function main () {
 
-  const partnersRegistryProxyAddress = '0x1ba41241b3f25cc7106de8ca462ecF6912A4e978';
+  const partnersRegistryProxyAddress = '0x71165fc407ff1c139Ef7ABE9181766bc9090a685';
 
   const PartnersRegistry = await ethers.getContractFactory('PartnersRegistry');
-  const skillWalletAddress = '0x433577c845478F6b9Cc6dc0B54a5E6B3c8C125E9'
+  const skillWalletAddress = '0xc73eAC76Ff73D39f94F1455e807c17611ECF8D56'
   const PartnersAgreementFactory = await ethers.getContractFactory('PartnersAgreementFactory');
   const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
   const interactionFactory = await InteractionFactory.deploy();
@@ -15,13 +15,10 @@ async function main () {
 
   console.log(partnersAgreementFactory.address);
   console.log('Upgrading PartnersRegistry...');
-//   await upgrades.upgradeProxy(partnersRegistryProxyAddress, PartnersRegistry, [
-//     skillWalletAddress,
-//     partnersAgreementFactory.address,
-// ], {
-//     initializer: 'initialize',
-//     unsafeAllowLinkedLibraries: true
-// });
+  await upgrades.upgradeProxy(partnersRegistryProxyAddress, PartnersRegistry, {
+    initializer: 'initialize',
+    unsafeAllowLinkedLibraries: true
+});
   console.log('PartnersRegistry upgraded');
 }
 

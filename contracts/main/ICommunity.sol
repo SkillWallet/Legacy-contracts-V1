@@ -13,13 +13,6 @@ interface ICommunity {
     event MemberAdded(address indexed _member, uint256 _skillWalletTokenId);
     event CoreTeamMemberAdded(address _member);
 
-
-    enum STATUS {
-        ACTIVE,
-        IN_PROGRESS,
-        MIGRATED
-    }
-
     // check if it's called only from deployer.
     function joinNewMember(string memory uri, uint256 role) external;
 

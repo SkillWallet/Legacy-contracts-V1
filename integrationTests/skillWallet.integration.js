@@ -1,4 +1,4 @@
-const skillWalletAddress = '0x17Ba22F618e77EbdB2dd9Ce4D98644FE9e998ab5'
+const skillWalletAddress = '0x22075c63761CA563ee73DBaB49382381544e2904'
 
 const communityAddress = '0xCBD8DA830262a287d73fF3eF07b0A0b350453C00'
 const { assert } = require('chai')
