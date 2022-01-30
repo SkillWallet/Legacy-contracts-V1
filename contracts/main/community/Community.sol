@@ -2,7 +2,7 @@
 pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
-import "./ISkillWallet.sol";
+import "../ISkillWallet.sol";
 import "./ICommunity.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
@@ -19,12 +19,10 @@ contract Community is ICommunity {
     address public migratedFrom;
     address public migratedTo;
 
-    address public registry;
-
     // properties
     uint256 public template;
     string public metadataUri;
-    address public owner;
+    address public override owner;
 
     address[] public memberAddresses;
     uint256[] public skillWalletIds;
@@ -56,15 +54,15 @@ contract Community is ICommunity {
     }
 
     constructor(
+        address _owner,
         string memory _url,
         uint256 _template,
         uint256 _totalMembersAllowed,
-        address _owner,
-        address _migrateFrom,
+        uint256 _coreTeamMembersCount,
         uint256 _version,
         address _skillWalletAddress,
         bool _isPermissioned,
-        uint256 _coreTeamMembersCount
+        address _migrateFrom
     ) public {
         if (_migrateFrom == address(0)) {
             metadataUri = _url;
@@ -72,18 +70,17 @@ contract Community is ICommunity {
             skillWallet = ISkillWallet(_skillWalletAddress);
             template = _template;
             owner = _owner;
-            registry = msg.sender;
             isPermissioned = _isPermissioned;
             coreTeamMembersCount = _coreTeamMembersCount;
 
             isCoreTeamMember[owner] = true;
             coreTeamMemberWhitelist.push(owner);
-
         } else {
             Community currentCommunity = Community(_migrateFrom);
-
-            //TODO see if you need this
-            require(currentCommunity.registry() == msg.sender);
+            require(
+                msg.sender == currentCommunity.owner(),
+                "Only owner can migrate"
+            );
 
             metadataUri = currentCommunity.metadataUri();
             totalMembersAllowed = currentCommunity.totalMembersAllowed();
@@ -114,7 +111,6 @@ contract Community is ICommunity {
                 currentCommunity.getSkillWalletAddress()
             );
             isPermissioned = currentCommunity.isPermissioned();
-            registry = currentCommunity.registry();
 
             migratedFrom = _migrateFrom;
         }
@@ -166,10 +162,6 @@ contract Community is ICommunity {
             "Only the owner can set permissions badge address!"
         );
         permissionBadges = IERC721(_permissionBadgeAddr);
-    }
-
-    function getTemplate() public view override returns (uint256) {
-        return template;
     }
 
     function getSkillWalletAddress() public view override returns (address) {

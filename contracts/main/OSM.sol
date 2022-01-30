@@ -40,7 +40,7 @@ contract OffchainSignatureMechanism is ChainlinkClient {
         setChainlinkToken(_linkToken);
         oracle = _oracle;
         // TODO: change JOB ID & oracle
-        jobId = "96a7de0b3c4140b4b04bdc2d058e559c";
+        jobId = "eac3069d969449968af970d9bf495c98";
         fee = 0.05 * 10**18;
         skillWallet = ISkillWallet(msg.sender);
     }

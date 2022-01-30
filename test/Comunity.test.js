@@ -28,42 +28,41 @@ contract('Community', function (accounts) {
 
         memberAddress = accounts[3];
         community = await Community.deploy(
+            signer.address,
             "url",
             1,
             100,
-            signer.address,
-            ZERO_ADDRESS,
+            10,
             1,
             skillWallet.address,
             false,
-            5);
+            ZERO_ADDRESS);
 
         community2 = await Community.deploy(
+            signer.address,
             "url",
             2,
             100,
-            signer.address,
-            ZERO_ADDRESS,
+            10,
             1,
             skillWallet.address,
             false,
-            5);
-
+            ZERO_ADDRESS);
         permissionedMember = accounts[4];
 
         badges = await BadgeNFT.deploy();
         await badges.deployed();
 
         permissionedCommunity = await Community.deploy(
+            signer.address,
             "url",
             2,
             100,
-            signer.address,
-            ZERO_ADDRESS,
+            10,
             1,
             skillWallet.address,
             true,
-            5);
+            ZERO_ADDRESS);
 
 
         await (await community
@@ -135,7 +134,7 @@ contract('Community', function (accounts) {
                 tx,
                 "The user has no permission badge."
             );
-                
+
             await permissionedCommunity.joinNewMember("", 1);
             await permissionedCommunity.setPermissionBadgeAddress(badges.address);
 

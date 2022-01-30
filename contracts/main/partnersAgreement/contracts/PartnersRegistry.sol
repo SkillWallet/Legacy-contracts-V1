@@ -4,10 +4,10 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "../interfaces/IPartnersRegistry.sol";
-import "../interfaces/IPartnersAgreementFactory.sol";
-import "../interfaces/IPartnersAgreement.sol";
+import "../contracts/PartnersAgreement.sol";
+
 import "../../../imported/CommonTypes.sol";
-import "../../Community.sol";
+import "../../community/ICommunity.sol";
 
 contract PartnersRegistry is IPartnersRegistry, Initializable {
     //versioning
@@ -19,15 +19,15 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
     mapping(address => uint256) public agreementIds;
 
     // factories
-    address public partnersAgreementFactory;
-    address skillWalletAddress;
+    address public interactionNFTFactory;
+    address public skillWalletAddress;
 
     function initialize(
         address _skillWalletAddress,
-        address _partnersAgreementFactoryAddress
+        address _interactionNFTFactory
     ) public initializer {
         skillWalletAddress = _skillWalletAddress;
-        partnersAgreementFactory = _partnersAgreementFactoryAddress;
+        interactionNFTFactory = _interactionNFTFactory;
 
         version = 1;
         deployer = msg.sender;
@@ -36,11 +36,6 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
     function setVersion(uint256 _version) public override {
         require(msg.sender == deployer, "Only deployer can set verison");
         version = _version;
-    }
-
-    function setPAFactory(address factory) public {
-        require(msg.sender == deployer, "Only deployer can set PAFactory");
-        partnersAgreementFactory = factory;
     }
 
     function getPartnerAgreementAddresses()
@@ -53,55 +48,41 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
     }
 
     function create(
-        string memory metadata,
-        uint256 template,
+        address communityAddress,
         uint256 rolesCount,
         uint256 commitmentLevel,
-        address partnersContractAddress,
-        uint256 membersAllowed,
-        uint256 coreTeamMembers,
-        bool isPermissioned
+        address partnersContractAddress
     ) public override {
-        require(
-            template >= 0 && template <= 2,
-            "Template should be between 0 and 2"
-        );
         require(
             commitmentLevel > 0 && commitmentLevel <= 10,
             "CommitmentLevel should be between 1 and 10"
         );
-        address communityAddress = address(
-            new Community(
-                metadata,
-                template,
-                membersAllowed,
-                msg.sender,
-                address(0),
-                version,
-                skillWalletAddress,
-                isPermissioned,
-                coreTeamMembers
-            )
+
+        require(
+            ICommunity(communityAddress).owner() == msg.sender,
+            "Only owner can attach community to PA"
         );
 
         if (partnersContractAddress == address(0))
             partnersContractAddress = communityAddress;
 
-        address[] memory partnersContracts = new address[](1);
-        partnersContracts[0] = partnersContractAddress;
-        address paAddr = IPartnersAgreementFactory(partnersAgreementFactory)
-            .createPartnersAgreement(
+        address[] memory contracts;
+
+        address paAddr = address(
+            new PartnersAgreement(
                 skillWalletAddress,
+                interactionNFTFactory,
                 Types.PartnersAgreementData(
                     version,
                     msg.sender,
                     communityAddress,
-                    partnersContracts,
+                    contracts,
                     rolesCount,
                     address(0),
                     commitmentLevel
                 )
-            );
+            )
+        );
 
         agreementIds[paAddr] = agreements.length;
         agreements.push(paAddr);
@@ -109,10 +90,7 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         emit PartnersAgreementCreated(paAddr, communityAddress);
     }
 
-    function migrate(address _agreement, bool _migrateCommunity)
-        public
-        override
-    {
+    function migrate(address _agreement) public override {
         uint256 agreementId = agreementIds[_agreement];
 
         require(
@@ -126,31 +104,11 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         require(pa.version < version, "already latest version");
         require(pa.owner == msg.sender, "not agreement owner");
 
-        if (_migrateCommunity) {
-            address commAddr = IPartnersAgreement(_agreement)
-                .communityAddress();
-
-            address newComm = address(
-                new Community(
-                    "",
-                    0,
-                    0,
-                    address(0),
-                    commAddr,
-                    version,
-                    address(0),
-                    false,
-                    0
-                )
-            );
-
-            pa.communityAddress = newComm;
-        }
         pa.version = version;
 
-        address agreement = IPartnersAgreementFactory(partnersAgreementFactory)
-            .createPartnersAgreement(skillWalletAddress, pa);
-
+        address agreement = address(
+            new PartnersAgreement(skillWalletAddress, interactionNFTFactory, pa)
+        );
         agreements[agreementId] = agreement;
         delete agreementIds[_agreement];
         agreementIds[agreement] = agreementId;

@@ -20,11 +20,10 @@ contract('PartnersAgreement', function (accounts) {
     const MockOracle = await ethers.getContractFactory("MockOracle");
     const SkillWallet = await ethers.getContractFactory("SkillWallet");
     const OffchainSignatureMechanism = await ethers.getContractFactory('OffchainSignatureMechanism');
-    const MembershipFactory = await ethers.getContractFactory('MembershipFactory');
-    const Membership = await ethers.getContractFactory('Membership');
     const MinimumCommunity = await ethers.getContractFactory('Community');
     const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
     const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
+    const CommunityRegistry = await ethers.getContractFactory('CommunityRegistry');
 
     linkTokenMock = await LinkToken.deploy();
     await linkTokenMock.deployed();
@@ -38,74 +37,78 @@ contract('PartnersAgreement', function (accounts) {
     );
     await skillWallet.deployed();
 
+    communityRegistry = await upgrades.deployProxy(
+      CommunityRegistry,
+      [skillWallet.address]
+    );
+    await communityRegistry.deployed();
+
     osmAddress = await skillWallet.getOSMAddress();
     osm = await OffchainSignatureMechanism.attach(osmAddress);
-
-    minimumCommunity = await MinimumCommunity.deploy(
-      "url",
-      1,
-      100,
-      signer.address,
-      ZERO_ADDRESS,
-      1,
-      skillWallet.address,
-      false,
-      5,
-      );
-
 
     await linkTokenMock.transfer(
       osmAddress,
       '2000000000000000000',
     );
 
-    interactionFactory = await InteractionFactory.deploy();
 
+    const community = await (await communityRegistry.createCommunity(
+      '',
+      1,
+      10,
+      2,
+      false,
+      ZERO_ADDRESS
+    )).wait();
+
+    interactionFactory = await InteractionFactory.deploy();
     partnersAgreement = await PartnersAgreement.deploy(
       skillWallet.address,
       interactionFactory.address,
       {
         version: 1,
         owner: accounts[0],
-        communityAddress: minimumCommunity.address,
+        communityAddress: community.events[0].args['comAddr'],
         partnersContracts: [ZERO_ADDRESS],
         rolesCount: 3,
         interactionContract: ZERO_ADDRESS,
-        interactionsCount: 100
+        commitmentLevel: 10
       },
     );
 
-    const community = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
-    await community.joinNewMember('', 1);
-    await partnersAgreement.activatePA();
+    const c = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
+    await c.joinNewMember('', 1);
 
     assert.equal((await partnersAgreement.getAllMembers()).length, 1);
 
     const isActive = await partnersAgreement.isActive();
     assert.isTrue(isActive);
 
-    await linkTokenMock.transfer(
-      partnersAgreement.address,
-      '2000000000000000000',
-    )
   })
 
   describe('Create partners agreement', async function () {
 
     it("should deploy inactive partners agreement contract", async function () {
       const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
-
+      const community = await (await communityRegistry.createCommunity(
+        '',
+        1,
+        10,
+        2,
+        false,
+        ZERO_ADDRESS
+      )).wait();
       const pa = await PartnersAgreement.deploy(
         skillWallet.address,
         interactionFactory.address,
         {
           version: 1,
           owner: accounts[0],
-          communityAddress: minimumCommunity.address,
+          communityAddress: community.events[0].args['comAddr'],
           partnersContracts: [ZERO_ADDRESS],
           rolesCount: 3,
           interactionContract: ZERO_ADDRESS,
-          interactionsCount: 100,
+          commitmentLevel: 10,
         }
       );
 
@@ -116,21 +119,29 @@ contract('PartnersAgreement', function (accounts) {
       expect(isActive).to.be.false;
     });
 
-    it.skip("should deploy and activate partners agreement contract", async function () {
+    it("should deploy and activate partners agreement contract", async function () {
 
       const PartnersAgreement = await ethers.getContractFactory('PartnersAgreement');
+      const community = await (await communityRegistry.connect(paOwner2Signee).createCommunity(
+        '',
+        1,
+        10,
+        2,
+        false,
+        ZERO_ADDRESS
+      )).wait();
 
       const pa = await PartnersAgreement.connect(paOwner2Signee).deploy(
         skillWallet.address,
         interactionFactory.address,
         {
           version: 1,
-          owner: accounts[0],
-          communityAddress: minimumCommunity.address,
+          owner: paOwner2Signee.address,
+          communityAddress: community.events[0].args['comAddr'],
           partnersContracts: [ZERO_ADDRESS],
           rolesCount: 3,
           interactionContract: ZERO_ADDRESS,
-          interactionsCount: 100,
+          commitmentLevel: 10,
         }
       );
 
@@ -145,16 +156,19 @@ contract('PartnersAgreement', function (accounts) {
       const MinimumCommunity = await ethers.getContractFactory('Community');
       const c = await MinimumCommunity.attach(await pa.communityAddress());
       await (await c.connect(paOwner2Signee).joinNewMember('', 1)).wait();
-      await pa.connect(paOwner2Signee).activatePA();
 
       isActive = await pa.isActive();
-      expect(isActive).to.be.true;
-
       const allUsers = await pa.getAllMembers();
-      const interactionNFTAddress = await pa.getInteractionNFTContractAddress();
+      const interactionNFTAddress = await pa.interactionNFT();
+      const owner = await c.owner();
+      const ownerPA = await pa.owner();
 
-      expect(interactionNFTAddress).not.to.eq(ZERO_ADDRESS);
+      expect(ownerPA).to.eq(paOwner2Signee.address)
+      expect(owner).to.eq(ownerPA);
+      expect(owner).to.eq(paOwner2Signee.address);
+      expect(interactionNFTAddress).to.eq(ZERO_ADDRESS);
       expect(allUsers.length).to.eq(1);
+      expect(isActive).to.be.true;
 
     });
     it('should add new contract address if owner is the signer', async function () {

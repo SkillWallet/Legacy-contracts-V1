@@ -4,8 +4,8 @@ pragma solidity ^0.6.10;
 import "./Activities.sol";
 
 contract ActivitiesFactory {
-    function deployActivities(address _bot) public returns (address) {
-        Activities activities = new Activities(msg.sender, _bot);
+    function deployActivities() public returns (address) {
+        Activities activities = new Activities(msg.sender);
 
         return address(activities);
     }

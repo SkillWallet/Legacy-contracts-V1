@@ -6,7 +6,7 @@ import "../../utils/RoleUtils.sol";
 import "../../utils/ERC1155Supply.sol";
 import "../../ISkillWallet.sol";
 import "./PartnersAgreement.sol";
-import "../../ICommunity.sol";
+import "../../community/ICommunity.sol";
 
 contract InteractionNFT is ERC1155Supply {
     event MarkedAsInactive();

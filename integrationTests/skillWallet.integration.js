@@ -1,4 +1,4 @@
-const skillWalletAddress = '0x22075c63761CA563ee73DBaB49382381544e2904'
+const skillWalletAddress = '0xE5AE3a4d71FFACEf34423C149F7D9f352de87f9b'
 
 const communityAddress = '0xCBD8DA830262a287d73fF3eF07b0A0b350453C00'
 const { assert } = require('chai')
@@ -31,7 +31,7 @@ let keyPair = {
 
 const provider = new ethers.providers.JsonRpcProvider(
   // 'https://kovan.infura.io/v3/779285194bd146b48538d269d1332f20',
-  'https://rpc-mumbai.maticvigil.com/'
+  'https://polygon-rpc.com/'
 )
 
 // Wallet connected to a provider

@@ -38,19 +38,16 @@ contract Activities is ERC721 {
     }
 
     address public partnersAgreement;
-    address public botAddress;
     mapping(uint256 => Type) public idTypes;
     Counters.Counter private idCounter;
     mapping(uint256 => uint256) public activityToTask;
     Task[] public tasks;
     mapping(uint256 => bool) public isFinalized;
 
-    constructor(address _pa, address _bot) public ERC721("Activities", "ACT") {
+    constructor(address _pa) public ERC721("Activities", "ACT") {
         require(_pa != address(0), "no PA address");
-        require(_bot != address(0), "no bot address");
 
         partnersAgreement = _pa;
-        botAddress = _bot;
     }
 
     function createActivity(uint256 _type, string memory _uri) public {
@@ -63,7 +60,6 @@ contract Activities is ERC721 {
     }
 
     function finalizeActivity(uint256 _id, string memory _uri) public {
-        require(msg.sender == botAddress, "noy bot");
         require(
             idTypes[_id] != Type.None && idTypes[_id] != Type.CoreTeamTask,
             "activity doesnt exist"

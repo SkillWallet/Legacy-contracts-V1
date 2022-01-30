@@ -20,7 +20,7 @@ interface ICommunity {
 
     function getMemberAddresses() external view returns (address[] memory);
 
-    function getTemplate() external view returns (uint256);
+    function owner() external view returns (address);
 
     function getSkillWalletAddress() external view returns (address);
 

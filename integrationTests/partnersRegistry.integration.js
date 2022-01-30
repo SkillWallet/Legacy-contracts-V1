@@ -1,16 +1,23 @@
-const partnersRegistryAddress = '0x71165fc407ff1c139Ef7ABE9181766bc9090a685'
+const partnersRegistryAddress = '0x59722BB9D2625ff16ebFc9ecD2492061414EeBC2'
+const communityRegistryAddress = '0xA011B9161B2a14C83Df656B114407E8B7Eb25931'
 
 const { assert } = require('chai')
 const fs = require("fs");
 
 var ethers = require('ethers')
 
-var partnersRegistryAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/PartnersRegistry.sol/PartnersRegistry.json')
+var partnersRegistryAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/PartnersRegistry.sol/Nananana.json')
     .abi
 var partnersAgreementAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/PartnersAgreement.sol/PartnersAgreement.json')
     .abi;
-var communityAbi = require('../artifacts/contracts/main/Community.sol/Community.json')
+
+var communityAbi = require('../artifacts/contracts/main/community/Community.sol/Community.json')
     .abi;
+
+var communityRegistryAbi = require("../artifacts/contracts/main/community/CommunityRegistry.sol/Kakaka.json")
+    .abi;
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 function mnemonic() {
     try {
@@ -30,7 +37,8 @@ function createWallet() {
 }
 
 const provider = new ethers.providers.JsonRpcProvider(
-    'https://rpc-mumbai.maticvigil.com/v1/9ca44fbe543c19857d4e47669aae2a9774e11c66'
+    'https://polygon-rpc.com/'
+    // 'https://matic-mumbai.chainstacklabs.com/'
 )
 
 // Wallet connected to a provider
@@ -38,6 +46,10 @@ const senderWalletMnemonic = ethers.Wallet.fromMnemonic(
     mnemonic(),
     "m/44'/60'/0'/0/0"
 );
+
+
+const url =
+    'https://hub.textile.io/ipfs/bafkreicezefuc6einewxdqhlpefelzjponwdqt4vmp2byosq5uwpn7hgoq';
 
 let signer = senderWalletMnemonic.connect(provider)
 
@@ -47,29 +59,46 @@ const partnersRegistryContract = new ethers.Contract(
     signer,
 )
 
+const communityRegistryContract = new ethers.Contract(
+    communityRegistryAddress,
+    communityRegistryAbi,
+    signer
+)
+
 async function getPAs() {
     const createTx = await partnersRegistryContract.getPartnerAgreementAddresses(
     );
     console.log(createTx);
 }
-
-
-async function createPartnersAgreement() {
-    const url =
-        'https://hub.textile.io/ipfs/bafkreicezefuc6einewxdqhlpefelzjponwdqt4vmp2byosq5uwpn7hgoq'
-    const createTx = await partnersRegistryContract.create(
+async function createCommunity() {
+    const a = await (await communityRegistryContract.createCommunity(
         url,
         1,
-        3,
-        10,
-        "0x0000000000000000000000000000000000000000",
         100,
         10,
-        false
+        false,
+        ZERO_ADDRESS
+    )).wait();
+
+    console.log('[createCommunity] communityAddr: ', a.events[0].args['comAddr']);
+    return a.events[0].args['comAddr'];
+}
+
+async function createPartnersAgreement(comAddr) {
+
+    const createTx = await partnersRegistryContract.create(
+        comAddr,
+        3,
+        10,
+        ZERO_ADDRESS,
+        {
+            gasLimit: 25000000
+        }
     );
+
     const createTxResult = await createTx.wait()
     const { events } = createTxResult
-    console.log(events);
+    console.log(createTxResult);
     const partnersAgreementCreatedEventEmitted = events.find(
         (e) => e.event === 'PartnersAgreementCreated',
     )
@@ -78,7 +107,8 @@ async function createPartnersAgreement() {
         partnersAgreementCreatedEventEmitted,
         'PartnersAgreementCreated event emitted',
     )
-    return pa;
+    console.log('PartnersAgreement: ', events[0].args['partnersAgreementAddress'])
+    return events[0].args['partnersAgreementAddress'];
 }
 
 
@@ -294,14 +324,14 @@ async function setNewVar(communityAddr) {
 }
 
 async function test() {
-    // await createPartnersAgreement();
-    const partnersAgreementAddr = '0x447743D045772193a8FE527812D05c32330C3160';
-    const communityAddr = '0x7ea8d287F2692197f7c637bD0601eE10191a6ed8';
+    const communityAddr = '0xFb0061886c317c68d1eE4a945b990BAdC3F01fB3';
+    const partnersAgreementAddr = '0x762f2b2581F6D5E048bEd4815794fDF5aF6B5270';
 
-    const upgradedPA = '0x668A5b34469Fc9190Af7e7db7e3b66bE7A36b4b7';
-    const upgradedCom = '0x6f237b89137cBB983c5EC0e2eE1636Fb1c161e2a';
+    //  await createCommunity();
+    // await createPartnersAgreement(communityAddr);
 
     // await joinCommunity(communityAddr);
+
     // const tokenId = 1;
     // console.log('old data');
     // await getPAData(partnersAgreementAddr);
@@ -309,23 +339,19 @@ async function test() {
     // console.log();
     // await getPAData(upgradedPA);
 
-    // await setValueInTestMapping(upgradedPA);
-    // await setValueInTestMappingCommunity(upgradedCom)
     // await getPAs();
     // await getComData(communityAddr)
     // await getComData(upgradedCom)
-    // await activatePA(partnersAgreementAddr)
     // await isActive(partnersAgreementAddr);
-    // await addCoreTeamMember(communityAddr, '0xEB77987d6125F5c7b6380DB422DBdF22bc4D6C18');
-    // await isCoreTeamMember(communityAddr, '0xEB77987d6125F5c7b6380DB422DBdF22bc4D6C18')
+    // await addCoreTeamMember(communityAddr, '0x4e81dae01B6AFB743887C7AdE403a3d875594e8a');
+    // await isCoreTeamMember(communityAddr, '0x4e81dae01B6AFB743887C7AdE403a3d875594e8a')
     // await migreatePA(partnersAgreementAddr);
 
     // await setPartnersAgreementFactory('0x0c0A898E19966083571e5DFC9b49562f5cE2613c')
     // await setVersion(2);
     // await setNewVar(upgradedCom)
 
-
-    createWallet()
+    // await createWallet();
 }
 
 test()

@@ -56,8 +56,7 @@ module.exports = {
       */
     },
     matic: {
-      url: 'https://rpc-mainnet.maticvigil.com/',
-      gasPrice: 1000000000,
+      url: 'https://polygon-rpc.com/',
       accounts: {
         mnemonic: mnemonic(),
       },

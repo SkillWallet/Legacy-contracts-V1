@@ -4,8 +4,6 @@ pragma experimental ABIEncoderV2;
 import "../../../imported/CommonTypes.sol";
 
 interface IPartnersAgreement {
-    function activatePA() external;
-
     function addURL(string memory _url) external;
 
     function removeURL(string memory _url) external;
@@ -14,7 +12,7 @@ interface IPartnersAgreement {
 
     function isURLListed(string memory _url) external view returns (bool);
 
-    function getInteractionNFTContractAddress() external view returns (address);
+    function interactionNFT() external view returns (address);
 
     function getActivitiesAddress() external view returns (address);
 
@@ -22,8 +20,6 @@ interface IPartnersAgreement {
 
     function transferInteractionNFTs(address user, uint256 amountOfInteractions)
         external;
-
-    function getInteractionNFT(address user) external view returns (uint256);
 
     function addNewContractAddressToAgreement(address contractAddress) external;
 
@@ -35,11 +31,12 @@ interface IPartnersAgreement {
 
     function isActive() external view returns (bool);
 
+    function commitmentLevel() external view returns (uint256);
+
     function getAgreementData()
         external
         view
         returns (Types.PartnersAgreementData memory data);
 
     function getSkillWalletAddress() external view returns (address);
-    
 }

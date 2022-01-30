@@ -35,29 +35,40 @@ contract("Activities", (accounts) => {
         const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
         const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry");
         const PartnersAgreementFactory = await ethers.getContractFactory("PartnersAgreementFactory");
+        const CommunityRegistry = await ethers.getContractFactory('CommunityRegistry');
 
         const interactionFactory = await InteractionFactory.deploy();
-        const partnersAgreementFactory = await PartnersAgreementFactory.deploy(1, interactionFactory.address);
 
         const partnersRegistry = await upgrades.deployProxy(
             PartnersRegistry,
             [
                 skillWallet.address,
-                partnersAgreementFactory.address,
+                interactionFactory.address,
             ]
         );
         await partnersRegistry.deployed();
 
+        communityRegistry = await upgrades.deployProxy(
+            CommunityRegistry,
+            [skillWallet.address]
+          );
+        await communityRegistry.deployed();
+
+        const com = await (await communityRegistry.createCommunity(
+            '',
+            1,
+            100,
+            10,
+            false,
+            ZERO_ADDRESS
+          )).wait();
+
         //deploy pa
         await partnersRegistry.create(
-            metadataUrl,
-            1,
-            2,
-            100,
-            ZERO_ADDRESS,
-            10,
+            com.events[0].args['comAddr'],
+            3,
             5,
-            false
+            ZERO_ADDRESS,
         );
 
         //TODO: Milena!
@@ -66,7 +77,6 @@ contract("Activities", (accounts) => {
         const communityAddress = await agreement.communityAddress();
         community = await ethers.getContractAt('Community', communityAddress);
         await community.joinNewMember('url', 1);
-        await agreement.activatePA();
 
 
         //create skillwallets and add core team members
@@ -86,17 +96,22 @@ contract("Activities", (accounts) => {
         const Factory = await ethers.getContractFactory("ActivitiesFactory");
         factory = await Factory.deploy();
         await factory.deployed();
+
+        console.log('asdasdasd')
     });
     describe("Deployment", async () => {
         it("Should deploy activities contract", async () => {
-            await agreement.deployActivities(factory.address, accounts[1]);
+
+            await agreement.deployActivities(factory.address);
 
             const activitiesAddress = await agreement.activities();
             expect(activitiesAddress).not.to.equal(ZERO_ADDRESS);
 
+            const interactionAddress = await agreement.interactionNFT();
+            expect(interactionAddress).not.to.equal(ZERO_ADDRESS);
+
             activities = await ethers.getContractAt("Activities", activitiesAddress);
             expect(await activities.partnersAgreement()).to.equal(agreement.address);
-            expect(await activities.botAddress()).to.equal(accounts[1]);
         });
     });
     describe("Activites", async () => {
@@ -215,7 +230,7 @@ contract("Activities", (accounts) => {
         it("Should allow to finalize taken task", async () => {
             const teamMember = await ethers.getSigner(accounts[4]);
             const agreementTM = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember);
-            const intNFT = await agreementTM.getInteractionNFTContractAddress();
+            const intNFT = await agreementTM.interactionNFT();
             const interactionNFT = await ethers.getContractAt("InteractionNFT", intNFT, teamMember);
 
             await agreementTM.finilizeTask(3);

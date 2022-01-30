@@ -43,6 +43,7 @@ yarn-error.log*
 artifacts/*
 deployments
 mnemonic.txt
+mnemonic-prod.txt
 tenderly.yaml
 test/chainlink.test.js
 

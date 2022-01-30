@@ -16,16 +16,13 @@ interface IPartnersRegistry {
         view
         returns (address[] memory);
 
+    
     function create(
-        string memory metadata,
-        uint256 template,
+        address communityAddress,
         uint256 rolesCount,
         uint256 commitmentLevel,
-        address partnersContractAddress,
-        uint256 membersAllowed,
-        uint256 coreTeamMembers,
-        bool isPermissioned
+        address partnersContractAddress
     ) external;
 
-    function migrate(address _agreement, bool _migrateCommunity) external;
+    function migrate(address _agreement) external;
 }
