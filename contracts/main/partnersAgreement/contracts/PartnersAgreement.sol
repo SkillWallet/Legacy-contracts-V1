@@ -95,6 +95,12 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder, ERC1155Holder {
             .deployInteractionNFT(rolesCount, 100);
     }
 
+    function setActivities(address _activity, address _interactionNFT) public {
+        require(msg.sender == owner, "not owner");
+        activities = IActivities(_activity);
+        interactionNFT = _interactionNFT;
+    }
+
     function createActivity(uint256 _type, string memory _uri)
         public
         onlyCoreTeamMember

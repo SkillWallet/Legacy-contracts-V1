@@ -22,7 +22,7 @@ import "./partnersAgreement/interfaces/IPartnersRegistry.sol";
  * @dev Implementation of the SkillWallet contract
  * @author SkillWallet
  */
-contract SkillWallet is
+contract SkillWalletID is
     ISkillWallet,
     IERC721MetadataUpgradeable,
     ERC721Upgradeable,
@@ -65,7 +65,7 @@ contract SkillWallet is
         initializer
     {
         __Ownable_init();
-        __ERC721_init("SkillWallet", "SW");
+        __ERC721_init("SkillWalletID", "SWID");
 
         _skillWalletCounter.increment();
         osmAddress = address(

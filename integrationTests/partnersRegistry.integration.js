@@ -6,7 +6,7 @@ const fs = require("fs");
 
 var ethers = require('ethers')
 
-var partnersRegistryAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/PartnersRegistry.sol/Nananana.json')
+var partnersRegistryAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/PartnersRegistry.sol/PartnersRegistry.json')
     .abi
 var partnersAgreementAbi = require('../artifacts/contracts/main/partnersAgreement/contracts/PartnersAgreement.sol/PartnersAgreement.json')
     .abi;
@@ -14,7 +14,7 @@ var partnersAgreementAbi = require('../artifacts/contracts/main/partnersAgreemen
 var communityAbi = require('../artifacts/contracts/main/community/Community.sol/Community.json')
     .abi;
 
-var communityRegistryAbi = require("../artifacts/contracts/main/community/CommunityRegistry.sol/Kakaka.json")
+var communityRegistryAbi = require("../artifacts/contracts/main/community/CommunityRegistry.sol/CommunityRegistry.json")
     .abi;
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -283,50 +283,43 @@ async function getComData(communityAddr) {
 
 }
 
-async function setValueInTestMapping(partnersAgreementAddr) {
+async function deployActivities(partnersAgreementAddr, factoryAddr) {
 
     const partnersAgreementContract = new ethers.Contract(
         partnersAgreementAddr,
         partnersAgreementAbi,
         signer,
     );
-    //  await partnersAgreementContract.testFunc(101, 202);
-    const a = await partnersAgreementContract.testMapping(101);
-    console.log(a.toString());
-    //  await partnersAgreementContract.setValueInTestMapping(101, 202);
+    const a = await partnersAgreementContract.deployActivities(factoryAddr, {
+        gasLimit: 25000000
+    });
+    console.log(a);
+    console.log(await a.wait());
 }
 
 
-async function setValueInTestMappingCommunity(communityAddr) {
 
-    const communityContract = new ethers.Contract(
-        communityAddr,
-        communityAbi,
+async function getActivities(partnersAgreementAddr) {
+
+    const partnersAgreementContract = new ethers.Contract(
+        partnersAgreementAddr,
+        partnersAgreementAbi,
         signer,
     );
-    await communityContract.testFunc(101, 202);
-    //  const a = await communityContract.testMapping(101);
-    //  console.log(a.toString());
+    console.log('isActive', await partnersAgreementContract.isActive());
+    console.log('getActivitiesAddress', await partnersAgreementContract.getActivitiesAddress());
+    console.log('interactionNFT', await partnersAgreementContract.interactionNFT());
+    
 }
 
 
 
-async function setNewVar(communityAddr) {
 
-    const communityContract = new ethers.Contract(
-        communityAddr,
-        communityAbi,
-        signer,
-    );
-    await communityContract.setAnotherOne(101);
-    //  const a= await communityContract.newVar();
-    //  console.log(a.toString());
-}
 
 async function test() {
-    const communityAddr = '0xFb0061886c317c68d1eE4a945b990BAdC3F01fB3';
+    // const communityAddr = '0xFb0061886c317c68d1eE4a945b990BAdC3F01fB3';
     const partnersAgreementAddr = '0x762f2b2581F6D5E048bEd4815794fDF5aF6B5270';
-
+    const activitiesFactory = '0x08B066886a4f1c226CE21b53d7CD53A092f060d5'
     //  await createCommunity();
     // await createPartnersAgreement(communityAddr);
 
@@ -347,9 +340,11 @@ async function test() {
     // await isCoreTeamMember(communityAddr, '0x4e81dae01B6AFB743887C7AdE403a3d875594e8a')
     // await migreatePA(partnersAgreementAddr);
 
-    // await setPartnersAgreementFactory('0x0c0A898E19966083571e5DFC9b49562f5cE2613c')
+    await deployActivities(partnersAgreementAddr, activitiesFactory);
+    // await getActivities(partnersAgreementAddr);
     // await setVersion(2);
     // await setNewVar(upgradedCom)
+
 
     // await createWallet();
 }

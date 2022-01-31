@@ -44,7 +44,7 @@ contract Activities is ERC721 {
     Task[] public tasks;
     mapping(uint256 => bool) public isFinalized;
 
-    constructor(address _pa) public ERC721("Activities", "ACT") {
+    constructor(address _pa) public ERC721("Bam", "BAM") {
         require(_pa != address(0), "no PA address");
 
         partnersAgreement = _pa;
