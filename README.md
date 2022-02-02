@@ -34,16 +34,14 @@ The SkillWallet.sol contract can be used for getting the SW data such as check i
 
 ## Chainlink 
 
-1. Kovan: <br/> <br/>
+1. Mainnnet: <br/> <br/>
 
-Oracle: 0xF405B99ACa8578B9eb989ee2b69D518aaDb90c1F <br/>
-JobID: e1b99d23a00549ad97cc2519d7d4f767 <br/>
-LinkToken: 
-0xa36085f69e2889c224210f603d836748e7dc0088
+JobID: eac3069d969449968af970d9bf495c98
+Oracle: 0x0a31078cD57d23bf9e8e8F1BA78356ca2090569E
 
 
 2. Mumbai <br/> <br/>
 
-Oracle: 0xc8D925525CA8759812d0c299B90247917d4d4b7C <br/>
-JobID: 31061086cb2749f7a3f99f2d5179caf7 <br/>
+Oracle: 0x0bDDCD124709aCBf9BB3F824EbC61C87019888bb <br/>
+JobID: 96a7de0b3c4140b4b04bdc2d058e559c <br/>
 LinkToken: 0x326C977E6efc84E512bB9C30f76E30c160eD06FB
