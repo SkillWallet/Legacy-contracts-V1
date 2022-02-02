@@ -34,7 +34,7 @@ The SkillWallet.sol contract can be used for getting the SW data such as check i
 
 ## Chainlink 
 
-1. Mainnnet: <br/> <br/>
+1. Polygon: <br/> <br/>
 
 JobID: eac3069d969449968af970d9bf495c98
 Oracle: 0x0a31078cD57d23bf9e8e8F1BA78356ca2090569E
