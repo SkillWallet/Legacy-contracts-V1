@@ -1,10 +1,10 @@
-const skillWalletAddress = '0x7a07df557eeAa429f5e839d08A612e2dDeD0CA88'
+const skillWalletAddress = '0x870FFb101Ba8Ce83df0Ddd1d30Aeb0539D4B2CB3'
 
 const communityAddress = '0xCBD8DA830262a287d73fF3eF07b0A0b350453C00'
 const { assert } = require('chai')
 var ethers = require('ethers')
 
-var abi = require('../artifacts/contracts/main/SkillWallet.sol/SkillWallet.json')
+var abi = require('../artifacts/contracts/main/SkillWallet.sol/SkillWalletID.json')
   .abi
 var osmAbi = require('../artifacts/contracts/main/OSM.sol/OffchainSignatureMechanism.json')
   .abi
@@ -30,7 +30,6 @@ let keyPair = {
 }
 
 const provider = new ethers.providers.JsonRpcProvider(
-  // 'https://kovan.infura.io/v3/779285194bd146b48538d269d1332f20',
   // 'https://polygon-rpc.com/'
   'https://matic-mumbai.chainstacklabs.com/'
 )

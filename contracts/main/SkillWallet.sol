@@ -17,7 +17,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./partnersAgreement/interfaces/IPartnersRegistry.sol";
 
 /**
- * @title SkillWallet
+ * @title SkillWalletID
  *
  * @dev Implementation of the SkillWallet contract
  * @author SkillWallet

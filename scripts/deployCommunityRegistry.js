@@ -7,7 +7,7 @@ const main = async () => {
 
     console.log("\n\n 📡 Deploying...\n");
 
-    const skillWalletAddress = '0x7a07df557eeAa429f5e839d08A612e2dDeD0CA88'
+    const skillWalletAddress = '0x870FFb101Ba8Ce83df0Ddd1d30Aeb0539D4B2CB3'
     const CommunityRegistry = await ethers.getContractFactory('CommunityRegistry');
 
     const communityRegistry = await upgrades.deployProxy(CommunityRegistry, [

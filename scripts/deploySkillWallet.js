@@ -4,7 +4,7 @@ const { ethers, upgrades } = require("hardhat");
 
 const main = async () => {
 
-    const SkillWallet = await ethers.getContractFactory('SkillWallet');
+    const SkillWallet = await ethers.getContractFactory('SkillWalletID');
     console.log('Deploying SkillWallet...');
         
     const linkTokenMumbai = '0x326C977E6efc84E512bB9C30f76E30c160eD06FB';
@@ -13,7 +13,7 @@ const main = async () => {
     const linkTokenPolygon = '0xb0897686c545045afc77cf20ec7a532e3120e0f1';
     const oraclePolygon = '0x0a31078cD57d23bf9e8e8F1BA78356ca2090569E'
 
-    const skillWallet = await upgrades.deployProxy(SkillWallet, [linkTokenMumbai, oracleMumbai], { initializer: 'initialize' });
+    const skillWallet = await upgrades.deployProxy(SkillWallet, [linkTokenPolygon, oraclePolygon], { initializer: 'initialize' });
     await skillWallet.deployed();
     console.log('SkillWallet deployed to:', skillWallet.address);
 
