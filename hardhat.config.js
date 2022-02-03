@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { utils } = require("ethers");
 const fs = require("fs");
 const chalk = require("chalk");
@@ -26,7 +27,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 //
 // Select the network you want to deploy to here:
 //
-const defaultNetwork = "matic";
+const defaultNetwork = "hardhat";
 
 function mnemonic() {
   try {
@@ -48,6 +49,12 @@ module.exports = {
   // (you will need to restart the `yarn run start` dev server after editing the .env)
 
   networks: {
+    hardhat: {
+      forking: {
+        url: process.env.ALCHEMY_URL,
+        blockNumber:24495390
+      }
+    },
     localhost: {
       url: "http://localhost:7545",
       /*

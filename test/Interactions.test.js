@@ -9,7 +9,7 @@ const LinkToken = artifacts.require('LinkToken');
 const MockOracle = artifacts.require('MockOracle');
 const PartnersAgreement = artifacts.require('PartnersAgreement');
 const InteractionNFT = artifacts.require('InteractionNFT');
-const SkillWallet = artifacts.require('skill-wallet/contracts/main/SkillWallet');
+const SkillWallet = artifacts.require('skill-wallet/contracts/main/SkillWalletID');
 const InteractionFactory = artifacts.require('InteractionNFTFactory');
 const ActivitiesFactory = artifacts.require('ActivitiesFactory');
 
@@ -53,7 +53,7 @@ contract('Interactions', function (accounts) {
         const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
         await community.joinNewMember('', 1, { from: accounts[0] });
     });
-    describe.only('Interaction tests', async function () {
+    describe('Interaction tests', async function () {
 
         it("PartnersAgreement should deploy and mint correct amount of InteractionNFTs when the roles are 3", async function () {
             const partnersAgreement = await PartnersAgreement.new(

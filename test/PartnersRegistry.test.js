@@ -33,7 +33,7 @@ contract("PartnersRegistry", (accounts) => {
         const MockOracle = await ethers.getContractFactory("MockOracle");
         mockOracle = await MockOracle.deploy(linkTokenMock.address);
 
-        const SkillWallet = await ethers.getContractFactory("SkillWallet");
+        const SkillWallet = await ethers.getContractFactory("SkillWalletID");
         skillWallet = await upgrades.deployProxy(
             SkillWallet,
             [linkTokenMock.address, mockOracle.address]

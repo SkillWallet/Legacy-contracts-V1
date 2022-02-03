@@ -24,7 +24,7 @@ contract("Activities", (accounts) => {
         const MockOracle = await ethers.getContractFactory("MockOracle");
         const mockOracle = await MockOracle.deploy(linkTokenMock.address);
 
-        const SkillWallet = await ethers.getContractFactory("SkillWallet");
+        const SkillWallet = await ethers.getContractFactory("SkillWalletID");
         const skillWallet = await upgrades.deployProxy(
             SkillWallet,
             [linkTokenMock.address, mockOracle.address]

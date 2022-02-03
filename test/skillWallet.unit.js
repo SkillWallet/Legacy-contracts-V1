@@ -21,7 +21,7 @@ contract('SkillWallet', function () {
 
     const LinkToken = await ethers.getContractFactory("LinkToken");
     const MockOracle = await ethers.getContractFactory("MockOracle");
-    const SkillWallet = await ethers.getContractFactory("SkillWallet");
+    const SkillWallet = await ethers.getContractFactory("SkillWalletID");
     const Community = await ethers.getContractFactory("Community");
     const OffchainSignatureMechanism = await ethers.getContractFactory('OffchainSignatureMechanism');
 

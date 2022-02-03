@@ -15,7 +15,7 @@ let badges;
 contract('Community', function (accounts) {
     before(async function () {
         [signer, coreTeamMember1, coreTeamMember2, coreTeamMember2, notACoreTeamMember, ...accounts] = await ethers.getSigners();
-        const SkillWallet = await ethers.getContractFactory('SkillWallet');
+        const SkillWallet = await ethers.getContractFactory('SkillWalletID');
         const Community = await ethers.getContractFactory('Community');
         const BadgeNFT = await ethers.getContractFactory('Badges');
 
