@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../interfaces/IPartnersAgreement.sol";
-import "./InteractionNFT.sol";
+import "./Interaction.sol";
 
 contract Activities is ERC721 {
     using Counters for Counters.Counter;
@@ -44,10 +44,13 @@ contract Activities is ERC721 {
     Task[] public tasks;
     mapping(uint256 => bool) public isFinalized;
 
+    address interactionsAddress;
+
     constructor(address _pa) public ERC721("Bam", "BAM") {
         require(_pa != address(0), "no PA address");
 
         partnersAgreement = _pa;
+        interactionsAddress = address(new Interactions(partnersAgreement));
     }
 
     function createActivity(uint256 _type, string memory _uri) public {
@@ -142,7 +145,7 @@ contract Activities is ERC721 {
         tasks[taskId].status = TaskStatus.Finished;
         isFinalized[_activityId] = true;
 
-        _transferInteractionNFT(tasks[taskId].taker);
+        _addInteraction(tasks[taskId].taker, taskId);
 
         emit TaskFinalized(_activityId, taskId, _taker);
     }
@@ -188,10 +191,10 @@ contract Activities is ERC721 {
         return tasks[activityToTask[_activityId]];
     }
 
-    function _transferInteractionNFT(address receiver) private {
-        IPartnersAgreement(partnersAgreement).transferInteractionNFTs(
+    function _addInteraction(address receiver, uint taskID) private {
+        Interactions(interactionsAddress).addInteractions(
             receiver,
-            1
+            taskID
         );
     }
 }

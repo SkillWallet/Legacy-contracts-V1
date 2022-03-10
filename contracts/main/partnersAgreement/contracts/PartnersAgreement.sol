@@ -191,27 +191,6 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder, ERC1155Holder {
         return ICommunity(communityAddress).getMemberAddresses();
     }
 
-    function transferInteractionNFTs(address user, uint256 amountOfInteractions)
-        public
-        override
-        onlyActive
-    {
-        require(msg.sender == address(activities), "Only activities!");
-        require(user != address(0), "Invalid user address");
-        require(amountOfInteractions > 0, "Invalid amount of interactions");
-        require(
-            ICommunity(communityAddress).isMember(user),
-            "Invalid user address"
-        );
-        IInteractionNFT(interactionNFT).safeTransferFrom(
-            address(this),
-            user,
-            uint256(skillWallet.getRole(user)),
-            amountOfInteractions,
-            ""
-        );
-    }
-
     function addNewContractAddressToAgreement(address contractAddress)
         public
         override
