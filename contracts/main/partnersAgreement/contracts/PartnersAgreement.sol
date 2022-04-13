@@ -7,10 +7,6 @@ import "./IOwnable.sol";
 import "../../ISkillWallet.sol";
 import "../interfaces/IPartnersAgreement.sol";
 import "../../../imported/CommonTypes.sol";
-import "../interfaces/IActivities.sol";
-import "../interfaces/IInteractionNFT.sol";
-import "../interfaces/IActivitiesFactory.sol";
-import "../interfaces/IInteractionNFTFactory.sol";
 import "../../community/ICommunity.sol";
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155Holder.sol";
@@ -32,11 +28,8 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder, ERC1155Holder {
 
     uint256 public override rolesCount;
 
-    address public interactionNFTFactory;
-    address public override interactionNFT;
-
-    ISkillWallet skillWallet;
-    IActivities public activities;
+    ISkillWallet skillWallet;   
+    address public activities;
 
     uint256 public override commitmentLevel;
 
@@ -48,12 +41,12 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder, ERC1155Holder {
             ICommunity(communityAddress).isMember(owner),
             "Owner hasn't joined the community yet!"
         );
-        require(
-            ISkillWallet(skillWallet).isSkillWalletActivated(
-                ISkillWallet(skillWallet).getSkillWalletIdByOwner(owner)
-            ),
-            "Owner hasn't activated their SW!"
-        );
+        // require(
+        //     ISkillWallet(skillWallet).isSkillWalletActivated(
+        //         ISkillWallet(skillWallet).getSkillWalletIdByOwner(owner)
+        //     ),
+        //     "Owner hasn't activated their SW!"
+        // );
         _;
     }
 
@@ -67,7 +60,6 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder, ERC1155Holder {
 
     constructor(
         address skillWalletAddr,
-        address _interactionNFTFactory,
         Types.PartnersAgreementData memory pa
     ) public {
         require(
@@ -79,45 +71,12 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder, ERC1155Holder {
         owner = pa.owner;
         communityAddress = pa.communityAddress;
         commitmentLevel = pa.commitmentLevel;
-        interactionNFTFactory = _interactionNFTFactory;
         skillWallet = ISkillWallet(skillWalletAddr);
     }
 
-    function deployActivities(address _factory) public {
+    function setActivities(address _activity) public {
         require(msg.sender == owner, "not owner");
-        require(address(activities) == address(0), "already deployed");
-
-        activities = IActivities(
-            IActivitiesFactory(_factory).deployActivities()
-        );
-
-        interactionNFT = IInteractionNFTFactory(interactionNFTFactory)
-            .deployInteractionNFT(rolesCount, 100);
-    }
-
-    function setActivities(address _activity, address _interactionNFT) public {
-        require(msg.sender == owner, "not owner");
-        activities = IActivities(_activity);
-        interactionNFT = _interactionNFT;
-    }
-
-    function createActivity(uint256 _type, string memory _uri)
-        public
-        onlyCoreTeamMember
-    {
-        if (_type == 1) {
-            activities.createTask(_uri, msg.sender);
-        } else {
-            activities.createActivity(_type, _uri);
-        }
-    }
-
-    function takeTask(uint256 _activityId) public onlyCoreTeamMember {
-        activities.takeTask(_activityId, msg.sender);
-    }
-
-    function finilizeTask(uint256 _activityId) public onlyCoreTeamMember {
-        activities.finilizeTask(_activityId, msg.sender);
+        activities = _activity;
     }
 
     function addURL(string memory _url)
@@ -191,27 +150,6 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder, ERC1155Holder {
         return ICommunity(communityAddress).getMemberAddresses();
     }
 
-    function transferInteractionNFTs(address user, uint256 amountOfInteractions)
-        public
-        override
-        onlyActive
-    {
-        require(msg.sender == address(activities), "Only activities!");
-        require(user != address(0), "Invalid user address");
-        require(amountOfInteractions > 0, "Invalid amount of interactions");
-        require(
-            ICommunity(communityAddress).isMember(user),
-            "Invalid user address"
-        );
-        IInteractionNFT(interactionNFT).safeTransferFrom(
-            address(this),
-            user,
-            uint256(skillWallet.getRole(user)),
-            amountOfInteractions,
-            ""
-        );
-    }
-
     function addNewContractAddressToAgreement(address contractAddress)
         public
         override
@@ -245,7 +183,7 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder, ERC1155Holder {
         onlyActive
         returns (address)
     {
-        return address(activities);
+        return activities;
     }
 
     function getSkillWalletAddress() public view override returns (address) {
@@ -254,10 +192,10 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder, ERC1155Holder {
 
     function isActive() public view override returns (bool) {
         return
-            ICommunity(communityAddress).isMember(owner) &&
-            ISkillWallet(skillWallet).isSkillWalletActivated(
-                ISkillWallet(skillWallet).getSkillWalletIdByOwner(owner)
-            );
+            ICommunity(communityAddress).isMember(owner); //&&
+            // ISkillWallet(skillWallet).isSkillWalletActivated(
+            //     ISkillWallet(skillWallet).getSkillWalletIdByOwner(owner)
+            // );
     }
 
     // add core tema members array
@@ -274,10 +212,7 @@ contract PartnersAgreement is IPartnersAgreement, ERC721Holder, ERC1155Holder {
                 communityAddress,
                 partnersContracts,
                 rolesCount,
-                interactionNFT,
-                interactionNFT == address(0)
-                    ? 100
-                    : IInteractionNFT(interactionNFT).getTotalSupplyAll()
+                commitmentLevel
             );
     }
 }

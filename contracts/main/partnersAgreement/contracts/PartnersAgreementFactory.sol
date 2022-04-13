@@ -9,18 +9,15 @@ contract PartnersAgreementFactory is IPartnersAgreementFactory {
     //TODO: Change to constant before prod
     uint256 public version;
 
-    address interactionNFTFactory;
-
-    constructor(uint256 _version, address _interactionNFTFactory) public {
+    constructor(uint256 _version) public {
         version = _version;
-        interactionNFTFactory = _interactionNFTFactory;
     }
 
     function createPartnersAgreement(
         address skillWalletAddr,
         Types.PartnersAgreementData calldata pa
     ) public override returns (address) {
-        address paAddr = address(new PartnersAgreement(skillWalletAddr, interactionNFTFactory, pa));
+        address paAddr = address(new PartnersAgreement(skillWalletAddr, pa));
 
         return paAddr;
     }

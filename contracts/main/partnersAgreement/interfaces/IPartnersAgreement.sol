@@ -12,14 +12,9 @@ interface IPartnersAgreement {
 
     function isURLListed(string memory _url) external view returns (bool);
 
-    function interactionNFT() external view returns (address);
-
     function getActivitiesAddress() external view returns (address);
 
     function getAllMembers() external view returns (address[] memory);
-
-    function transferInteractionNFTs(address user, uint256 amountOfInteractions)
-        external;
 
     function addNewContractAddressToAgreement(address contractAddress) external;
 

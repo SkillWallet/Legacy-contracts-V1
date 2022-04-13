@@ -15,7 +15,7 @@ let badges;
 contract('Community', function (accounts) {
     before(async function () {
         [signer, coreTeamMember1, coreTeamMember2, coreTeamMember2, notACoreTeamMember, ...accounts] = await ethers.getSigners();
-        const SkillWallet = await ethers.getContractFactory('SkillWallet');
+        const SkillWallet = await ethers.getContractFactory('SkillWalletID');
         const Community = await ethers.getContractFactory('Community');
         const BadgeNFT = await ethers.getContractFactory('Badges');
 
@@ -73,7 +73,7 @@ contract('Community', function (accounts) {
         ).wait();
 
     });
-    describe('Join new member (permissionless community)', async function () {
+    describe.only('Join new member (permissionless community)', async function () {
 
         it("should fail if the user is a member a member of a community", async function () {
             let tx = community2.connect(memberAddress).joinNewMember('http://someuri.co', 1);
@@ -127,7 +127,7 @@ contract('Community', function (accounts) {
             expect(skillWalletIds[+(membersCount.toString()) - 1].toString()).to.eq(tokenId.toString());
         });
     });
-    describe('Join new member (permissioned community)', async function () {
+    describe.only('Join new member (permissioned community)', async function () {
         it("should fail if the user has no Badges NFT address assigned", async function () {
             let tx = permissionedCommunity.connect(permissionedMember).joinNewMember('http://someuri.co', 1);
             await truffleAssert.reverts(
@@ -182,7 +182,7 @@ contract('Community', function (accounts) {
             expect(skillWalletIds[+(membersCount.toString()) - 1].toString()).to.eq(tokenId.toString());
         });
     });
-    describe("Core team members", async () => {
+    describe.only("Core team members", async () => {
         it("Should add owner as core team member after deployment", async () => {
             const isCoreTeamMember = await community.isCoreTeamMember(signer.address);
             const coreTeamMemberWhitelist = await community.getCoreTeamMembers();
@@ -215,7 +215,7 @@ contract('Community', function (accounts) {
                 community.connect(coreTeamMember2).addNewCoreTeamMembers(coreTeamMember2.address)
             ).to.be.revertedWith("The signer is not whitelisted as core team member!");
         });
-        it.skip("Should fail if core team member spots are filled", async () => {
+        it("Should fail if core team member spots are filled", async () => {
             await community.addNewCoreTeamMembers(coreTeamMember2.address);
             const coreTeamMembers = await community.getCoreTeamMembers();
             expect(

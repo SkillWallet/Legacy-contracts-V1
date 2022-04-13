@@ -71,14 +71,12 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         address paAddr = address(
             new PartnersAgreement(
                 skillWalletAddress,
-                interactionNFTFactory,
                 Types.PartnersAgreementData(
                     version,
                     msg.sender,
                     communityAddress,
                     contracts,
                     rolesCount,
-                    address(0),
                     commitmentLevel
                 )
             )
@@ -107,7 +105,7 @@ contract PartnersRegistry is IPartnersRegistry, Initializable {
         pa.version = version;
 
         address agreement = address(
-            new PartnersAgreement(skillWalletAddress, interactionNFTFactory, pa)
+            new PartnersAgreement(skillWalletAddress, pa)
         );
         agreements[agreementId] = agreement;
         delete agreementIds[_agreement];

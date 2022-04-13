@@ -6,6 +6,7 @@ import "./ISkillWallet.sol";
 import "./ISWActionExecutor.sol";
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "./SkillWallet.sol";
 
 /**
  * @title SkillWallet OSM implementation

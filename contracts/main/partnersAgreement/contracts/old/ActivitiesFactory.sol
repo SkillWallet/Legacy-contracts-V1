@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
 
-import "./Activities.sol";
+import "./ActivitiesOld.sol";
 
 contract ActivitiesFactory {
     function deployActivities() public returns (address) {
-        Activities activities = new Activities(msg.sender);
+        ActivitiesOld activities = new ActivitiesOld(msg.sender);
 
         return address(activities);
     }

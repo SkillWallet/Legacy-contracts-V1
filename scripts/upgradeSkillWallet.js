@@ -3,7 +3,7 @@ const { ethers, upgrades } = require('hardhat');
 async function main () {
     console.log(await ethers.provider.getBlockNumber())
 
-  const SkillWallet = await ethers.getContractFactory('SkillWallet');
+  const SkillWallet = await ethers.getContractFactory('SkillWalletID');
   console.log('Upgrading SkillWallet...');
   await upgrades.upgradeProxy('0xbc83Dff75363161616729B760AB8814c8CD55D1c', SkillWallet, {
     initializer: 'initialize'

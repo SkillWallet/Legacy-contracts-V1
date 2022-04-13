@@ -1,282 +1,260 @@
-const { getContractFactory } = require('@nomiclabs/hardhat-ethers/types');
-const { expectEvent, singletons, constants } = require('@openzeppelin/test-helpers');
-const { expect } = require('chai');
-const { Contract } = require('ethers');
+const { constants } = require("@openzeppelin/test-helpers");
+const { expect } = require("chai");
 const { ZERO_ADDRESS } = constants;
-const hre = require("hardhat");
 const { ethers } = require("hardhat");
 
-let factory;
 let activities;
-let agreement;
 let community;
+let coreTeamMember1;
+let coreTeamMember2;
+let discordBotAddress;
+let interactions;
 
-const URI = "https://hub.textile.io/ipfs/bafkreiaks3kjggtxqaj3ixk6ce2difaxj5r6lbemx5kcqdkdtub5vwv5mi";
-const URI_FIN = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
-const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
+const URI =
+  "https://hub.textile.io/ipfs/bafkreiaks3kjggtxqaj3ixk6ce2difaxj5r6lbemx5kcqdkdtub5vwv5mi";
+const URI_FIN =
+  "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
+const metadataUrl =
+  "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
 
 contract("Activities", (accounts) => {
-    before(async () => {
-        //deploy prerequisites
-        const LinkToken = await ethers.getContractFactory("LinkToken");
-        const linkTokenMock = await LinkToken.deploy();
+  before(async () => {
+    [
+      signer,
+      partner,
+      notAMember,
+      secondMember,
+      coreTeam1,
+      coreTeam2,
+      discordBot,
+      ...accounts
+    ] = await ethers.getSigners();
 
-        const MockOracle = await ethers.getContractFactory("MockOracle");
-        const mockOracle = await MockOracle.deploy(linkTokenMock.address);
+    const SkillWallet = await ethers.getContractFactory("SkillWalletID");
+    const skillWallet = await upgrades.deployProxy(SkillWallet, [
+      "0x64307b67314b584b1E3Be606255bd683C835A876",
+      "0x64307b67314b584b1E3Be606255bd683C835A876",
+    ]);
+    await skillWallet.deployed();
 
-        const SkillWallet = await ethers.getContractFactory("SkillWallet");
-        const skillWallet = await upgrades.deployProxy(
-            SkillWallet,
-            [linkTokenMock.address, mockOracle.address]
+    memberAddress = signer;
+    notACoreTeamMember = notAMember;
+    partnerMember = partner;
+    coreTeamMember1 = coreTeam1;
+    coreTeamMember2 = coreTeam2;
+    discordBotAddress = discordBot;
+
+    const Community = await ethers.getContractFactory("Community");
+    community = await Community.deploy(
+      signer.address,
+      "url",
+      1,
+      100,
+      10,
+      1,
+      skillWallet.address,
+      false,
+      ZERO_ADDRESS
+    );
+    await community.deployed();
+
+    await (
+      await community
+        .connect(memberAddress)
+        .joinNewMember("http://someuri.co", 4)
+    ).wait();
+
+    // create skillwallets and add core team members
+    await (
+      await community
+        .connect(memberAddress)
+        .addNewCoreTeamMembers(coreTeam1.address)
+    ).wait();
+    await community.connect(coreTeam1).joinNewMember(metadataUrl, 4);
+
+    //create skillwallets and add core team members
+    await (
+      await community
+        .connect(memberAddress)
+        .addNewCoreTeamMembers(coreTeam2.address)
+    ).wait();
+    await community.connect(coreTeam2).joinNewMember(metadataUrl, 4);
+
+    //deploy activites factory
+    const Activities = await ethers.getContractFactory("Activities");
+    activities = await Activities.deploy(community.address, discordBot.address);
+    await activities.deployed();
+
+    const Interaction = await ethers.getContractFactory("Interaction");
+    interactions = await Interaction.attach(
+      await activities.getInteractionsAddr()
+    );
+  });
+  describe.skip("Activites", async () => {
+    it("Should create some activities", async () => {
+      await activities.connect(memberAddress).createActivity(2, URI);
+      await activities.connect(memberAddress).createActivity(3, URI);
+      await activities.connect(memberAddress).createActivity(2, URI);
+
+      const polls = await activities.getActivitiesByType(2);
+      const calls = await activities.getActivitiesByType(3);
+      const tasks = await activities.getActivitiesByType(1);
+
+      expect(polls.length).to.equal(2);
+      expect(calls.length).to.equal(1);
+      expect(tasks.length).to.equal(0);
+
+      expect(polls[0]).to.equal(0);
+      expect(polls[1]).to.equal(2);
+      expect(calls[0]).to.equal(1);
+    });
+    it("Should not allow to create activity with wong type", async () => {
+      await expect(activities.createActivity(0, URI)).to.be.reverted;
+      await expect(activities.createActivity(4, URI)).to.be.reverted;
+    });
+    it("Should finalize some activities, set new URI and increase interaction indexers", async () => {
+      await activities
+        .connect(discordBotAddress)
+        .finalizeActivity(1, URI_FIN, [
+          coreTeamMember1.address,
+          coreTeamMember2.address,
+        ]);
+      await activities
+        .connect(discordBotAddress)
+        .finalizeActivity(2, URI_FIN, [coreTeamMember1.address]);
+
+      expect(await activities.connect(discordBotAddress).tokenURI(0)).to.equal(
+        URI
+      );
+      expect(await activities.connect(discordBotAddress).tokenURI(1)).to.equal(
+        URI_FIN
+      );
+      expect(await activities.connect(discordBotAddress).tokenURI(2)).to.equal(
+        URI_FIN
+      );
+
+      expect(await activities.isFinalized(0)).to.equal(false);
+      expect(await activities.isFinalized(1)).to.equal(true);
+      expect(await activities.isFinalized(2)).to.equal(true);
+
+      const interactionIndex =
+        await interactions.getInteractionsIndexPerAddress(
+          coreTeamMember1.address
         );
-        await skillWallet.deployed();
+      expect(interactionIndex.toString()).to.equal("2");
 
-        //deploy pr
-        const InteractionFactory = await ethers.getContractFactory("InteractionNFTFactory");
-        const PartnersRegistry = await ethers.getContractFactory("PartnersRegistry");
-        const PartnersAgreementFactory = await ethers.getContractFactory("PartnersAgreementFactory");
-        const CommunityRegistry = await ethers.getContractFactory('CommunityRegistry');
-
-        const interactionFactory = await InteractionFactory.deploy();
-
-        const partnersRegistry = await upgrades.deployProxy(
-            PartnersRegistry,
-            [
-                skillWallet.address,
-                interactionFactory.address,
-            ]
+      const interactionIndex2 =
+        await interactions.getInteractionsIndexPerAddress(
+          coreTeamMember2.address
         );
-        await partnersRegistry.deployed();
-
-        communityRegistry = await upgrades.deployProxy(
-            CommunityRegistry,
-            [skillWallet.address]
-          );
-        await communityRegistry.deployed();
-
-        const com = await (await communityRegistry.createCommunity(
-            '',
-            1,
-            100,
-            10,
-            false,
-            ZERO_ADDRESS
-          )).wait();
-
-        //deploy pa
-        await partnersRegistry.create(
-            com.events[0].args['comAddr'],
-            3,
-            5,
-            ZERO_ADDRESS,
-        );
-
-        //TODO: Milena!
-        const agreementAddress = await partnersRegistry.agreements(0);
-        agreement = await ethers.getContractAt("PartnersAgreement", agreementAddress);
-        const communityAddress = await agreement.communityAddress();
-        community = await ethers.getContractAt('Community', communityAddress);
-        await community.joinNewMember('url', 1);
-
-
-        //create skillwallets and add core team members
-        for (let i = 2; i <= 5; i++) {
-            const coreTM = await ethers.getSigner(accounts[i]);
-
-            await community.connect(coreTM).joinNewMember(
-                metadataUrl,
-                1,
-            );
-
-            await community.addNewCoreTeamMembers(accounts[i]);
-
-        }
-
-        //deploy activites factory
-        const Factory = await ethers.getContractFactory("ActivitiesFactory");
-        factory = await Factory.deploy();
-        await factory.deployed();
-
-        console.log('asdasdasd')
+      expect(interactionIndex2.toString()).to.equal("1");
     });
-    describe("Deployment", async () => {
-        it("Should deploy activities contract", async () => {
-
-            await agreement.deployActivities(factory.address);
-
-            const activitiesAddress = await agreement.activities();
-            expect(activitiesAddress).not.to.equal(ZERO_ADDRESS);
-
-            const interactionAddress = await agreement.interactionNFT();
-            expect(interactionAddress).not.to.equal(ZERO_ADDRESS);
-
-            activities = await ethers.getContractAt("Activities", activitiesAddress);
-            expect(await activities.partnersAgreement()).to.equal(agreement.address);
-        });
+    it("Should not allow change of URI once activity is finalized", async () => {
+      await expect(
+        activities.connect(discordBotAddress).finalizeActivity(1, URI, [])
+      ).to.be.revertedWith("already finalized");
     });
-    describe("Activites", async () => {
-        it("Should create some activities", async () => {
-            await agreement.createActivity(2, URI);
-            await agreement.createActivity(3, URI);
-            await agreement.createActivity(2, URI);
+  });
+  describe.skip("Tasks", async () => {
+    it("Should create some tasks", async () => {
+      await activities.connect(coreTeamMember1).createTask(URI);
+      await activities.connect(coreTeamMember2).createTask(URI);
 
-            const polls = await activities.getActivitiesByType(2);
-            const calls = await activities.getActivitiesByType(3);
-            const tasks = await activities.getActivitiesByType(1);
+      const polls = await activities.getActivitiesByType(2);
+      const calls = await activities.getActivitiesByType(3);
+      const tasks = await activities.getActivitiesByType(1);
 
-            expect(polls.length).to.equal(2);
-            expect(calls.length).to.equal(1);
-            expect(tasks.length).to.equal(0);
+      expect(polls.length).to.equal(2);
+      expect(calls.length).to.equal(1);
+      expect(tasks.length).to.equal(2);
 
-            expect(polls[0]).to.equal(0);
-            expect(polls[1]).to.equal(2);
-            expect(calls[0]).to.equal(1);
-        });
-        it("Should not allow to create activity with wong type", async () => {
-            await expect(agreement.createActivity(0, URI)).to.be.reverted;
-            await expect(agreement.createActivity(4, URI)).to.be.reverted;
-        });
-        it("Should finalize some activities and set new URI", async () => {
-            const bot = await ethers.getSigner(accounts[1]);
-            const activitiesBot = await ethers.getContractAt("Activities", activities.address, bot);
-
-            await activitiesBot.finalizeActivity(1, URI_FIN);
-            await activitiesBot.finalizeActivity(2, URI_FIN);
-
-            expect(await activities.tokenURI(0)).to.equal(URI);
-            expect(await activities.tokenURI(1)).to.equal(URI_FIN);
-            expect(await activities.tokenURI(2)).to.equal(URI_FIN);
-
-            expect(await activities.isFinalized(0)).to.equal(false);
-            expect(await activities.isFinalized(1)).to.equal(true);
-            expect(await activities.isFinalized(2)).to.equal(true);
-        });
-        it("Should not allow change of URI once activity is finalized", async () => {
-            const bot = await ethers.getSigner(accounts[1]);
-            const activitiesBot = await ethers.getContractAt("Activities", activities.address, bot);
-
-            await expect(activitiesBot.finalizeActivity(1, URI)).to.be.revertedWith("already finalized");
-        });
+      expect(polls[0]).to.equal(0);
+      expect(polls[1]).to.equal(2);
+      expect(calls[0]).to.equal(1);
+      expect(tasks[0]).to.equal(3);
+      expect(tasks[1]).to.equal(4);
     });
-    describe("Tasks", async () => {
-        it("Should create some tasks", async () => {
-            const teamMember1 = await ethers.getSigner(accounts[2]);
-            const teamMember2 = await ethers.getSigner(accounts[3]);
-            const agreementTM1 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember1);
-            const agreementTM2 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember2);
+    it("Should have stored task details", async () => {
+      const task1 = await activities.tasks(0);
+      const task2 = await activities.tasks(1);
 
-            await agreementTM1.createActivity(1, URI);
-            await agreementTM2.createActivity(1, URI);
+      expect(await activities.activityToTask(3)).to.equal("0");
+      expect(await activities.activityToTask(4)).to.equal("1");
 
-            const polls = await activities.getActivitiesByType(2);
-            const calls = await activities.getActivitiesByType(3);
-            const tasks = await activities.getActivitiesByType(1);
+      expect(task1.activityId).to.equal("3");
+      expect(task1.status).to.equal(0);
+      expect(task1.creator).to.equal(coreTeamMember1.address);
+      expect(task1.taker).to.equal(ZERO_ADDRESS);
 
-            expect(polls.length).to.equal(2);
-            expect(calls.length).to.equal(1);
-            expect(tasks.length).to.equal(2);
+      expect(task2.activityId).to.equal("4");
+      expect(task2.status).to.equal(0);
+      expect(task2.creator).to.equal(coreTeamMember2.address);
+      expect(task2.taker).to.equal(ZERO_ADDRESS);
 
-            expect(polls[0]).to.equal(0);
-            expect(polls[1]).to.equal(2);
-            expect(calls[0]).to.equal(1);
-            expect(tasks[0]).to.equal(3);
-            expect(tasks[1]).to.equal(4);
-        });
-        it("Should have stored task details", async () => {
-            const task1 = await activities.tasks(0);
-            const task2 = await activities.tasks(1);
-
-            expect(await activities.activityToTask(3)).to.equal("0");
-            expect(await activities.activityToTask(4)).to.equal("1");
-
-            expect(task1.activityId).to.equal("3");
-            expect(task1.status).to.equal(0);
-            expect(task1.creator).to.equal(accounts[2]);
-            expect(task1.taker).to.equal(ZERO_ADDRESS);
-
-            expect(task2.activityId).to.equal("4");
-            expect(task2.status).to.equal(0);
-            expect(task2.creator).to.equal(accounts[3]);
-            expect(task2.taker).to.equal(ZERO_ADDRESS);
-
-            expect(await activities.tokenURI(3)).to.equal(URI);
-            expect(await activities.tokenURI(4)).to.equal(URI);
-        });
-        it("Should take the task", async () => {
-            const teamMember = await ethers.getSigner(accounts[4]);
-            const agreementTM = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember);
-
-            await agreementTM.takeTask(3);
-
-            const task1 = await activities.getTaskByActivityId(3);
-            const task2 = await activities.getTaskByActivityId(4);
-
-            expect(task1.activityId).to.equal("3");
-            expect(task1.status).to.equal(1);
-            expect(task1.creator).to.equal(accounts[2]);
-            expect(task1.taker).to.equal(accounts[4]);
-
-            expect(task2.activityId).to.equal("4");
-            expect(task2.status).to.equal(0);
-            expect(task2.creator).to.equal(accounts[3]);
-            expect(task2.taker).to.equal(ZERO_ADDRESS);
-        });
-        it("Should not allow to take task that is already taken", async () => {
-            const teamMember = await ethers.getSigner(accounts[5]);
-            const agreementTM = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember);
-
-            await expect(agreementTM.takeTask(3)).to.be.revertedWith("wrong status");
-        });
-        it("Should allow to finalize taken task", async () => {
-            const teamMember = await ethers.getSigner(accounts[4]);
-            const agreementTM = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember);
-            const intNFT = await agreementTM.interactionNFT();
-            const interactionNFT = await ethers.getContractAt("InteractionNFT", intNFT, teamMember);
-
-            await agreementTM.finilizeTask(3);
-
-            const task1 = await activities.getTaskByActivityId(3);
-
-            expect(task1.activityId).to.equal("3");
-            expect(task1.status).to.equal(2);
-            expect(task1.creator).to.equal(accounts[2]);
-            expect(task1.taker).to.equal(accounts[4]);
-
-            expect(await activities.isFinalized(3)).to.equal(true);
-            const intNFTBalanceTaker = await interactionNFT.balanceOf(task1.taker, 1);
-            expect(intNFTBalanceTaker.toString()).to.equal('1');
-        });
-        it("Should not allow to finalze task that is not taken", async () => {
-            const teamMember1 = await ethers.getSigner(accounts[3]);
-            const teamMember2 = await ethers.getSigner(accounts[4]);
-            const agreementTM1 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember1);
-            const agreementTM2 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember2);
-
-            await expect(agreementTM1.finilizeTask(4)).to.be.revertedWith("wrong status");
-            await expect(agreementTM2.finilizeTask(3)).to.be.revertedWith("wrong status");
-        });
-        it("Should not allow to finalze task with not taker", async () => {
-            const teamMember1 = await ethers.getSigner(accounts[5]);
-            const teamMember2 = await ethers.getSigner(accounts[3]);
-            const agreementTM1 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember1);
-            const agreementTM2 = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember2);
-
-            await agreementTM1.takeTask(4);
-
-            await expect(agreementTM2.finilizeTask(4)).to.be.revertedWith("wrong taker");
-        });
-        it("Should not allow to take or finalize task that is not task (by type)", async () => {
-            const teamMember = await ethers.getSigner(accounts[0]);
-            const agreementTM = await ethers.getContractAt("PartnersAgreement", agreement.address, teamMember);
-
-            await expect(agreementTM.takeTask(0)).to.be.revertedWith("Not core team task");
-            await expect(agreementTM.finilizeTask(0)).to.be.revertedWith("Not core team task");
-        });
-        it("Should not allow to finalize activity that is task (by type)", async () => {
-            const bot = await ethers.getSigner(accounts[1]);
-            const activitiesBot = await ethers.getContractAt("Activities", activities.address, bot);
-
-            await expect(activitiesBot.finalizeActivity(4, URI_FIN)).to.be.revertedWith("activity doesnt exist");
-        });
+      expect(await activities.tokenURI(3)).to.equal(URI);
+      expect(await activities.tokenURI(4)).to.equal(URI);
     });
+    it("Should take the task", async () => {
+      await activities.connect(coreTeamMember2).takeTask(3);
+
+      const task1 = await activities.getTaskByActivityId(3);
+      const task2 = await activities.getTaskByActivityId(4);
+
+      expect(task1.activityId).to.equal("3");
+      expect(task1.status).to.equal(1);
+      expect(task1.creator).to.equal(coreTeamMember1.address);
+      expect(task1.taker).to.equal(coreTeamMember2.address);
+
+      expect(task2.activityId).to.equal("4");
+      expect(task2.status).to.equal(0);
+      expect(task2.creator).to.equal(coreTeamMember2.address);
+      expect(task2.taker).to.equal(ZERO_ADDRESS);
+    });
+    it("Should not allow to take task that is already taken", async () => {
+      await expect(
+        activities.connect(coreTeamMember2).takeTask(3)
+      ).to.be.revertedWith("wrong status");
+    });
+    it("Should allow to finalize taken task", async () => {
+      await activities.connect(coreTeamMember1).finilizeTask(3);
+      const task1 = await activities.getTaskByActivityId(3);
+
+      expect(task1.activityId).to.equal("3");
+      expect(task1.status).to.equal(2);
+      expect(task1.creator).to.equal(coreTeamMember1.address);
+      expect(task1.taker).to.equal(coreTeamMember2.address);
+
+      expect(await activities.isFinalized(3)).to.equal(true);
+
+      const interactionIndex =
+        await interactions.getInteractionsIndexPerAddress(task1.taker);
+      expect(interactionIndex.toString()).to.equal("2");
+    });
+    it("Should not allow to finalze task that is not taken", async () => {
+      await expect(
+        activities.connect(coreTeamMember1).finilizeTask(3)
+      ).to.be.revertedWith("wrong status");
+      await expect(
+        activities.connect(coreTeamMember2).finilizeTask(4)
+      ).to.be.revertedWith("wrong status");
+    });
+    it("Should not allow the creator to take their task", async () => {
+      await expect(
+        activities.connect(coreTeamMember2).takeTask(4)
+      ).to.be.revertedWith("Creator can't take the task");
+    });
+    it("Should not allow to take or finalize task that is not task (by type)", async () => {
+      await expect(
+        activities.connect(coreTeamMember1).takeTask(0)
+      ).to.be.revertedWith("Not core team task");
+      await expect(
+        activities.connect(coreTeamMember1).finilizeTask(0)
+      ).to.be.revertedWith("Not core team task");
+    });
+    it("Should not allow to finalize activity that is task (by type)", async () => {
+      await expect(
+        activities.connect(discordBotAddress).finalizeActivity(4, URI_FIN, [])
+      ).to.be.revertedWith("activity doesnt exist");
+    });
+  });
 });

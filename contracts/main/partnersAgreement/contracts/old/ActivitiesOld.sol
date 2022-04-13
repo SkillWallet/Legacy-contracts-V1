@@ -3,15 +3,12 @@ pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./Interaction.sol";
-import "../interfaces/IActivities.sol";
-import "../../SkillWallet.sol";
-import "../../community/ICommunity.sol";
+import "../../interfaces/IPartnersAgreement.sol";
+import "./InteractionNFT.sol";
 
-contract Activities is IActivities, ERC721, IERC721Receiver {
+contract ActivitiesOld is ERC721 {
     using Counters for Counters.Counter;
 
     event ActivityCreated(uint256 _id, Type _type, string _uri);
@@ -40,39 +37,21 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
         address taker;
     }
 
-    modifier onlyCoreTeam() {
-        require(
-            ICommunity(community).isCoreTeamMember(msg.sender),
-            "The signer is not whitelisted as core team member!"
-        );
-        _;
-    }
-
-    address public community;
+    address public partnersAgreement;
     mapping(uint256 => Type) public idTypes;
     Counters.Counter private idCounter;
     mapping(uint256 => uint256) public activityToTask;
     Task[] public tasks;
     mapping(uint256 => bool) public isFinalized;
-    address public discordBotAddress;
-    Interaction interactions;
 
-    constructor(address _community, address _discordBotAddress)
-        public
-        ERC721("Tsk", "TSK")
-    {
-        require(_community != address(0), "no community address");
+    constructor(address _pa) public ERC721("Bam", "BAM") {
+        require(_pa != address(0), "no PA address");
 
-        community = _community;
-        discordBotAddress = _discordBotAddress;
-        interactions = new Interaction();
+        partnersAgreement = _pa;
     }
 
-    function createActivity(uint256 _type, string memory _uri)
-        public
-        override
-        onlyCoreTeam
-    {
+    function createActivity(uint256 _type, string memory _uri) public {
+        require(msg.sender == partnersAgreement, "Not PA");
         require(Type(_type) != Type.None, "No type");
         require(Type(_type) != Type.CoreTeamTask, "Use createTask for tasks");
         require(bytes(_uri).length > 0, "No URI");
@@ -80,21 +59,7 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
         _addActivity(Type(_type), _uri);
     }
 
-    function setDiscordBotAddress(
-        address _discordBotAddress
-    ) public onlyCoreTeam {
-        discordBotAddress = _discordBotAddress;
-    }
-
-    function finalizeActivity(
-        uint256 _id,
-        string memory _uri,
-        address[] calldata members
-    ) public override {
-        require(
-            msg.sender == discordBotAddress,
-            "Only Discord Bot Can call this."
-        );
+    function finalizeActivity(uint256 _id, string memory _uri) public {
         require(
             idTypes[_id] != Type.None && idTypes[_id] != Type.CoreTeamTask,
             "activity doesnt exist"
@@ -107,10 +72,6 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
 
         isFinalized[_id] = true;
 
-        for (uint256 i = 0; i < members.length; i++) {
-            interactions.addInteraction(_id, members[i]);
-        }
-
         emit ActivityFinalized(_id, idTypes[_id], _uri);
     }
 
@@ -120,7 +81,7 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
     {
         uint256 tokenId = idCounter.current();
 
-        _safeMint(address(this), tokenId);
+        _safeMint(partnersAgreement, tokenId);
         _setTokenURI(tokenId, _uri);
         idTypes[tokenId] = _type;
         idCounter.increment();
@@ -131,7 +92,9 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
     }
 
     //core team member task functions
-    function createTask(string memory _uri) public override onlyCoreTeam {
+
+    function createTask(string memory _uri, address _creator) public {
+        require(msg.sender == partnersAgreement, "Not PA");
         require(bytes(_uri).length > 0, "No URI");
 
         uint256 activityId = _addActivity(Type.CoreTeamTask, _uri);
@@ -142,14 +105,15 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
                 activityId,
                 block.timestamp,
                 TaskStatus.Created,
-                msg.sender,
+                _creator,
                 address(0)
             )
         );
         activityToTask[activityId] = taskId;
     }
 
-    function takeTask(uint256 _activityId) public override {
+    function takeTask(uint256 _activityId, address _taker) public {
+        require(msg.sender == partnersAgreement, "Not PA");
         require(
             idTypes[_activityId] == Type.CoreTeamTask,
             "Not core team task"
@@ -157,44 +121,37 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
 
         uint256 taskId = activityToTask[_activityId];
         require(tasks[taskId].status == TaskStatus.Created, "wrong status");
-        require(
-            tasks[taskId].creator != msg.sender,
-            "Creator can't take the task."
-        );
 
-        tasks[taskId].taker = msg.sender;
+        tasks[taskId].taker = _taker;
         tasks[taskId].status = TaskStatus.Taken;
 
-        emit TaskTaken(_activityId, taskId, msg.sender);
+        emit TaskTaken(_activityId, taskId, _taker);
     }
 
-    function finilizeTask(uint256 _activityId) public override {
+    function finilizeTask(uint256 _activityId, address _taker) public {
+        require(msg.sender == partnersAgreement, "Not PA");
         require(
             idTypes[_activityId] == Type.CoreTeamTask,
             "Not core team task"
         );
 
         uint256 taskId = activityToTask[_activityId];
-
-        require(
-            tasks[taskId].creator == msg.sender,
-            "Only creator can finalize!"
-        );
         require(tasks[taskId].status == TaskStatus.Taken, "wrong status");
+        require(tasks[taskId].taker == _taker, "wrong taker");
 
         tasks[taskId].status = TaskStatus.Finished;
         isFinalized[_activityId] = true;
 
-        interactions.addInteraction(_activityId, tasks[taskId].taker);
+        _transferInteractionNFT(tasks[taskId].taker);
 
-        emit TaskFinalized(_activityId, taskId, tasks[taskId].taker);
+        emit TaskFinalized(_activityId, taskId, _taker);
     }
 
     //getters
+
     function getActivitiesByType(uint256 _type)
         public
         view
-        override
         returns (uint256[] memory)
     {
         require(_type <= 3, "Wrong type");
@@ -231,16 +188,10 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
         return tasks[activityToTask[_activityId]];
     }
 
-    function getInteractionsAddr() public view override returns (address) {
-        return address(interactions);
-    }
-
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external override returns (bytes4) {
-        return this.onERC721Received.selector;
+    function _transferInteractionNFT(address receiver) private {
+        // IPartnersAgreement(partnersAgreement).transferInteractionNFTs(
+        //     receiver,
+        //     1
+        // );
     }
 }
