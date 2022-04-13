@@ -130,8 +130,20 @@ contract Community is ICommunity {
             activeMembersCount <= totalMembersAllowed,
             "No free spots left!"
         );
-
         require(!isMember[msg.sender], "Already a member");
+
+        if (role >= 1 && role <= 3)
+            require(
+                activeMembersCount <=
+                    totalMembersAllowed - coreTeamMembersCount,
+                "No free spots for members roles"
+            );
+
+        if (role >= 4 && role <= 6)
+            require(
+                isCoreTeamMember[msg.sender],
+                "User not whitelisted as core team member!"
+            );
 
         skillWallet.create(msg.sender, uri, RoleUtils.Roles(role), false);
 
