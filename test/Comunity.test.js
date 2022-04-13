@@ -73,7 +73,7 @@ contract('Community', function (accounts) {
         ).wait();
 
     });
-    describe.only('Join new member (permissionless community)', async function () {
+    describe('Join new member (permissionless community)', async function () {
 
         it("should fail if the user is a member a member of a community", async function () {
             let tx = community2.connect(memberAddress).joinNewMember('http://someuri.co', 1);
@@ -127,7 +127,7 @@ contract('Community', function (accounts) {
             expect(skillWalletIds[+(membersCount.toString()) - 1].toString()).to.eq(tokenId.toString());
         });
     });
-    describe.only('Join new member (permissioned community)', async function () {
+    describe('Join new member (permissioned community)', async function () {
         it("should fail if the user has no Badges NFT address assigned", async function () {
             let tx = permissionedCommunity.connect(permissionedMember).joinNewMember('http://someuri.co', 1);
             await truffleAssert.reverts(
@@ -182,7 +182,7 @@ contract('Community', function (accounts) {
             expect(skillWalletIds[+(membersCount.toString()) - 1].toString()).to.eq(tokenId.toString());
         });
     });
-    describe.only("Core team members", async () => {
+    describe("Core team members", async () => {
         it("Should add owner as core team member after deployment", async () => {
             const isCoreTeamMember = await community.isCoreTeamMember(signer.address);
             const coreTeamMemberWhitelist = await community.getCoreTeamMembers();

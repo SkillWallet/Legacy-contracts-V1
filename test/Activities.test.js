@@ -90,7 +90,7 @@ contract("Activities", (accounts) => {
       await activities.getInteractionsAddr()
     );
   });
-  describe.skip("Activites", async () => {
+  describe.only("Activites", async () => {
     it("Should create some activities", async () => {
       await activities.connect(memberAddress).createActivity(2, URI);
       await activities.connect(memberAddress).createActivity(3, URI);
@@ -155,7 +155,7 @@ contract("Activities", (accounts) => {
       ).to.be.revertedWith("already finalized");
     });
   });
-  describe.skip("Tasks", async () => {
+  describe.only("Tasks", async () => {
     it("Should create some tasks", async () => {
       await activities.connect(coreTeamMember1).createTask(URI);
       await activities.connect(coreTeamMember2).createTask(URI);
@@ -215,12 +215,34 @@ contract("Activities", (accounts) => {
         activities.connect(coreTeamMember2).takeTask(3)
       ).to.be.revertedWith("wrong status");
     });
-    it("Should allow to finalize taken task", async () => {
+
+    it("Should submit the task", async () => {
+      await activities.connect(coreTeamMember2).submitTask(3, URI_FIN);
+
+      const task1 = await activities.getTaskByActivityId(3);
+      const task2 = await activities.getTaskByActivityId(4);
+
+      expect(task1.activityId).to.equal("3");
+      expect(task1.status).to.equal(2);
+      expect(task1.creator).to.equal(coreTeamMember1.address);
+      expect(task1.taker).to.equal(coreTeamMember2.address);
+
+      expect(task2.activityId).to.equal("4");
+      expect(task2.status).to.equal(0);
+      expect(task2.creator).to.equal(coreTeamMember2.address);
+      expect(task2.taker).to.equal(ZERO_ADDRESS);
+    });
+    it("Should not allow to submit task that is already submitted", async () => {
+      await expect(
+        activities.connect(coreTeamMember1).submitTask(3, URI_FIN)
+      ).to.be.revertedWith("wrong status");
+    });
+    it("Should allow to finalize submitted task", async () => {
       await activities.connect(coreTeamMember1).finilizeTask(3);
       const task1 = await activities.getTaskByActivityId(3);
 
       expect(task1.activityId).to.equal("3");
-      expect(task1.status).to.equal(2);
+      expect(task1.status).to.equal(3);
       expect(task1.creator).to.equal(coreTeamMember1.address);
       expect(task1.taker).to.equal(coreTeamMember2.address);
 
@@ -230,7 +252,7 @@ contract("Activities", (accounts) => {
         await interactions.getInteractionsIndexPerAddress(task1.taker);
       expect(interactionIndex.toString()).to.equal("2");
     });
-    it("Should not allow to finalze task that is not taken", async () => {
+    it("Should not allow to finalze task that is not submitted", async () => {
       await expect(
         activities.connect(coreTeamMember1).finilizeTask(3)
       ).to.be.revertedWith("wrong status");

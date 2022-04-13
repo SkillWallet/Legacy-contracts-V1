@@ -17,6 +17,7 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
     event ActivityCreated(uint256 _id, Type _type, string _uri);
     event ActivityFinalized(uint256 _id, Type _type, string _uri);
     event TaskTaken(uint256 _activityId, uint256 _taskId, address _taker);
+    event TaskSubmitted(uint256 _activityId, uint256 _taskId);
     event TaskFinalized(uint256 _activityId, uint256 _taskId, address _taker);
 
     enum Type {
@@ -29,6 +30,7 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
     enum TaskStatus {
         Created,
         Taken,
+        Submitted,
         Finished
     }
 
@@ -38,6 +40,7 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
         TaskStatus status;
         address creator;
         address taker;
+        string submitionUrl;
     }
 
     modifier onlyCoreTeam() {
@@ -143,7 +146,8 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
                 block.timestamp,
                 TaskStatus.Created,
                 msg.sender,
-                address(0)
+                address(0),
+                ""
             )
         );
         activityToTask[activityId] = taskId;
@@ -168,6 +172,26 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
         emit TaskTaken(_activityId, taskId, msg.sender);
     }
 
+
+    function submitTask(uint256 _activityId, string calldata _submitionUrl) public override {
+        require(
+            idTypes[_activityId] == Type.CoreTeamTask,
+            "Not core team task"
+        );
+
+        uint256 taskId = activityToTask[_activityId];
+        require(tasks[taskId].status == TaskStatus.Taken, "wrong status");
+        require(
+            tasks[taskId].taker == msg.sender,
+            "Only taker can submit a task."
+        );
+
+        tasks[taskId].status = TaskStatus.Submitted;
+        tasks[taskId].submitionUrl = _submitionUrl;
+
+        emit TaskSubmitted(_activityId, taskId);
+    }
+
     function finilizeTask(uint256 _activityId) public override {
         require(
             idTypes[_activityId] == Type.CoreTeamTask,
@@ -180,7 +204,7 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
             tasks[taskId].creator == msg.sender,
             "Only creator can finalize!"
         );
-        require(tasks[taskId].status == TaskStatus.Taken, "wrong status");
+        require(tasks[taskId].status == TaskStatus.Submitted, "wrong status");
 
         tasks[taskId].status = TaskStatus.Finished;
         isFinalized[_activityId] = true;

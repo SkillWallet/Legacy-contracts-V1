@@ -25,5 +25,7 @@ interface IActivities is IERC721 {
         view
         returns (uint256[] memory);
 
-function getInteractionsAddr() external view returns (address);
+    function getInteractionsAddr() external view returns (address);
+
+    function submitTask(uint256 _activityId, string calldata _submitionUrl) external;
 }
