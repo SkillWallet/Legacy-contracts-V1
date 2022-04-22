@@ -14,7 +14,6 @@ Behind the hoods, the protocol follows these steps:
 - If the validation passes the SkillWallet is marked as Active and from now on can be used for signing further transactions.
 - At this point, new users will receive their personal NFT ID – and own, de-facto, their universal, non-transferable, self-sovereign identity on the Blockchain.
 
-
 ## Contracts 
 
 When you sign the Partners Agreement from https://playground.skillwallet.id there are two contracts deployed under the hood - PartnersAgreement.sol and Community.sol 
@@ -33,20 +32,25 @@ Tasks and Events are represented by Activities.sol, that is deployed when creati
 After finalizing a task/event, the SkillWallet holder's interaction index is increased. In order to access Interactions contract - call `getInteractionsAddr()` from Activities contract.
 
 ## Imports
+<br/><br/>
 
 1. SkillWallet
 `import "skill-wallet/contracts/main/ISkillWallet.sol";`
 `import "skill-wallet/contracts/main/utils/RoleUtils.sol";`
+<br/><br/>
 
 2. Community 
 `import "skill-wallet/contracts/main/community/ICommunity.sol;"`
+<br/><br/>
 
 3. PartnersAgreement
 `import "skill-wallet/contracts/main/partnersAgreement/interfaces/IPartnersAgreement.sol;"`
+<br/><br/>
 
 4. Activities & Interactions
 `import "skill-wallet/contracts/main/partnersAgreement/interfaces/IActivities.sol";`
 `import "skill-wallet/contracts/main/partnersAgreement/contracts/Interaction.sol";`
+<br/><br/>
 
 ## Flow
 
