@@ -92,9 +92,9 @@ contract("Activities", (accounts) => {
   });
   describe.only("Activites", async () => {
     it("Should create some activities", async () => {
-      await activities.connect(memberAddress).createActivity(2, URI);
-      await activities.connect(memberAddress).createActivity(3, URI);
-      await activities.connect(memberAddress).createActivity(2, URI);
+      await activities.connect(memberAddress).createActivity(2, 4, URI);
+      await activities.connect(memberAddress).createActivity(3, 4, URI);
+      await activities.connect(memberAddress).createActivity(2, 4, URI);
 
       const polls = await activities.getActivitiesByType(2);
       const calls = await activities.getActivitiesByType(3);
@@ -109,8 +109,8 @@ contract("Activities", (accounts) => {
       expect(calls[0]).to.equal(1);
     });
     it("Should not allow to create activity with wong type", async () => {
-      await expect(activities.createActivity(0, URI)).to.be.reverted;
-      await expect(activities.createActivity(4, URI)).to.be.reverted;
+      await expect(activities.createActivity(0, 1, URI)).to.be.reverted;
+      await expect(activities.createActivity(4, 1, URI)).to.be.reverted;
     });
     it("Should finalize some activities, set new URI and increase interaction indexers", async () => {
       await activities
@@ -157,8 +157,8 @@ contract("Activities", (accounts) => {
   });
   describe.only("Tasks", async () => {
     it("Should create some tasks", async () => {
-      await activities.connect(coreTeamMember1).createTask(URI);
-      await activities.connect(coreTeamMember2).createTask(URI);
+      await activities.connect(coreTeamMember1).createTask(4, URI);
+      await activities.connect(coreTeamMember2).createTask(4, URI);
 
       const polls = await activities.getActivitiesByType(2);
       const calls = await activities.getActivitiesByType(3);

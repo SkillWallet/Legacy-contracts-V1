@@ -44,10 +44,10 @@ const senderWalletMnemonic = ethers.Wallet.fromMnemonic(
 );
 
 let signer = senderWalletMnemonic.connect(provider);
-
-console.log(signer.address);
-console.log(signer.mnemonic);
-console.log(signer.privateKey);
+const wallet =  ethers.Wallet.createRandom();
+console.log(wallet.address);
+console.log(wallet.mnemonic);
+console.log(wallet.privateKey);
 
 const skillWalletContract = new ethers.Contract(
   skillWalletAddress,
@@ -193,8 +193,8 @@ async function getCommunity(tokenID) {
 
 async function test() {
   // await getOSMAddr();
-  const tokenId = 1;
-  getOSMAddr()
+  // const tokenId = 1;
+  // getOSMAddr()
   // // await getCommunity(tokenId);
   // // // // const tokenId = await joinCommunity()
   // // // // await claim();

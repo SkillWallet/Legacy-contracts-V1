@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./Interaction.sol";
 import "../interfaces/IActivities.sol";
-import "../../SkillWallet.sol";
 import "../../community/ICommunity.sol";
+import "../../ISkillWallet.sol";
 
 contract Activities is IActivities, ERC721, IERC721Receiver {
     using Counters for Counters.Counter;
@@ -41,6 +41,7 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
         address creator;
         address taker;
         string submitionUrl;
+        uint256 role;
     }
 
     modifier onlyCoreTeam() {
@@ -50,15 +51,18 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
         );
         _;
     }
+    Counters.Counter private idCounter;
 
     address public community;
-    mapping(uint256 => Type) public idTypes;
-    Counters.Counter private idCounter;
-    mapping(uint256 => uint256) public activityToTask;
-    Task[] public tasks;
-    mapping(uint256 => bool) public isFinalized;
     address public discordBotAddress;
     Interaction interactions;
+
+    mapping(uint256 => Type) public idTypes;
+    mapping(uint256 => uint256) public activityToTask;
+    mapping(uint256 => bool) public isFinalized;
+    mapping(uint256 => uint256) public activityToRole;
+
+    Task[] public tasks;
 
     constructor(address _community, address _discordBotAddress)
         public
@@ -71,21 +75,22 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
         interactions = new Interaction();
     }
 
-    function createActivity(uint256 _type, string memory _uri)
-        public
-        override
-        onlyCoreTeam
-    {
+    function createActivity(
+        uint256 _type,
+        uint256 _role,
+        string memory _uri
+    ) public override onlyCoreTeam {
         require(Type(_type) != Type.None, "No type");
         require(Type(_type) != Type.CoreTeamTask, "Use createTask for tasks");
         require(bytes(_uri).length > 0, "No URI");
 
-        _addActivity(Type(_type), _uri);
+        _addActivity(Type(_type), _role, _uri);
     }
 
-    function setDiscordBotAddress(
-        address _discordBotAddress
-    ) public onlyCoreTeam {
+    function setDiscordBotAddress(address _discordBotAddress)
+        public
+        onlyCoreTeam
+    {
         discordBotAddress = _discordBotAddress;
     }
 
@@ -108,24 +113,33 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
             _setTokenURI(_id, _uri);
         }
 
-        isFinalized[_id] = true;
-
         for (uint256 i = 0; i < members.length; i++) {
-            interactions.addInteraction(_id, members[i]);
+            if (
+                ICommunity(community).isMember(members[i]) &&
+                uint256(
+                    ISkillWallet(ICommunity(community).getSkillWalletAddress())
+                        .getRole(members[i])
+                ) ==
+                activityToRole[_id]
+            ) interactions.addInteraction(_id, members[i]);
         }
+
+        isFinalized[_id] = true;
 
         emit ActivityFinalized(_id, idTypes[_id], _uri);
     }
 
-    function _addActivity(Type _type, string memory _uri)
-        internal
-        returns (uint256)
-    {
+    function _addActivity(
+        Type _type,
+        uint256 role,
+        string memory _uri
+    ) internal returns (uint256) {
         uint256 tokenId = idCounter.current();
 
         _safeMint(address(this), tokenId);
         _setTokenURI(tokenId, _uri);
         idTypes[tokenId] = _type;
+        activityToRole[tokenId] = role;
         idCounter.increment();
 
         emit ActivityCreated(tokenId, _type, _uri);
@@ -134,10 +148,14 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
     }
 
     //core team member task functions
-    function createTask(string memory _uri) public override onlyCoreTeam {
+    function createTask(uint256 _role, string memory _uri)
+        public
+        override
+        onlyCoreTeam
+    {
         require(bytes(_uri).length > 0, "No URI");
 
-        uint256 activityId = _addActivity(Type.CoreTeamTask, _uri);
+        uint256 activityId = _addActivity(Type.CoreTeamTask, _role, _uri);
         uint256 taskId = tasks.length;
 
         tasks.push(
@@ -147,7 +165,8 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
                 TaskStatus.Created,
                 msg.sender,
                 address(0),
-                ""
+                "",
+                _role
             )
         );
         activityToTask[activityId] = taskId;
@@ -166,14 +185,18 @@ contract Activities is IActivities, ERC721, IERC721Receiver {
             "Creator can't take the task."
         );
 
+        // TODO: add check for role 
+
         tasks[taskId].taker = msg.sender;
         tasks[taskId].status = TaskStatus.Taken;
 
         emit TaskTaken(_activityId, taskId, msg.sender);
     }
 
-
-    function submitTask(uint256 _activityId, string calldata _submitionUrl) public override {
+    function submitTask(uint256 _activityId, string calldata _submitionUrl)
+        public
+        override
+    {
         require(
             idTypes[_activityId] == Type.CoreTeamTask,
             "Not core team task"

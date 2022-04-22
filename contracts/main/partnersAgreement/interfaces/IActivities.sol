@@ -6,7 +6,11 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol";
 
 interface IActivities is IERC721 {
-    function createActivity(uint256 _type, string memory _uri) external;
+    function createActivity(
+        uint256 _type,
+        uint256 role,
+        string memory _uri
+    ) external;
 
     function finalizeActivity(
         uint256 _id,
@@ -14,7 +18,7 @@ interface IActivities is IERC721 {
         address[] calldata members
     ) external;
 
-    function createTask(string memory _url) external;
+    function createTask(uint256 role, string memory _url) external;
 
     function takeTask(uint256 _activityId) external;
 
@@ -27,5 +31,6 @@ interface IActivities is IERC721 {
 
     function getInteractionsAddr() external view returns (address);
 
-    function submitTask(uint256 _activityId, string calldata _submitionUrl) external;
+    function submitTask(uint256 _activityId, string calldata _submitionUrl)
+        external;
 }
