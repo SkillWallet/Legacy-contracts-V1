@@ -14,11 +14,39 @@ Behind the hoods, the protocol follows these steps:
 - If the validation passes the SkillWallet is marked as Active and from now on can be used for signing further transactions.
 - At this point, new users will receive their personal NFT ID – and own, de-facto, their universal, non-transferable, self-sovereign identity on the Blockchain.
 
+
+## Contracts 
+
+When you sign the Partners Agreement from https://playground.skillwallet.id there are two contracts deployed under the hood - PartnersAgreement.sol and Community.sol 
+The Community.sol is managing the membership in the community. 
+PartnersAgreement.sol is managing activities - tasks, polls, and community calls.
+
+In order to use them within your contract after you sign the Partners Agreement, you can use partnersAgreementAddress, that you get after deploying it. 
+From Partners Agreement, you can use `communityAddress()` to fetch the community address. 
+
+In order to fetch SkillWallet data - such as whether is activated or not, roles, community history - you can use the ISkillWallet interface. 
+
+Deployed on Mumbai `0xfb19708dEc0c84b739F98D9AAAE719D236Af3B32`!
+
+Tasks and Events are represented by Activities.sol, that is deployed when creating the first one. You can fetch the address of the Activities, by calling `getActivitiesAddress()`.
+
+After finalizing a task/event, the SkillWallet holder's interaction index is increased. In order to access Interactions contract - call `getInteractionsAddr()` from Activities contract.
+
 ## Imports
 
-`import skill-wallet/contracts/main/ISkillWallet.sol` <br/>
-`import skill-wallet/contracts/main/SkillWallet.sol` <br/>
-`import skill-wallet/contracts/main/ISWActionExecutor.sol` <br/>
+1. SkillWallet
+`import "skill-wallet/contracts/main/ISkillWallet.sol";`
+`import "skill-wallet/contracts/main/utils/RoleUtils.sol";`
+
+2. Community 
+`import "skill-wallet/contracts/main/community/ICommunity.sol;"`
+
+3. PartnersAgreement
+`import "skill-wallet/contracts/main/partnersAgreement/interfaces/IPartnersAgreement.sol;"`
+
+4. Activities & Interactions
+`import "skill-wallet/contracts/main/partnersAgreement/interfaces/IActivities.sol";`
+`import "skill-wallet/contracts/main/partnersAgreement/contracts/Interaction.sol";`
 
 ## Flow
 
@@ -30,18 +58,3 @@ Behind the hoods, the protocol follows these steps:
 5. By implementing the interface, the contract will be able to gain the benefits of fast and secure, UX friendly signature mechanism.
 <br/><br/>
 The SkillWallet.sol contract can be used for getting the SW data such as check if it's activated, skillSet, current and history of communities.
-
-
-## Chainlink 
-
-1. Polygon: <br/> <br/>
-
-JobID: eac3069d969449968af970d9bf495c98
-Oracle: 0x0a31078cD57d23bf9e8e8F1BA78356ca2090569E
-
-
-2. Mumbai <br/> <br/>
-
-Oracle: 0x0bDDCD124709aCBf9BB3F824EbC61C87019888bb <br/>
-JobID: 96a7de0b3c4140b4b04bdc2d058e559c <br/>
-LinkToken: 0x326C977E6efc84E512bB9C30f76E30c160eD06FB

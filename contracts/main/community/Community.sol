@@ -39,7 +39,6 @@ contract Community is ICommunity {
     IERC721 permissionBadges;
 
     ISkillWallet public skillWallet;
-    mapping(uint256 => uint256) public testMapping;
 
     modifier onlyCoreTeam() {
         require(
