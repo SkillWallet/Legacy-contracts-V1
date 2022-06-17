@@ -1,8 +1,11 @@
+# (!) DISCLAIMER (!) 
+## Discontinued V1 of āut's contracts. Using SkillWallet Legacy communities and Mobile App verification. It required additional pieces of infrastructure, and leaned to potential risks of centralization on the long-term. Now discontinued. See [link] for the current version of our Contract Suite - in production.
+
+
 # Overview
 The SkillWallet is a permissionless, open-source protocol for the creation of universal, self-sovereign Identities - based on Skills instead of personal data. <br/>
 It comes as an upgradable, Non-Transferable, Non-Fungible-Token (U-NT-NFT) - and it entiles native sybil-resistant properties. <br/>
-Moreover, in order to receive their NT-NFT, individual users need to join a Community/Protocol/Platform. By being part of a Community, they can participate in Gigs/Tasks/Projects, that in return provide them Credits (DITO) - in the form of ERC777 - that they can spend across the whole network, including the Partners that integrate the SkillWallet package in their existing Contract. <br/>
-Once an individual member's skills are validated (simply by contributing to Gigs), they will be able to spend their Credits, create new tasks/projects, and move to a different Community seamlessly, without losing the Credits & the reputation earned. <br/>
+Moreover, in order to receive their NT-NFT, individual users need to join a Community/Protocol/Platform. By being part of a Community, they can participate in Gigs/Tasks/Projects, that in return provide them a Reputation Score, visible across the whole network, including the Partners that integrate the SkillWallet package in their existing Contract. <br/>
 The sybyl-resistance features, together with the portability of the Skills & Benefits acquired, makes the SkillWallet the complementary missing piece in the Multiverse, and the NFT space at large.
 
 ## Steps
