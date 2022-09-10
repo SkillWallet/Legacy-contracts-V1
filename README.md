@@ -1,6 +1,7 @@
 # (!) DISCLAIMER (!) 
-## Discontinued V1 of āut's contracts. Using SkillWallet Legacy communities and Mobile App verification. It required additional pieces of infrastructure, and leaned to potential risks of centralization on the long-term. Now discontinued. See [link] for the current version of our Contract Suite - in production.
+_SkillWallet is now the [Āut Protocol](https://github.com/aut-protocol). SkillWallet's Contracts, Mobile App and Legacy Communities have been discontinued. You may have a look at the V1 of our contracts here. Our V1 required additional pieces of infrastructure, and we realized it leaned towards potential risks of centralization on the long-term. Our V2 is very well alive and actively developed. See [Āut](https://github.com/aut-protocol) for the current version of our Contract Suite - in production._
 
+--------
 
 # Overview
 The SkillWallet is a permissionless, open-source protocol for the creation of universal, self-sovereign Identities - based on Skills instead of personal data. <br/>
